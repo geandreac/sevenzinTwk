@@ -52,11 +52,45 @@ public partial class ProtecaoView : UserControl
         Lista.Children.Add(CartaoInformativo("Secure Boot", SegurancaSistema.SecureBootAtivo(), "verifica a assinatura do sistema ao iniciar"));
         Lista.Children.Add(CartaoInformativo("TPM", SegurancaSistema.TpmHabilitado(), "chip de segurança usado por BitLocker/Windows Hello"));
 
+        // Write-cache por disco (paridade 05 §7): tweak dinâmico por disco, mesmo motor reversível.
+        var discos = CacheEscrita.Listar();
+        if (discos.Count > 0)
+        {
+            Lista.Children.Add(new TextBlock { Text = "WRITE-CACHE (por disco)", Style = SectionStyle, Margin = new Thickness(0, 8, 0, 10) });
+            foreach (var d in discos) Lista.Children.Add(LinhaDisco(d));
+        }
+
         Lista.Children.Add(new TextBlock
         {
-            Text = "Desligar mecanismos de segurança deixa o PC vulnerável a malware. Todos os itens acima são reversíveis (desfazer restaura o valor anterior) e exigem administrador. Itens marcados com * só valem após reiniciar.",
+            Text = "Desligar mecanismos de segurança deixa o PC vulnerável a malware. Todos os itens acima são reversíveis (desfazer restaura o valor anterior) e exigem administrador. Itens marcados com * só valem após reiniciar. O write-cache forçado arrisca perda de dados em queda de energia.",
             Foreground = Warning, FontSize = 12, Margin = new Thickness(0, 12, 0, 0), TextWrapping = TextWrapping.Wrap,
         });
+    }
+
+    /// <summary>Linha de write-cache por disco: estado atual + toggle do tweak dinâmico (mesma confirmação).</summary>
+    Border LinhaDisco(DiscoCache d)
+    {
+        var t = CacheEscrita.TweakParaDisco(d);
+        var g = new Grid { Margin = new Thickness(0, 8, 0, 8) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var esq = new StackPanel { Margin = new Thickness(0, 0, 16, 0) };
+        esq.Children.Add(new TextBlock { Text = d.Modelo, FontSize = 14 });
+        esq.Children.Add(new TextBlock
+        {
+            Text = $"Cache de escrita: {(d.CacheForcadoAtual == 1 ? "forçado (CacheIsPowerProtected=1)" : "padrão do Windows")}  ·  risco: {t.Risco}.",
+            Foreground = d.CacheForcadoAtual == 1 ? Danger : Muted,
+            FontSize = 12, Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap,
+        });
+        Grid.SetColumn(esq, 0);
+        g.Children.Add(esq);
+
+        var sw = new ToggleButton { Style = Switch, VerticalAlignment = VerticalAlignment.Center, Tag = t, IsChecked = _motor.Aplicado(t) };
+        sw.Click += Toggle_Click;
+        Grid.SetColumn(sw, 1);
+        g.Children.Add(sw);
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 10), Child = g };
     }
 
     /// <summary>Linha com estado real + toggle do tweak correspondente (confirmação explícita ao ligar).</summary>

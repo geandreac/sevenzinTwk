@@ -49,7 +49,7 @@ da trava por decisão do dono, foram implementados na F1.1** (com aviso de risco
 | HVCI (Isolamento de Núcleo) | `hvci-off` | **b** | risco CRÍTICO; requer reinício |
 | Mitigações Spectre/Meltdown | `mitigacoes-off` (FeatureSettingsOverride) | **b** | requer reinício |
 | Windows Update | `wu-pausar` (NoAutoUpdate=1) | **b** | política de máquina |
-| Write-cache forçado | — | **d** | F1.2 (per-disk via Enum) |
+| Write-cache forçado | `CacheEscrita` (CacheIsPowerProtected por disco, via Enum) + seção na Proteção | **b** | F1.2; tweak dinâmico por disco com backup/desfazer/auditoria |
 
 Nenhum desses itens roda sem o usuário confirmar; todos mantêm prévia/backup/desfazer/auditoria do `MotorTweaks`.
 

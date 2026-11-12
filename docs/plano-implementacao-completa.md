@@ -54,7 +54,7 @@ aprovados** — não será inventada; se o produto exigir, será decisão explí
 |---|---|---|
 | **F0** ✅ | Remoção da trava + registro + branch de restauração | — |
 | **F1.1** ✅ | Tweaks avançados (UAC, Defender, SmartScreen, HVCI, mitigações, Windows Update) + confirmação explícita + **tela Proteção** | F0 |
-| **F1.2** | Write-cache forçado por disco (CacheIsPowerProtected via Enum) + seção na Proteção | F1.1 |
+| **F1.2** ✅ | Write-cache forçado por disco (CacheIsPowerProtected via Enum) + seção na Proteção | F1.1 |
 | **F2** | Capturas completas: região/janela/monitor, editor de anotação, envio explícito (webhook configurado pelo usuário) | F1 |
 | **F3** | Instaladores completos: catálogo ampliado da RE (35 logos confirmados + lista provável, fontes oficiais + hash) + winget allowlist | F1 |
 | **F4** | Guias + Notificações/Tarefas agendadas + tweaks extras (mouse, localização) | F3 |
