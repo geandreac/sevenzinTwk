@@ -38,6 +38,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        JanelaArredondada.Arredondar(this);
         bool podeAdmin = Servicos.Sessao.PodeAcessarAdmin;
         foreach (var (tag, glifo, rotulo) in Itens)
         {

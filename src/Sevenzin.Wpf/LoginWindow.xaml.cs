@@ -25,6 +25,7 @@ public partial class LoginWindow : Window
     public LoginWindow()
     {
         InitializeComponent();
+        JanelaArredondada.Arredondar(this);
         _bootstrap = Servicos.Contas.Todos.Count == 0;
 
         if (_bootstrap)
