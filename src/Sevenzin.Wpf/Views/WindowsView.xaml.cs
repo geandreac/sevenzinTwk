@@ -63,6 +63,21 @@ public partial class WindowsView : UserControl
         en.Children.Add(botoes);
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = en });
 
+        // Análise de imagem do Windows (SÓ LEITURA): monta a ISO, lista edições/apps/features via DISM.
+        Raiz.Children.Add(new TextBlock { Text = "ANÁLISE DE IMAGEM DO WINDOWS (SÓ LEITURA)", Style = SectionStyle });
+        var analise = new StackPanel();
+        var analiseStatus = new TextBlock { Foreground = Secondary, TextWrapping = TextWrapping.Wrap };
+        var analisarBtn = Botao(Primario, "Escolher ISO e analisar", () => { });
+        analisarBtn.Click += async (_, _) => await AnalisarIsoAsync(analiseStatus, analisarBtn);
+        analise.Children.Add(new TextBlock
+        {
+            Text = "Lê o que há dentro de uma ISO do Windows: edições, apps provisionados e recursos opcionais. A ISO é montada só para leitura e desmontada ao final — nada é alterado.",
+            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+        });
+        analise.Children.Add(analisarBtn);
+        analise.Children.Add(analiseStatus);
+        Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = analise });
+
         var sp = new StackPanel();
         sp.Children.Add(new TextBlock { Text = "Salvaguardas", FontWeight = FontWeights.SemiBold, Foreground = Success });
         sp.Children.Add(new TextBlock { Text = "O Sevenzin não constrói ISO do Windows, não remove apps em massa, não desliga o Defender/UAC/SmartScreen/Windows Update e não executa nada de forma oculta. Mudanças exigem sua confirmação e são reversíveis.", Foreground = Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
@@ -97,6 +112,38 @@ public partial class WindowsView : UserControl
     }
 
     void AtualizarEnergia() => _energiaLbl.Text = $"Plano de energia ativo agora: {GestorEnergia.NomeAtivo() ?? "—"}";
+
+    async System.Threading.Tasks.Task AnalisarIsoAsync(TextBlock status, Button botao)
+    {
+        if (!Elevacao.EhAdmin())
+        {
+            if (MessageBox.Show("A análise monta a ISO (somente leitura) e exige administrador.\n\nReabrir o Sevenzin como administrador?",
+                    "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                Elevacao.ReabrirComoAdmin();
+            return;
+        }
+        var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Escolha a ISO do Windows", Filter = "Imagem ISO (*.iso)|*.iso" };
+        if (dlg.ShowDialog() != true) return;
+
+        botao.IsEnabled = false;
+        status.Foreground = Muted;
+        status.Text = "Analisando… (monta a ISO só para leitura e executa o DISM; pode demorar)";
+        var resultado = await System.Threading.Tasks.Task.Run(() => ExecutorDism.AnalisarIsoAsync(dlg.FileName));
+        botao.IsEnabled = true;
+
+        if (!resultado.Ok)
+        {
+            status.Foreground = (Brush)Application.Current.Resources["DangerBrush"];
+            status.Text = "Falha na análise: " + resultado.Erro;
+            return;
+        }
+        status.Foreground = Secondary;
+        status.Text = resultado.Edicoes.Count == 0
+            ? "Nenhuma edição encontrada na imagem."
+            : $"Edições: {string.Join(" · ", resultado.Edicoes.Select(e => $"{e.Nome} ({e.Arquitetura ?? "arch n/d"})"))}\n" +
+              $"Apps provisionados: {resultado.Apps.Count} · Recursos opcionais: {resultado.Features.Count}\n" +
+              "Só leitura — nada foi alterado na ISO nem no sistema.";
+    }
 
     void ExecutarEnergia(Func<ResultadoEnergia> acao)
     {
