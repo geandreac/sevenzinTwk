@@ -23,7 +23,9 @@ public partial class LoginWindow : Window
     public static bool ModoAdmin;
 
     readonly bool _bootstrap;
-    string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA
+    string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA (modo local)
+    ClienteSupabase? _clienteMfa;  // sessão Supabase aguardando o código MFA
+    string? _fatorMfa, _emailMfa, _senhaMfa;
 
     public LoginWindow()
     {
@@ -135,6 +137,23 @@ public partial class LoginWindow : Window
 
     async Task EntrarSupabase(string email, string senha)
     {
+        // 2ª etapa: código MFA (TOTP) de uma sessão já autenticada por senha.
+        if (_clienteMfa is { } cmfa && _fatorMfa is { } fid)
+        {
+            EntrarBtn.IsEnabled = false;
+            var rv = await cmfa.VerificarTotpAsync(fid, Totp.Text);
+            EntrarBtn.IsEnabled = true;
+            if (!rv.Ok)
+            {
+                _ = cmfa.RegistrarAcessoAsync(_emailMfa!, "Código 2FA inválido", false);
+                Erro(rv.Mensagem ?? "Código inválido."); Totp.Clear(); Totp.Focus();
+                return;
+            }
+            _ = cmfa.RegistrarAcessoAsync(_emailMfa!, "Sucesso (2FA)", true);
+            CompletarSupabase(cmfa, _emailMfa!, _senhaMfa!);
+            return;
+        }
+
         EntrarBtn.IsEnabled = false;
         Mensagem.Visibility = Visibility.Collapsed;
         try
@@ -147,16 +166,31 @@ public partial class LoginWindow : Window
                 Erro(r.Mensagem ?? "E-mail ou senha inválidos.");
                 return;
             }
-            // Sessão local sintética com o papel do Supabase — o resto da UI (checagem de admin) segue igual.
-            var papel = cliente.EhAdmin ? PapelUsuario.Administrador : PapelUsuario.Usuario;
-            var nome = string.IsNullOrWhiteSpace(r.Dado) ? ValidacaoCredenciais.NomeDeEmail(cliente.Sessao!.Email) : r.Dado!;
-            Servicos.Sessao.Abrir(new Usuario(cliente.Sessao!.Email, nome, papel, "-", DateTime.UtcNow));
-            Servicos.ClienteSupabase = cliente;
+            // Tem MFA verificado? Pede o código antes de concluir (eleva a sessão a aal2).
+            if (ClienteSupabase.TotpVerificado(await cliente.FatoresAsync()) is { } fator)
+            {
+                _clienteMfa = cliente; _fatorMfa = fator.Id; _emailMfa = email; _senhaMfa = senha;
+                TotpBloco.Visibility = Visibility.Visible;
+                EntrarBtn.Content = "Verificar código";
+                Subtitulo.Text = "Verificação em dois fatores";
+                Totp.Focus();
+                return;
+            }
             _ = cliente.RegistrarAcessoAsync(email, "Sucesso", true);
-            LembrarCredenciais(email, senha);
-            DialogResult = true;
+            CompletarSupabase(cliente, email, senha);
         }
         finally { if (DialogResult != true) EntrarBtn.IsEnabled = true; }
+    }
+
+    // Sessão local sintética com o papel do Supabase — o resto da UI (checagem de admin) segue igual.
+    void CompletarSupabase(ClienteSupabase cliente, string email, string senha)
+    {
+        var papel = cliente.EhAdmin ? PapelUsuario.Administrador : PapelUsuario.Usuario;
+        var nome = string.IsNullOrWhiteSpace(cliente.NomePerfil) ? ValidacaoCredenciais.NomeDeEmail(cliente.Sessao!.Email) : cliente.NomePerfil!;
+        Servicos.Sessao.Abrir(new Usuario(cliente.Sessao!.Email, nome, papel, "-", DateTime.UtcNow));
+        Servicos.ClienteSupabase = cliente;
+        LembrarCredenciais(email, senha);
+        DialogResult = true;
     }
 
     void CriarPrimeiroAdmin(string email, string senha)

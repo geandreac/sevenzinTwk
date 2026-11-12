@@ -47,32 +47,34 @@ public partial class PerfilView : UserControl
 
         // 2FA
         Lista.Children.Add(new TextBlock { Text = "VERIFICAÇÃO EM DOIS FATORES (2FA)", Style = SectionStyle });
-        var fa = new StackPanel();
-        fa.Children.Add(new TextBlock
+        if (Servicos.UsaSupabase)
         {
-            Text = eu.TotpAtivo ? "Ativo — o login pede o código do seu aplicativo autenticador." : "Inativo — o login usa só e-mail e senha.",
-            Foreground = eu.TotpAtivo ? Success : Muted, FontSize = 13, TextWrapping = TextWrapping.Wrap,
-        });
-        var acoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
-        if (eu.TotpAtivo)
-        {
-            var desativar = Botao(Secundario, "Desativar 2FA", () =>
-            {
-                if (MessageBox.Show("Desativar a verificação em dois fatores?", "2FA", MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.OK)
-                {
-                    Servicos.Contas.Desativar2FA(eu.Email);
-                    Montar();
-                }
-            });
-            acoes.Children.Add(desativar);
+            Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = Bloco2FASupabase() });
         }
         else
         {
-            var ativar = Botao(Primario, "Ativar 2FA", () => IniciarAtivacao2FA(fa));
-            acoes.Children.Add(ativar);
+            var fa = new StackPanel();
+            fa.Children.Add(new TextBlock
+            {
+                Text = eu.TotpAtivo ? "Ativo — o login pede o código do seu aplicativo autenticador." : "Inativo — o login usa só e-mail e senha.",
+                Foreground = eu.TotpAtivo ? Success : Muted, FontSize = 13, TextWrapping = TextWrapping.Wrap,
+            });
+            var acoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
+            if (eu.TotpAtivo)
+            {
+                acoes.Children.Add(Botao(Secundario, "Desativar 2FA", () =>
+                {
+                    if (MessageBox.Show("Desativar a verificação em dois fatores?", "2FA", MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.OK)
+                    { Servicos.Contas.Desativar2FA(eu.Email); Montar(); }
+                }));
+            }
+            else
+            {
+                acoes.Children.Add(Botao(Primario, "Ativar 2FA", () => IniciarAtivacao2FA(fa)));
+            }
+            fa.Children.Add(acoes);
+            Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = fa });
         }
-        fa.Children.Add(acoes);
-        Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = fa });
 
         // LICENÇA
         var lic = _licenca.Carregar();
@@ -120,6 +122,69 @@ public partial class PerfilView : UserControl
         res.Children.Add(Campo("Capturas salvas", capturas.ToString()));
         res.Children.Add(Campo("Notificações no histórico", NotificacoesStore.Padrao.Todos.Count.ToString()));
         Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = res });
+    }
+
+    StackPanel Bloco2FASupabase()
+    {
+        var fa = new StackPanel();
+        var status = new TextBlock { Text = "Carregando status do 2FA…", Foreground = Muted, FontSize = 13, TextWrapping = TextWrapping.Wrap };
+        var acoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
+        fa.Children.Add(status);
+        fa.Children.Add(acoes);
+        _ = CarregarMfa(fa, status, acoes);
+        return fa;
+    }
+
+    async Task CarregarMfa(StackPanel fa, TextBlock status, StackPanel acoes)
+    {
+        acoes.Children.Clear();
+        var cli = Servicos.ClienteSupabase;
+        if (cli is null) { status.Text = "Sessão não disponível."; return; }
+        var fator = ClienteSupabase.TotpVerificado(await cli.FatoresAsync());
+        if (fator is not null)
+        {
+            status.Text = "Ativo — o login pede o código do seu aplicativo autenticador.";
+            status.Foreground = Success;
+            acoes.Children.Add(Botao(Secundario, "Desativar 2FA", async () =>
+            {
+                if (MessageBox.Show("Desativar a verificação em dois fatores?", "2FA", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+                if (await cli.DesinscreverFatorAsync(fator.Id)) await CarregarMfa(fa, status, acoes);
+                else MessageBox.Show("Não foi possível desativar agora.", "2FA", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }));
+        }
+        else
+        {
+            status.Text = "Inativo — o login usa só e-mail e senha.";
+            status.Foreground = Muted;
+            acoes.Children.Add(Botao(Primario, "Ativar 2FA", async () => await IniciarMfaSupabase(fa, acoes)));
+        }
+    }
+
+    async Task IniciarMfaSupabase(StackPanel fa, StackPanel acoes)
+    {
+        var cli = Servicos.ClienteSupabase;
+        if (cli is null) return;
+        var insc = await cli.InscreverTotpAsync();
+        if (insc is null) { MessageBox.Show("Não foi possível iniciar o 2FA agora.", "2FA", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        acoes.Children.Clear();
+
+        var bloco = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
+        bloco.Children.Add(new TextBlock { Text = "1. Cadastre este segredo no seu aplicativo autenticador (Google Authenticator, Authy…):", Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap });
+        bloco.Children.Add(new TextBlock { Text = insc.Segredo, FontSize = 15, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 6, 0, 0), TextWrapping = TextWrapping.Wrap });
+        bloco.Children.Add(new TextBlock { Text = "2. Digite o código de 6 dígitos para confirmar:", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap });
+        var linha = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
+        var codigo = new TextBox { Style = (Style)Application.Current.Resources["DarkBox"], Width = 140, Tag = "000000", MaxLength = 6, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
+        linha.Children.Add(codigo);
+        linha.Children.Add(Botao(Primario, "Confirmar código", async () =>
+        {
+            var r = await cli.VerificarTotpAsync(insc.FatorId, codigo.Text);
+            if (r.Ok) { MessageBox.Show("Verificação em dois fatores ativada. No próximo login o código será pedido.", "2FA", MessageBoxButton.OK, MessageBoxImage.Information); Montar(); }
+            else { MessageBox.Show(r.Mensagem ?? "Código inválido ou expirado.", "2FA", MessageBoxButton.OK, MessageBoxImage.Warning); codigo.Clear(); codigo.Focus(); }
+        }));
+        linha.Children.Add(Botao(Secundario, "Cancelar", async () => { await cli.DesinscreverFatorAsync(insc.FatorId); Montar(); }));
+        bloco.Children.Add(linha);
+        fa.Children.Add(bloco);
+        codigo.Focus();
     }
 
     void IniciarAtivacao2FA(StackPanel host)
