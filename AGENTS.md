@@ -37,7 +37,7 @@ Sevenzin.sln
 src/Sevenzin.Wpf/          app WPF (.NET 8, Windows): Views/, MainWindow, LoginWindow, Theme.xaml
 src/Sevenzin.Diagnostics/  motor SEM UI (testável): Tweaks, Autenticacao, Usuarios, Coletores, Jogos, Gpu, Capturas…
 src/Sevenzin.Report/       runner de linha de comando (relatorio-pc.md/.json)
-tests/Sevenzin.Tests/      xUnit (85 testes)
+tests/Sevenzin.Tests/      xUnit (101 testes)
 docs/                      documentação; docs/engenharia-reversa/ = inventário do original
 ```
 
@@ -53,7 +53,7 @@ use no PowerShell: `$env:DOTNET_ROOT='C:\re\geandre\dotnet'; $env:PATH="C:\re\ge
 
 ```powershell
 dotnet build src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug   # compilar o app
-dotnet test                                                   # rodar os 85 testes
+dotnet test                                                   # rodar os 101 testes
 dotnet run --project src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug   # abrir o app
 ```
 
@@ -70,9 +70,12 @@ Para semear sem UI: variáveis `SEVENZIN_ADMIN_EMAIL` e `SEVENZIN_ADMIN_SENHA`. 
 - Métricas são **reais**: mostre "—" quando a métrica é indisponível; **nunca** invente número (FPS/temperatura não
   existem no original — seriam feature nova, ver `docs/engenharia-reversa/05_metricas_instaladores_jogos.md`).
 
-## Próximos passos (roadmap §5, todos seguros)
+## Próximos passos (roadmap §5.1, todos seguros)
 
-1. Enumeração de modos de vídeo (DEVMODE/Hz) — só leitura.
-2. Uso de CPU do sistema (%) na Home — `GetSystemTimes`.
-3. Working set / `timeBeginPeriod` opt-in nos perfis de jogo, com aviso e reversão ao fechar.
-4. Fila de instaladores persistida (JSON local).
+Os 4 itens do roadmap §5 já foram implementados (modos de vídeo DEVMODE, CPU% via `GetSystemTimes`, working set +
+timer opt-in por jogo, fila de instaladores persistida). Candidatos para o próximo ciclo:
+
+1. Troca real do modo de vídeo (`ChangeDisplaySettingsEx`) com confirmação e reversão automática (hoje só listamos).
+2. Ajustes de GPU no nível do driver (perfis NVIDIA/AMD) — manter só leitura até provar reversibilidade.
+3. Detecção **informativa** dos mecanismos que o original desligava (Defender/HVCI/SmartScreen) com "restaurar
+   estado protegido" — detectar e restaurar, nunca desligar.

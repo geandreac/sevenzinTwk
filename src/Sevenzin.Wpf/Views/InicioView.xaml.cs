@@ -25,6 +25,7 @@ public partial class InicioView : UserControl
     }
 
     readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(1200) };
+    readonly MedidorCpuUso _cpuUso = new(); // GetSystemTimes (05 §3): delta puro, sem warm-up de WMI
     CardMonitor _cpu = null!, _gpu = null!, _mem = null!, _lat = null!;
     double _totalGB;
 
@@ -146,16 +147,29 @@ public partial class InicioView : UserControl
         rec.Children.Add(CardRecurso("Perfil por jogo", "Afinidade e prioridade por título.", 1));
         Raiz.Children.Add(rec);
 
+        _cpuUso.Ler(); // 1ª amostra do GetSystemTimes: o próximo tick já tem intervalo para calcular o %
         _timer.Start();
     }
 
     async System.Threading.Tasks.Task TickAsync()
     {
+        // CPU do sistema via GetSystemTimes (delta entre ticks). "…" até haver intervalo — nunca 0 forjado.
+        var cpu = await System.Threading.Tasks.Task.Run(_cpuUso.Ler);
+        if (cpu is { } c)
+        {
+            Empurrar(_cpu, c);
+            _cpu.Numero.Text = $"{c:0}%";
+            _cpu.Card.ToolTip = null;
+        }
+        else
+        {
+            _cpu.Card.ToolTip = "Uso de CPU indisponível (GetSystemTimes não respondeu).";
+        }
+
+        // Memória via WMI formatado (a parte de CPU do mesmo coletor não é mais usada aqui).
         var a = await System.Threading.Tasks.Task.Run(LeituraAtual.Agora);
         if (a is { } s)
         {
-            Empurrar(_cpu, s.CpuPct);
-            _cpu.Numero.Text = $"{s.CpuPct:0}%";
             double usadaGB = _totalGB > 0 ? Math.Max(0, _totalGB - s.RamDisponivelMB / 1024.0) : s.RamCommittedPct;
             Empurrar(_mem, usadaGB);
             _mem.Numero.Text = _totalGB > 0 ? $"{usadaGB:0.0} GB" : $"{s.RamCommittedPct:0}%";

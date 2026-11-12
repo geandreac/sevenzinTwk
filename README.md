@@ -13,12 +13,15 @@ tudo **reversível, auditado e confirmado** por você.
 
 - **Login + Admin** por e-mail e senha: hash **bcrypt**, sessão com expiração/renovação/logout, proteção de rota por
   papel (administrador × usuário), proteção contra força bruta e seed do primeiro admin por variável de ambiente.
-- **Início** — monitores ao vivo de CPU, GPU, memória e latência (leituras reais; "—" quando a métrica é indisponível,
-  nunca um valor forjado) + faixa de sistema + atalhos.
+- **Início** — monitores ao vivo de CPU (`GetSystemTimes`), GPU, memória e latência (leituras reais; "—" quando a
+  métrica é indisponível, nunca um valor forjado) + faixa de sistema + atalhos.
 - **Ajustes** — otimizações **reversíveis** com prévia, backup do estado anterior, desfazer e auditoria.
-- **GPU** — diagnóstico somente leitura (sem DDU, sem alterar flags do driver) + link oficial do fabricante.
-- **Instaladores** — utilitários de **fontes oficiais** com verificação por assinatura/hash antes de executar.
-- **Jogos** — perfil por jogo **temporário** (afinidade/prioridade revertidas ao fechar).
+- **GPU** — diagnóstico somente leitura (sem DDU, sem alterar flags do driver), **modos de vídeo suportados**
+  (resolução × Hz via DEVMODE, só listagem) + link oficial do fabricante.
+- **Instaladores** — utilitários de **fontes oficiais** com verificação por assinatura/hash antes de executar e
+  **fila persistida** em JSON local (sobrevive a reinícios).
+- **Jogos** — perfil por jogo **temporário** (afinidade/prioridade revertidas ao fechar) + **working set e timer de
+  1 ms opt-in** com aviso, também revertidos ao fechar.
 - **Capturas** — captura de tela **local**, salva no PC, nunca enviada à rede.
 - **BIOS / Windows** — telas **informativas e seguras** (estado só leitura + instruções com classificação de risco);
   nenhuma ação altera BIOS/Windows automaticamente.
@@ -31,7 +34,7 @@ tudo **reversível, auditado e confirmado** por você.
   tweaks reversível, autenticação). Testável de forma isolada.
 - `src/Sevenzin.Wpf/` — aplicativo **WPF** (tema escuro alinhado ao Figma, tipografia Inter, ícone oficial "S em raio").
 - `src/Sevenzin.Report/` — runner de linha de comando (`relatorio-pc.md`/`.json`, self-test).
-- `tests/Sevenzin.Tests/` — **84 testes** automatizados (motor de tweaks, autenticação, GPU, inventário…).
+- `tests/Sevenzin.Tests/` — **101 testes** automatizados (motor de tweaks, autenticação, GPU, inventário, modos de vídeo, CPU, timer, fila…).
 - `docs/` — análise do original, design system, paridade funcional e revisões.
 
 ## Como usar

@@ -11,7 +11,7 @@
 
         <StackPanel Grid.Row="0" Margin="0,8,0,12">
             <TextBlock Text="Jogos" Style="{StaticResource TituloTela}"/>
-            <TextBlock Text="Perfil por jogo: afinidade e prioridade TEMPORÁRIAS, revertidas por você ou ao fechar o jogo. Nunca Realtime. Meça com Benchmark/Telemetria (A/B) antes de confiar no ganho." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            <TextBlock Text="Perfil por jogo: afinidade e prioridade TEMPORÁRIAS, revertidas por você ou ao fechar o jogo. Nunca Realtime. Working set e timer de 1 ms são opt-in com aviso. Meça com Benchmark/Telemetria (A/B) antes de confiar no ganho." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
 
         <Grid Grid.Row="1" Margin="0,0,0,16">

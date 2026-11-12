@@ -89,6 +89,8 @@ public partial class JogosView : UserControl
         var acoes = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         acoes.Children.Add(Botao(Secundario, $"Prioridade: {NomePrio(j.Prioridade)}", () => CiclarPrioridade(j)));
         if (Hibrido) acoes.Children.Add(Botao(Secundario, $"Afinidade: {NomeAfinidade(j)}", () => CiclarAfinidade(j)));
+        acoes.Children.Add(Botao(Secundario, $"Working set: {(j.TrimWorkingSet ? "trim" : "não")}", () => AlternarWorkingSet(j)));
+        acoes.Children.Add(Botao(Secundario, $"Timer 1 ms: {(j.TimerAltaResolucao ? "sim" : "não")}", () => AlternarTimer(j)));
         acoes.Children.Add(Botao(Primario, "Aplicar", () => Aplicar(j)));
         acoes.Children.Add(Botao(Secundario, "Reverter", () => Reverter(j)));
         acoes.Children.Add(Botao(Secundario, "Remover", () => Remover(j)));
@@ -124,6 +126,24 @@ public partial class JogosView : UserControl
         Montar();
     }
 
+    void AlternarWorkingSet(PerfilJogo j)
+    {
+        _catalogo.Adicionar(j with { TrimWorkingSet = !j.TrimWorkingSet });
+        Montar();
+        StatusLbl.Text = j.TrimWorkingSet
+            ? "Trim de working set ligado para aplicar — pode causar micro-travadas logo após aplicar (memória volta a crescer)."
+            : "Trim de working set desligado.";
+    }
+
+    void AlternarTimer(PerfilJogo j)
+    {
+        _catalogo.Adicionar(j with { TimerAltaResolucao = !j.TimerAltaResolucao });
+        Montar();
+        StatusLbl.Text = j.TimerAltaResolucao
+            ? "Timer de 1 ms ligado — ATENÇÃO: aumenta o consumo de energia enquanto o jogo estiver aplicado; revertido ao fechar."
+            : "Timer de alta resolução desligado.";
+    }
+
     void Aplicar(PerfilJogo j)
     {
         if (_controle.ExesRodando(new[] { j.Executavel }).Count == 0)
@@ -132,7 +152,13 @@ public partial class JogosView : UserControl
             return;
         }
         if (_gestor.AplicarAgora(j))
-            StatusLbl.Text = $"'{j.Nome}' aplicado (prioridade {NomePrio(j.Prioridade)}, afinidade {NomeAfinidade(j)}) — reversível.";
+        {
+            var extras = new List<string>();
+            if (j.TrimWorkingSet) extras.Add("trim de working set");
+            if (j.TimerAltaResolucao) extras.Add("timer 1 ms (revertido ao fechar)");
+            var textoExtras = extras.Count > 0 ? $" · {string.Join(" + ", extras)}" : "";
+            StatusLbl.Text = $"'{j.Nome}' aplicado (prioridade {NomePrio(j.Prioridade)}, afinidade {NomeAfinidade(j)}{textoExtras}) — reversível.";
+        }
         else
             StatusLbl.Text = $"Não foi possível aplicar em '{j.Nome}' (pode exigir administrador ou ser bloqueado por anti-cheat).";
         Montar();

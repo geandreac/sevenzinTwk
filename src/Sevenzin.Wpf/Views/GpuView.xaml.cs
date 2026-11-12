@@ -30,6 +30,7 @@ public partial class GpuView : UserControl
                 return;
             }
             foreach (var g in gpus) Lista.Children.Add(CartaoGpu(g));
+            Lista.Children.Add(CartaoModosVideo());
             Lista.Children.Add(CartaoRecomendacoes());
         };
     }
@@ -76,6 +77,59 @@ public partial class GpuView : UserControl
         Grid.SetColumn(v, 1);
         g.Children.Add(r); g.Children.Add(v);
         return g;
+    }
+
+    /// <summary>Modos de vídeo suportados (EnumDisplaySettingsW/DEVMODE — paridade 05 §2). Somente leitura:
+    /// lista resolução × Hz por monitor; nada altera o modo atual. "—" quando a API não responde.</summary>
+    Border CartaoModosVideo()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock { Text = "Modos de vídeo suportados (somente leitura)", FontSize = 16, FontWeight = FontWeights.SemiBold });
+
+        var dispositivos = LeitorModosVideo.Dispositivos();
+        var alvos = dispositivos.Count > 0 ? dispositivos : new List<DispositivoVideo> { new("", "Exibição primária") };
+        foreach (var d in alvos)
+        {
+            var nomeAlvo = d.Nome.Length > 0 ? d.Nome : null; // null = primário
+            var modos = LeitorModosVideo.Listar(nomeAlvo);
+            var atual = LeitorModosVideo.Atual(nomeAlvo);
+
+            var titulo = $"{d.Descricao}{(d.Nome.Length > 0 ? $" ({d.Nome})" : "")}";
+            sp.Children.Add(new TextBlock
+            {
+                Text = atual is { } a ? $"{titulo} — em uso: {a.Largura}×{a.Altura} @ {a.Hz} Hz" : titulo,
+                FontSize = 13,
+                Foreground = Secondary,
+                Margin = new Thickness(0, 10, 0, 4),
+            });
+
+            if (modos.Count == 0)
+            {
+                sp.Children.Add(new TextBlock { Text = "Indisponível neste equipamento.", Foreground = Muted, FontSize = 12 });
+                continue;
+            }
+
+            // Agrupa por resolução e mostra as taxas: "1920×1080 — 60 · 120 · 144 Hz"
+            foreach (var grupo in modos.GroupBy(m => (m.Largura, m.Altura)).Take(12))
+            {
+                var hz = string.Join(" · ", grupo.Select(m => m.Hz).Distinct().OrderByDescending(h => h).Select(h => $"{h} Hz"));
+                var bpp = grupo.First().BitsPerPel != 32 ? $" · {grupo.First().BitsPerPel} bpp" : "";
+                sp.Children.Add(new TextBlock { Text = $"•  {grupo.Key.Largura}×{grupo.Key.Altura} — {hz}{bpp}", FontSize = 12, Margin = new Thickness(0, 2, 0, 0) });
+            }
+            var grupos = modos.GroupBy(m => (m.Largura, m.Altura)).Count();
+            if (grupos > 12)
+                sp.Children.Add(new TextBlock { Text = $"… e mais {grupos - 12} resoluções.", Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 2, 0, 0) });
+        }
+
+        sp.Children.Add(new TextBlock
+        {
+            Text = "O Sevenzin lista os modos, mas não altera a taxa de atualização por você — troque nas configurações de vídeo do Windows ou do driver.",
+            Foreground = Muted,
+            FontSize = 11,
+            Margin = new Thickness(0, 10, 0, 0),
+            TextWrapping = TextWrapping.Wrap,
+        });
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 6, 0, 0), Child = sp };
     }
 
     Border CartaoRecomendacoes()

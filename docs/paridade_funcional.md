@@ -68,13 +68,14 @@ Mapa dos documentos de [`engenharia-reversa/`](engenharia-reversa/) (itens `[CON
 | 04 §4-5 | Debloat Appx + remover Edge/OneDrive | **e** | não replicado (alto impacto sem opt-in) |
 | 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **e** | instalação de SO + GPL; fora do escopo |
 | 04 §7 / 05 §6-8 | Catálogo de instaladores + winget allowlist | **c** | `CatalogoUtilitarios` (fontes oficiais + assinatura); só benignos |
-| 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **c** | `Jogos.cs`: afinidade+prioridade, revertido ao fechar; working set/timer = 🔜 opt-in |
+| 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **b** | `Jogos.cs`: afinidade+prioridade, revertido ao fechar; working set (`TrimWorkingSet`) e timer 1 ms (`TimerAltaResolucao`) opt-in por jogo, revertidos ao fechar |
 | 04 §9 | Captura + anotação | **b** | `Capturas` local, sem webhook |
 | 04 §10 / 06 F12 | Assistente IA/humano via webhook | **e** | não replicado (exfiltração) |
-| 05 §2 | Enumeração de modos de vídeo (DEVMODE/Hz) | **d → 🔜** | só modo atual hoje; próximo item do roadmap §5.1 |
+| 05 §2 | Enumeração de modos de vídeo (DEVMODE/Hz) | **b** | `LeitorModosVideo` (`EnumDisplaySettingsW`) + cartão na `GpuView`; só leitura |
 | 05 §3 | FPS/frametime, temp/clock de GPU/CPU | **d** | **confirmado inexistente no original**; seria feature nova (`BenchmarkView` já faz frametime interno A/B) |
 | 05 §3 | Uso de GPU (%) | **b** | `LeitorGpuUso` (GPU Engine) |
-| 05 §3 | Uso de CPU (%) | **d → 🔜** | roadmap §5.2 (`GetSystemTimes`) |
+| 05 §3 | Uso de CPU (%) | **b** | `LeitorCpuUso`/`MedidorCpuUso` (`GetSystemTimes`, delta puro) no cartão da Home |
+| 05 §7 (lacuna) | Fila de instaladores persistida | **b** | `FilaInstaladores` (JSON local atômico) + seção "Fila" na `InstaladoresView`; o original não persistia |
 | 06 F13 | Atualização autenticada | **d** | não implementado |
 
 Detalhe e passo a passo em [`engenharia-reversa/roadmap_implementacao.md`](engenharia-reversa/roadmap_implementacao.md).

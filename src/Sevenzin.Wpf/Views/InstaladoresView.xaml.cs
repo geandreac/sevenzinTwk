@@ -8,14 +8,19 @@ using Sevenzin.Diagnostics;
 namespace Sevenzin.Wpf.Views;
 
 /// <summary>Tela "Instaladores" (§21.5/21.7): catálogo de utilitários de fonte oficial. O download é
-/// verificado (assinatura + hash quando fixado) antes de permitir executar, e nada roda sem confirmação.</summary>
+/// verificado (assinatura + hash quando fixado) antes de permitir executar, e nada roda sem confirmação.
+/// O andamento de cada item fica registrado numa fila persistida em JSON local (sobrevive a reinícios).</summary>
 public partial class InstaladoresView : UserControl
 {
     static readonly string Pasta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "instaladores");
 
+    readonly FilaInstaladores _fila = new();
+    StackPanel? _filaLista;
+
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style Primario => (Style)Application.Current.Resources["PrimaryButton"];
     static Style Secundario => (Style)Application.Current.Resources["SecondaryButton"];
+    static Style SectionStyle => (Style)Application.Current.Resources["SectionLabel"];
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
     static Brush Danger => (Brush)Application.Current.Resources["DangerBrush"];
@@ -24,6 +29,7 @@ public partial class InstaladoresView : UserControl
     {
         InitializeComponent();
         foreach (var u in CatalogoUtilitarios.Todos) Lista.Children.Add(Cartao(u));
+        Lista.Children.Add(CartaoFila());
     }
 
     Border Cartao(Utilitario u)
@@ -62,6 +68,7 @@ public partial class InstaladoresView : UserControl
         executar.Visibility = Visibility.Collapsed;
         status.Visibility = Visibility.Visible;
         status.Foreground = Muted;
+        _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Baixando, null, null));
         try
         {
             Directory.CreateDirectory(Pasta);
@@ -69,6 +76,7 @@ public partial class InstaladoresView : UserControl
             var prog = new Progress<double>(p => status.Text = $"Baixando… {p:P0}");
             await DownloaderInstalador.BaixarAsync(u.UrlDownload!, destino, prog);
 
+            _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Verificando, null, null));
             var r = VerificadorDownload.Verificar(destino, u);
             if (r == ResultadoVerificacao.Ok)
             {
@@ -76,11 +84,13 @@ public partial class InstaladoresView : UserControl
                 status.Foreground = Success;
                 executar.Tag = destino;
                 executar.Visibility = Visibility.Visible;
+                _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Concluido, "assinatura verificada", null));
             }
             else
             {
                 status.Text = $"✖ Verificação falhou: {Motivo(r)}. O arquivo NÃO será oferecido para execução.";
                 status.Foreground = Danger;
+                _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, Motivo(r), null));
                 try { File.Delete(destino); } catch { }
             }
         }
@@ -88,8 +98,9 @@ public partial class InstaladoresView : UserControl
         {
             status.Text = "Falha no download: " + ex.Message;
             status.Foreground = Danger;
+            _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, ex.Message, null));
         }
-        finally { baixar.IsEnabled = true; }
+        finally { baixar.IsEnabled = true; AtualizarFila(); }
     }
 
     static string Motivo(ResultadoVerificacao r) => r switch
@@ -112,5 +123,53 @@ public partial class InstaladoresView : UserControl
     {
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Erro ao abrir", MessageBoxButton.OK, MessageBoxImage.Warning); }
+    }
+
+    static string NomeEstado(EstadoFila e) => e switch
+    {
+        EstadoFila.Pendente => "Pendente",
+        EstadoFila.Baixando => "Baixando…",
+        EstadoFila.Verificando => "Verificando…",
+        EstadoFila.Concluido => "✔ Concluído",
+        _ => "✖ Falhou",
+    };
+
+    /// <summary>Cartão "Fila" no fim da lista: andamento persistido em JSON local (nada é enviado pela rede).</summary>
+    Border CartaoFila()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock { Text = "FILA DE DOWNLOADS (salva localmente)", Style = SectionStyle });
+        _filaLista = new StackPanel();
+        sp.Children.Add(_filaLista);
+
+        var limpar = new Button { Style = Secundario, Content = "Limpar concluídos/falhos", Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, Padding = new Thickness(12, 7, 12, 7) };
+        limpar.Click += (_, _) => { _fila.LimparConcluidos(); AtualizarFila(); };
+        sp.Children.Add(limpar);
+
+        var card = new Border { Style = CardStyle, Margin = new Thickness(0, 6, 0, 0), Child = sp };
+        AtualizarFila();
+        return card;
+    }
+
+    void AtualizarFila()
+    {
+        if (_filaLista is null) return;
+        _filaLista.Children.Clear();
+        var itens = _fila.Todos.OrderByDescending(i => i.AtualizadoUtc).ToList();
+        if (itens.Count == 0)
+        {
+            _filaLista.Children.Add(new TextBlock { Text = "Nada ainda. Os downloads feitos nesta tela aparecem aqui e continuam registrados após fechar o app.", Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 4, 0, 0), TextWrapping = TextWrapping.Wrap });
+            return;
+        }
+        foreach (var i in itens)
+        {
+            var linha = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 3, 0, 0) };
+            linha.Children.Add(new TextBlock { Text = i.Nome, FontSize = 12, Width = 240, TextTrimming = TextTrimming.CharacterEllipsis });
+            var estado = new TextBlock { Text = NomeEstado(i.Estado), FontSize = 12, Width = 110, Foreground = i.Estado == EstadoFila.Concluido ? Success : i.Estado == EstadoFila.Falhou ? Danger : Muted };
+            linha.Children.Add(estado);
+            var detalhe = (i.Detalhe is { } d ? $" — {d}" : "") + (i.AtualizadoUtc is { } t ? $" · {t.ToLocalTime():dd/MM HH:mm}" : "");
+            linha.Children.Add(new TextBlock { Text = detalhe, FontSize = 11, Foreground = Muted, TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = detalhe.TrimStart(' ', '—', '·') });
+            _filaLista.Children.Add(linha);
+        }
     }
 }

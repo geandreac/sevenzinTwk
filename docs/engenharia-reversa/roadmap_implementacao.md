@@ -49,7 +49,7 @@ Legenda de estado: ✅ pronto · 🟡 pronto (validação manual pendente) · �
 - **.NET SDK 8** (Windows). Build: `dotnet build src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug`.
 - Tweaks de **máquina (HKLM)** exigem **administrador** — elevação sob demanda em `AjustesView` (`Elevacao.ReabrirComoAdmin`).
 - Primeiro uso: criar o administrador (e-mail + senha forte) ou semear via `SEVENZIN_ADMIN_EMAIL`/`SEVENZIN_ADMIN_SENHA`.
-- Testes: `dotnet test` (85 testes).
+- Testes: `dotnet test` (101 testes).
 
 ## 4. Implementado neste ciclo
 
@@ -70,18 +70,41 @@ publisher Microsoft, com verificação de assinatura). Só diagnóstico/leitura;
 
 Build 0/0, 85/85 testes.
 
-## 5. 🔜 Próximos (seguros, com paridade comprovada)
+**Paridade de métricas e otimizações opt-in (este ciclo)** — os 4 itens do §5 abaixo:
 
-Passo a passo sugerido, cada um reversível/só-leitura e com teste:
+- **Enumeração de modos de vídeo** — `ModosVideo.cs` (`EnumDisplaySettingsW`/DEVMODE, parse por offsets testado):
+  `LeitorModosVideo.Listar/Atual/Dispositivos/Consolidar` + cartão "Modos de vídeo suportados" na `GpuView`
+  (resolução × Hz por monitor, só leitura — o app não troca o modo por você).
+- **Uso de CPU (%) na Home** — `CpuUso.cs` (`GetSystemTimes`): `CalcularUso` é função pura (delta de tempos,
+  clampa 0–100, null quando o contador volta); `MedidorCpuUso` substituiu o WMI no cartão CPU da Home (sem warm-up).
+- **Working set / timer nos perfis de jogo (opt-in)** — `TimerSistema.cs` (`TimerAltaResolucao`: `timeBeginPeriod(1)`
+  com contagem de referência e delegates injetáveis) e `AplicadorPerfil.TrimWorkingSet` (`SetProcessWorkingSetSize -1/-1`).
+  Novos campos do `PerfilJogo`: `TrimWorkingSet` e `TimerAltaResolucao` (padrão `false` — `jogos.json` antigo continua
+  abrindo). `ControleProcessoWindows` sobe o timer ao aplicar e baixa ao reverter o último jogo; a UI avisa
+  energia/micro-travadas a cada troca.
+- **Fila de instaladores persistida** — `FilaInstaladores.cs` (JSON em `%LOCALAPPDATA%\Sevenzin\fila-instaladores.json`,
+  escrita atômica, thread-safe) + seção "Fila de downloads" na `InstaladoresView`; os estados Baixando→Verificando→
+  Concluído/Falhou são gravados durante o fluxo existente (lacuna §7 do original, que não persistia nada).
 
-1. **Enumeração de modos de vídeo (05 §2)** — `EnumDisplaySettingsW`/DEVMODE para listar resolução×Hz suportados e
-   permitir escolher a taxa de atualização. *Pré-req:* P/Invoke em `Sevenzin.Diagnostics` (novo `LeitorModosVideo`), seção
-   na `GpuView`/`InventarioView`. *Risco:* só leitura (a troca de modo é opcional e reversível). *Teste:* parse do DEVMODE.
-2. **Uso de CPU do sistema (05 §3)** — `GetSystemTimes`/`PerformanceCounter` para % de CPU na Home, ao lado do uso de GPU
-   já existente. *Risco:* leitura. *Teste:* cálculo de delta de tempos.
-3. **Working set / timer sob demanda nos perfis de jogo (04 §8)** — oferecer `SetProcessWorkingSetSize` e `timeBeginPeriod`
-   **com aviso explícito** (energia/stutter) e reversão ao fechar o jogo. *Risco:* médio → opt-in, nunca global permanente.
-4. **Fila de instaladores persistida (05 §7, lacuna)** — estado da fila de downloads em JSON local (o original não persistia).
+Build 0/0, 101/101 testes.
+
+## 5. ✅ Próximos passos do roadmap (todos implementados neste ciclo)
+
+1. ✅ **Enumeração de modos de vídeo (05 §2)** — `LeitorModosVideo` (P/Invoke `EnumDisplaySettingsW`, parse DEVMODE
+   testado) + cartão na `GpuView`. Só leitura (a troca de modo fica nas configurações do Windows/driver).
+2. ✅ **Uso de CPU do sistema (05 §3)** — `LeitorCpuUso`/`MedidorCpuUso` (`GetSystemTimes`, delta testado) no cartão
+   da Home; memória continua via WMI.
+3. ✅ **Working set / timer sob demanda nos perfis de jogo (04 §8)** — `TimerAltaResolucao` + `TrimWorkingSet`
+   opt-in por jogo, com aviso explícito e reversão ao fechar o jogo; nunca global/permanente.
+4. ✅ **Fila de instaladores persistida (05 §7)** — `FilaInstaladores` em JSON local atômico + UI na `InstaladoresView`.
+
+### Candidatos seguros para o próximo ciclo (não ordenados)
+
+- Troca real do modo de vídeo (`ChangeDisplaySettingsEx`) com confirmação e reversão automática (hoje só listamos).
+- Ajustes de GPU no nível do driver (perfis NVIDIA/AMD) — exige APIs de fabricante; manter só leitura até provar reversibilidade.
+- Detecção **informativa** dos mecanismos que o original desligava (Defender/HVCI/SmartScreen) com botão "restaurar
+  estado protegido" — detectar e restaurar, nunca desligar (charter §7).
+- Notificação de driver de GPU desatualizado por data (hoje o cartão da `GpuView` já sinaliza).
 
 ## 6. 🟡 Validação manual pendente (não bloqueante)
 

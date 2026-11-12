@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -8,8 +9,12 @@ namespace Sevenzin.Diagnostics;
 /// Realtime pode travar áudio, captura e o próprio SO.</summary>
 public enum PrioridadeJogo { Normal, AcimaDoNormal, Alta }
 
-/// <summary>Perfil reversível por jogo: afinidade de CPU (máscara de bits; 0 = todos os núcleos) e prioridade.</summary>
-public sealed record PerfilJogo(string Nome, string Executavel, long MascaraAfinidade, PrioridadeJogo Prioridade);
+/// <summary>Perfil reversível por jogo: afinidade de CPU (máscara de bits; 0 = todos os núcleos), prioridade e
+/// duas otimizações OPT-IN com aviso (§5.3 do roadmap): <paramref name="TrimWorkingSet"/> libera as páginas
+/// residentes ao aplicar (ação pontual, sem estado a reverter) e <paramref name="TimerAltaResolucao"/> sobe a
+/// resolução do timer do sistema (1 ms) enquanto o jogo estiver aplicado — revertida ao fechar.</summary>
+public sealed record PerfilJogo(string Nome, string Executavel, long MascaraAfinidade, PrioridadeJogo Prioridade,
+    bool TrimWorkingSet = false, bool TimerAltaResolucao = false);
 
 /// <summary>Estado de afinidade/prioridade de um processo, guardado para restaurar depois.</summary>
 public sealed record EstadoProcesso(long Afinidade, ProcessPriorityClass Prioridade);
@@ -43,6 +48,14 @@ public static class AplicadorPerfil
         p.ProcessorAffinity = (IntPtr)anterior.Afinidade;
         p.PriorityClass = anterior.Prioridade;
     }
+
+    /// <summary>Trim do working set (SetProcessWorkingSetSize -1/-1): libera as páginas residentes do processo.
+    /// Ação pontual e reversível por natureza — a memória volta a crescer conforme o jogo trabalha. Opt-in.</summary>
+    public static bool TrimWorkingSet(Process p) =>
+        SetProcessWorkingSetSize(p.Handle, unchecked((IntPtr)(-1)), unchecked((IntPtr)(-1)));
+
+    [DllImport("kernel32.dll")]
+    static extern bool SetProcessWorkingSetSize(IntPtr hProcess, IntPtr minimo, IntPtr maximo);
 }
 
 /// <summary>Catálogo de perfis por jogo, persistido localmente (JSON). Sem rede, sem identificadores.</summary>
@@ -98,10 +111,15 @@ public interface IControleProcesso
 }
 
 /// <summary>Implementação real: localiza o processo pelo nome do executável e aplica/reverte o perfil,
-/// guardando o estado anterior por jogo.</summary>
+/// guardando o estado anterior por jogo. Trim de working set é aplicado uma vez (opt-in) e o timer de alta
+/// resolução sobe enquanto houver jogo usando e baixa quando o último for revertido.</summary>
 public sealed class ControleProcessoWindows : IControleProcesso
 {
     readonly Dictionary<string, (Process proc, EstadoProcesso estado)> _estados = new(StringComparer.OrdinalIgnoreCase);
+    readonly HashSet<string> _usandoTimer = new(StringComparer.OrdinalIgnoreCase);
+    readonly TimerAltaResolucao _timer;
+
+    public ControleProcessoWindows(TimerAltaResolucao? timer = null) => _timer = timer ?? new TimerAltaResolucao();
 
     static string Nome(string exe) => Path.GetFileNameWithoutExtension(exe);
 
@@ -120,7 +138,9 @@ public sealed class ControleProcessoWindows : IControleProcesso
         try
         {
             var estado = AplicadorPerfil.Aplicar(procs[0], jogo.MascaraAfinidade, jogo.Prioridade);
+            if (jogo.TrimWorkingSet) { try { AplicadorPerfil.TrimWorkingSet(procs[0]); } catch { } }
             _estados[jogo.Executavel] = (procs[0], estado);
+            if (jogo.TimerAltaResolucao) { _usandoTimer.Add(jogo.Executavel); _timer.Iniciar(); }
             return true;
         }
         catch { return false; } // acesso negado / anti-cheat / exige admin
@@ -131,6 +151,7 @@ public sealed class ControleProcessoWindows : IControleProcesso
         if (!_estados.TryGetValue(executavel, out var e)) return false;
         try { if (!e.proc.HasExited) AplicadorPerfil.Reverter(e.proc, e.estado); } catch { }
         _estados.Remove(executavel);
+        if (_usandoTimer.Remove(executavel)) _timer.Parar();
         return true;
     }
 }
