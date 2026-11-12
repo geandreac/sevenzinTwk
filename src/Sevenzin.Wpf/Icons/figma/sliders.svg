@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="sliders">
+<path id="Vector" d="M3.33333 5H11.6667M15 5H16.6667M3.33333 10H6.66667M10 10H16.6667M3.33333 15H13.3333" stroke="#A9B6C8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M13.3333 6.66667C14.2538 6.66667 15 5.92047 15 5C15 4.07953 14.2538 3.33333 13.3333 3.33333C12.4129 3.33333 11.6667 4.07953 11.6667 5C11.6667 5.92047 12.4129 6.66667 13.3333 6.66667Z" stroke="#A9B6C8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M8.33333 11.6667C9.25381 11.6667 10 10.9205 10 10C10 9.07953 9.25381 8.33333 8.33333 8.33333C7.41286 8.33333 6.66667 9.07953 6.66667 10C6.66667 10.9205 7.41286 11.6667 8.33333 11.6667Z" stroke="#A9B6C8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_4" d="M15 16.6667C15.9205 16.6667 16.6667 15.9205 16.6667 15C16.6667 14.0795 15.9205 13.3333 15 13.3333C14.0795 13.3333 13.3333 14.0795 13.3333 15C13.3333 15.9205 14.0795 16.6667 15 16.6667Z" stroke="#A9B6C8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

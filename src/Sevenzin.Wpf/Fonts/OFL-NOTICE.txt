@@ -1,0 +1,2 @@
+Fontes Inter e Geist sob SIL Open Font License (OFL 1.1) — redistribuíveis.
+Inter: https://github.com/rsms/inter  ·  Geist: https://github.com/vercel/geist-font

@@ -1,0 +1,110 @@
+.DEFAULT\\Control Panel\\Mouse
+.DEFAULT\\Control Panel\\Sound
+Control Panel\\Colors
+Control Panel\\Desktop
+Control Panel\\Desktop\\WindowMetrics
+Control Panel\\Mouse
+HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0
+SOFTWARE\\Classes\\Interface\\{9F8B4A2D-5C7E-4F1B-A6D0-8E3C4B7F1D2E}\\ProxyStubClsid32
+SOFTWARE\\DpcOptimization
+SOFTWARE\\Epic Games\\Unreal Engine\\Builds
+SOFTWARE\\FpsAmd
+SOFTWARE\\FpsApp\\Tweaking
+SOFTWARE\\FpsNvidia
+SOFTWARE\\MSIIRQ
+SOFTWARE\\MemoryManagementTweak
+SOFTWARE\\Microsoft\\DirectX\\UserGpuPreferences
+SOFTWARE\\Microsoft\\PolicyManager\\default\\ApplicationManagement\\AllowGameDVR
+SOFTWARE\\Microsoft\\WINDOWS\\DWM
+SOFTWARE\\Microsoft\\Windows Defender\\Real-Time Protection
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\Discord.exe\\PerfOptions
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\lsass.exe\\PerfOptions
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\MultiMedia\\SystemProfile
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games
+SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Sensor\\Overrides\\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}
+SOFTWARE\\Microsoft\\Windows Photo Viewer\\Capabilities\\FileAssociations
+SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\userNotificationListener
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\DriverSearching
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FlyoutMenuSettings
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\GameDVR
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search
+SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Riot Game valorant.live
+SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting
+SOFTWARE\\MitigationOptions
+SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications
+SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection
+SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer
+SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors
+SOFTWARE\\Policies\\Microsoft\\Windows\\Maps
+SOFTWARE\\PowerTweak
+SOFTWARE\\StorPortPower
+SOFTWARE\\USBPowerTweak
+SOFTWARE\\VisualEffectsTweak
+SOFTWARE\\WinDefenderTweak
+SOFTWARE\\honestTweaks
+SOFTWARE\\tool
+SYSTEM\\ControlSet001\\Control\\Session Manager\\Power
+SYSTEM\\CurrentControlSet\\Control
+SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}
+SYSTEM\\CurrentControlSet\\Control\\DeviceGuard
+SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity
+SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers
+SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler
+SYSTEM\\CurrentControlSet\\Control\\Power
+SYSTEM\\CurrentControlSet\\Control\\PriorityControl
+SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Executive
+SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Kernel
+SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management
+SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power
+SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel
+SYSTEM\\CurrentControlSet\\Enum
+SYSTEM\\CurrentControlSet\\Enum\\
+SYSTEM\\CurrentControlSet\\Enum\\PCI
+SYSTEM\\CurrentControlSet\\Enum\\USB
+SYSTEM\\CurrentControlSet\\Enum\\USB\\
+SYSTEM\\CurrentControlSet\\Services\\
+SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters
+SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters\\Interfaces
+SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters\\Interfaces\\
+SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces
+SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\
+SYSTEM\\CurrentControlSet\\Services\\WpnService
+SYSTEM\\CurrentControlSet\\Services\\disk\\Enum
+SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters
+SYSTEM\\CurrentControlSet\\Services\\lfsvc
+SYSTEM\\CurrentControlSet\\Services\\lfsvc\\Service\\Configuration
+SYSTEM\\CurrentControlSet\\services\\amdkmdap
+SYSTEM\\\\CurrentControlSet\\\\Services\\\\WSAIFabricSvc
+ScopeIdToMountPointPathCache
+Software\\7-Zip\\Options
+Software\\AMD\\DVR
+Software\\HonestTech
+Software\\Honest\\NvClean\\Gpu
+Software\\Microsoft\\OneDrive\\Accounts
+Software\\Microsoft\\Windows\\CurrentVersion\\Authentication\\LogonUI\\Background
+Software\\Microsoft\\Windows\\CurrentVersion\\Authentication\\LogonUI\\BootAnimation
+Software\\Microsoft\\Windows\\CurrentVersion\\DoNotDisturb
+Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced
+Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects
+Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Wallpapers
+Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer
+Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System
+Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize
+Software\\Microsoft\\Windows\\DWM
+Software\\Microsoft\\Windows\\Windows Error Reporting
+Software\\Microsoft\\Windows\\Windows Error Reporting\\Consent
+Software\\Policies\\Microsoft\\Windows\\Windows Error Reporting
+Software\\Policies\\Microsoft\\Windows\\WindowsCopilot
+System\\GameConfigStore

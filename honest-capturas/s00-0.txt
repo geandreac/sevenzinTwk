@@ -1,0 +1,15 @@
+﻿[Window] 'FPS - Login' id= cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2010,680,900,530 en=True off=False
+  [Pane] 'Seu HWID' id=1639610 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2074,951,200,14 en=True off=False
+  [Pane] 'Discord ID' id=657316 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2074,879,63,14 en=True off=False
+  [Pane] '' id=11929212 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2074,901,320,39 en=True off=False
+  [Pane] '' id=4261736 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2074,973,320,39 en=True off=False
+  [Pane] 'Comprar' id=722838 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2248,1113,53,14 en=True off=False
+  [Pane] 'Quer comprar?' id=4522610 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2159,1113,85,14 en=True off=False
+  [Pane] 'Entrar' id=6751476 cls=WindowsForms10.BUTTON.app.0.3c73ab4_r6_ad1 rect=2074,1023,320,39 en=True off=False
+  [Pane] '' id=5375832 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2044,695,13,13 en=True off=False
+  [Pane] '' id=657314 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2025,695,13,13 en=True off=False
+  [Pane] '' id=13632504 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2410,692,20,20 en=True off=False
+  [Pane] 'Entrar' id=3016488 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2074,763,225,30 en=True off=False
+  [Pane] '' id=8783746 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2460,690,440,510 en=True off=False
+    [Pane] 'glowingSphereControl1' id=11732314 cls=WindowsForms10.Window.8.app.0.3c73ab4_r6_ad1 rect=2487,708,387,475 en=True off=False
+

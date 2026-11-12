@@ -1,0 +1,378 @@
+﻿[Window] 'Honest Tech' id= cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=320,155,1280,740 en=True off=False
+  [Pane] '' id=67806 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-580,155,900,530 en=True off=False
+    [Pane] 'modern3DSpinner1' id=67808 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-495,240,60,60 en=True off=False
+  [Pane] '' id=68442 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=320,155,1280,740 en=True off=False
+    [Pane] '' id=68444 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=386,155,1214,48 en=True off=False
+      [Text] 'Windows' id=68446 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=406,155,400,48 en=True off=False
+      [Pane] '' id=68448 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1482,164,32,30 en=True off=False
+      [Pane] '' id=68450 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1520,164,32,30 en=True off=False
+      [Pane] '' id=68452 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1558,164,32,30 en=True off=False
+    [Pane] '' id=68454 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=320,155,66,740 en=True off=False
+    [Pane] '' id=919472 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=386,203,1214,692 en=True off=False
+      [Pane] '' id=2819930 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=386,203,1214,692 en=True off=False
+        [Pane] '' id= cls=Pane rect=386,203,1214,692 en=True off=False
+          [ComboBox] 'Automático · FAT32 ou NTFS' id= cls=ComboBox rect=418,1115,1150,31 en=True off=False
+          [ComboBox] '' id= cls=ComboBox rect=418,1063,993,31 en=True off=False
+          [ComboBox] 'Pendrive bootável · UEFI / GPT' id= cls=ComboBox rect=418,1011,1150,31 en=True off=False
+          [ComboBox] 'Opções de remoção' id= cls=ComboBox rect=1226,474,342,31 en=True off=False
+          [Edit] 'Pesquisar aplicativos' id= cls=TextBox rect=831,475,383,31 en=True off=False
+          [ComboBox] '' id= cls=ComboBox rect=418,540,383,31 en=False off=False
+      [Pane] '' id=11536474 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=386,203,1214,692 en=True off=False
+        [Pane] '' id=68434 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1590,211,4,392 en=True off=False
+        [Pane] '' id=4063606 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=386,203,1200,1193 en=True off=False
+          [Pane] 'Seu Windows, do seu jeito' id=1181808 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,228,1150,38 en=True off=False
+          [Pane] 'Escolha uma edição, personalize os aplicativos e crie sua mídia de instalação.' id=4720720 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,271,1150,42 en=True off=False
+          [Pane] '' id=1116314 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,331,383,582 en=True off=False
+            [Pane] '' id=8849282 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=432,345,36,36 en=True off=False
+            [Pane] 'Selecione sua ISO' id=11797850 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=480,339,307,50 en=True off=False
+            [Pane] 'Windows 10 ou 11 · arquivo original preservado' id=3082024 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=432,395,355,37 en=True off=False
+            [Pane] 'Selecionar ISO' id=13698040 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=432,441,145,38 en=True off=False
+            [Pane] 'Edição encontrada na imagem · selecione abaixo' id=722850 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,498,383,39 en=True off=False
+            [ComboBox] '' id=68410 cls=WindowsForms10.COMBOBOX.app.0.2c6361f_r6_ad1 rect=418,540,383,31 en=False off=False
+              [Text] '' id= cls= rect=418,540,383,31 en=False off=False
+              [Button] 'Open' id= cls= rect=785,541,15,29 en=False off=False
+            [Pane] 'Drivers INF' id=5441368 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,592,136,36 en=True off=False
+            [Pane] 'Drivers INF para o Windows instalado' id=6817012 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,637,383,39 en=True off=False
+            [Pane] 'Analisar aplicativos' id=4588146 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,690,163,38 en=False off=False
+            [Pane] '' id=788374 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,736,383,48 en=True off=False
+            [Pane] '' id=4327272 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,787,383,120 en=True off=False
+          [Pane] '' id=11994748 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,331,737,605 en=True off=False
+            [Pane] '' id=722852 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,387,737,549 en=True off=False
+              [Pane] '0 encontrados · 0 para remover · marcado = manter' id=1705146 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,387,737,27 en=True off=False
+              [Pane] 'Windows mínimo' id=3672204 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,423,145,37 en=False off=False
+              [Pane] 'Remover filtrados' id=1640432 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=986,423,145,37 en=False off=False
+              [Pane] 'Manter todos' id=7210216 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1141,423,145,37 en=False off=False
+              [Pane] '' id=5834188 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,475,383,31 en=True off=False
+                [Pane] 'Pesquisar aplicativos' id=1378160 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=844,478,357,24 en=True off=False
+                [Pane] '' id=919482 cls=WindowsForms10.EDIT.app.0.2c6361f_r6_ad1 rect=843,482,359,16 en=True off=False
+              [ComboBox] 'Opções de remoção' id=68414 cls=WindowsForms10.COMBOBOX.app.0.2c6361f_r6_ad1 rect=1226,474,342,31 en=True off=False
+                [Text] '' id= cls= rect=1226,474,342,31 en=True off=False
+                [Button] 'Open' id= cls= rect=1552,475,15,29 en=True off=False
+              [Pane] '' id=1574692 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,520,737,352 en=True off=False
+              [Pane] '‹ Anterior' id=1050596 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,883,109,35 en=False off=False
+              [Pane] 'Próxima ›' id=2099020 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1459,883,109,35 en=False off=False
+              [Pane] '0 encontrados · página 1 de 1' id=25560030 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=949,883,501,35 en=True off=False
+            [Pane] '' id=526366 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=831,331,737,43 en=True off=False
+          [Pane] '' id=1771406 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,966,1150,330 en=True off=False
+            [Pane] 'Criar mídia · somente a edição escolhida' id=3933490 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,966,1150,30 en=True off=False
+            [ComboBox] 'Pendrive bootável · UEFI / GPT' id=68422 cls=WindowsForms10.COMBOBOX.app.0.2c6361f_r6_ad1 rect=418,1011,1150,31 en=True off=False
+              [Text] '' id= cls= rect=418,1011,1150,31 en=True off=False
+              [Button] 'Open' id= cls= rect=1552,1012,15,29 en=True off=False
+            [ComboBox] '' id=68426 cls=WindowsForms10.COMBOBOX.app.0.2c6361f_r6_ad1 rect=418,1063,993,31 en=True off=False
+              [Text] '' id= cls= rect=418,1063,993,31 en=True off=False
+              [Button] 'Open' id= cls= rect=1395,1064,15,29 en=True off=False
+            [ComboBox] 'Automático · FAT32 ou NTFS' id=68430 cls=WindowsForms10.COMBOBOX.app.0.2c6361f_r6_ad1 rect=418,1115,1150,31 en=True off=False
+              [Text] '' id= cls= rect=418,1115,1150,31 en=True off=False
+              [Button] 'Open' id= cls= rect=1552,1116,15,29 en=True off=False
+            [Pane] 'Atualizar USB' id=984942 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1423,1062,145,36 en=True off=False
+            [Pane] 'Sua ISO original é preservada. A instalação pedirá a partição de destino.' id=722892 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=418,1165,1150,60 en=True off=False
+            [Pane] 'Revisar criação' id=1050558 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1396,1243,172,41 en=False off=False
+    [Pane] '' id=68908 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Pane] 'CAPTURAS' id=68910 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,227,1126,18 en=True off=False
+      [Pane] 'Seu próximo print começa aqui' id=68912 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,252,1126,34 en=True off=False
+      [Pane] 'Capture, anote e copie sem sair do Honest.' id=68914 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,294,1126,23 en=True off=False
+      [Pane] 'Região' id=68916 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,334,367,88 en=True off=False
+      [Pane] 'Janela' id=68918 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-471,334,367,88 en=True off=False
+      [Pane] 'Tela inteira' id=68920 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-92,334,367,88 en=True off=False
+      [Pane] 'Atalhos e preferências' id=68922 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,435,788,24 en=True off=False
+      [Pane] 'Região · Win + Shift + S' id=68924 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,463,558,26 en=True off=False
+      [Pane] '' id=68926 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-288,468,32,18 en=True off=False
+      [Pane] 'Alterar' id=68928 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-229,462,78,27 en=True off=False
+      [Pane] 'Padrão' id=68930 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-143,462,78,27 en=True off=False
+      [Pane] 'Janela · Ctrl + Shift + Print Screen' id=68932 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,493,558,26 en=True off=False
+      [Pane] '' id=68934 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-288,498,32,18 en=True off=False
+      [Pane] 'Alterar' id=68936 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-229,492,78,27 en=True off=False
+      [Pane] 'Padrão' id=68938 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-143,492,78,27 en=True off=False
+      [Pane] 'Tela inteira · Alt + Shift + Print Screen' id=68940 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,523,558,26 en=True off=False
+      [Pane] '' id=68942 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-288,528,32,18 en=True off=False
+      [Pane] 'Alterar' id=68944 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-229,522,78,27 en=True off=False
+      [Pane] 'Padrão' id=68946 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-143,522,78,27 en=True off=False
+      [Pane] '' id=68948 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,553,788,42 en=True off=False
+        [Pane] '' id=68950 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-100,567,32,18 en=True off=False
+      [Pane] '' id=68952 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,595,788,42 en=True off=False
+        [Pane] '' id=68954 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-100,609,32,18 en=True off=False
+      [Pane] '' id=68956 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,637,788,42 en=True off=False
+        [Pane] '' id=68958 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-100,651,32,18 en=True off=False
+      [Pane] '' id=68960 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,679,788,42 en=True off=False
+        [Pane] '' id=68962 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-100,693,32,18 en=True off=False
+      [Pane] '' id=68964 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-34,463,310,56 en=True off=False
+        [Pane] '' id=68966 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=238,477,32,18 en=True off=False
+      [Pane] 'Pasta de capturas
+Z:\Computador\Imagens\honest prints' id=68968 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,730,788,38 en=True off=False
+      [Pane] 'Escolher pasta' id=68970 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,773,124,32 en=True off=False
+      [Pane] 'Abrir pasta' id=68972 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-716,773,104,32 en=True off=False
+      [Pane] '' id=68974 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-34,527,310,220 en=True off=False
+      [Pane] 'Abrir imagem' id=68976 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-34,773,310,32 en=False off=False
+      [Pane] 'Janela: Esse atalho já está em uso ou não está disponível. Escolha outro em Alterar.' id=68978 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,817,1126,20 en=True off=False
+    [Pane] '' id=68534 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Pane] 'Montar PC por orçamento' id=68536 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-505,687,338,30 en=True off=False
+      [Pane] 'Planejar meu upgrade' id=68538 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-167,687,338,30 en=True off=False
+      [Pane] 'Verificar compatibilidade' id=68540 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-505,722,338,30 en=True off=False
+      [Pane] 'Diagnosticar meu PC' id=68542 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-167,722,338,30 en=True off=False
+      [Pane] '' id=68544 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,240,692 en=True off=False
+        [Pane] '' id=68546 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-700,218,32,32 en=True off=False
+        [Pane] 'Nova conversa' id=68548 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-878,269,208,36 en=True off=False
+        [Pane] '' id=68550 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-882,328,216,510 en=True off=False
+          [Pane] '' id=68552 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-882,328,208,48 en=True off=False
+      [Pane] 'Nova conversa' id=68554 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-18,216,136,32 en=True off=False
+      [Pane] 'Falar com atendente' id=68556 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=130,216,170,32 en=True off=False
+      [Pane] 'Meu PC' id=68558 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-146,216,120,32 en=True off=False
+      [Pane] '' id=68560 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-537,459,740,78 en=True off=False
+      [Pane] '' id=68562 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-537,557,740,110 en=True off=False
+        [Pane] '' id=68564 cls=WindowsForms10.EDIT.app.0.2c6361f_r6_ad1 rect=-519,574,704,45 en=True off=False
+        [Text] 'Pergunte ao assistente...' id=68566 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-519,575,704,26 en=True off=False
+        [Pane] '' id=68568 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=155,619,34,34 en=False off=False
+      [Text] 'Equipe pode revisar conversas do servidor por 30 dias. Histórico local separado.' id=68570 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-537,768,740,22 en=True off=False
+    [Pane] '' id=68574 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Text] 'FIRMWARE' id=68576 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,233,1126,18 en=True off=False
+      [Text] 'BIOS' id=68578 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,256,350,42 en=True off=False
+      [Text] 'Exporte, revise e gerencie as configurações do firmware.' id=68580 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,302,1126,24 en=True off=False
+      [Text] '01 / REVISAR' id=68582 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,355,252,22 en=True off=False
+      [Text] '02 / CONFIGURAR' id=68584 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,581,252,22 en=True off=False
+      [Text] 'Alterações no firmware exigem cuidado. Revise antes de importar.' id=68586 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,785,1126,40 en=True off=False
+      [Pane] 'Exportar' id=68588 cls=WindowsForms10.BUTTON.app.0.2c6361f_r6_ad1 rect=-850,391,252,44 en=True off=False
+      [Pane] 'Ver Config.' id=68590 cls=WindowsForms10.BUTTON.app.0.2c6361f_r6_ad1 rect=-850,447,252,44 en=True off=False
+      [Pane] 'Abrir Pasta' id=68592 cls=WindowsForms10.BUTTON.app.0.2c6361f_r6_ad1 rect=-850,503,252,44 en=True off=False
+      [Pane] 'Auto Config' id=68594 cls=WindowsForms10.BUTTON.app.0.2c6361f_r6_ad1 rect=-850,617,252,44 en=True off=False
+      [Pane] 'Importar' id=68596 cls=WindowsForms10.BUTTON.app.0.2c6361f_r6_ad1 rect=-850,673,252,44 en=True off=False
+      [Pane] 'Entrar BIOS' id=68598 cls=WindowsForms10.BUTTON.app.0.2c6361f_r6_ad1 rect=-850,729,252,44 en=True off=False
+      [Pane] '' id=68600 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-574,355,850,420 en=True off=False
+        [Pane] '' id=68602 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,379,40,40 en=True off=False
+        [Pane] 'customSeparator5' id=68604 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,688,802,1 en=True off=False
+        [Pane] 'customSeparator4' id=68606 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,630,802,1 en=True off=False
+        [Pane] 'customSeparator3' id=68608 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,572,802,1 en=True off=False
+        [Pane] 'customSeparator2' id=68610 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,514,802,1 en=True off=False
+        [Pane] '3636' id=68612 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-358,701,610,24 en=True off=False
+        [Pane] 'Versão' id=68614 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,701,180,24 en=True off=False
+        [Pane] 'TUF GAMING B550M-PLUS' id=68616 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-358,643,610,24 en=True off=False
+        [Pane] 'Modelo' id=68618 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,643,180,24 en=True off=False
+        [Pane] 'ASUSTeK COMPUTER INC.' id=68620 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-358,585,610,24 en=True off=False
+        [Pane] 'Placa Mãe' id=68622 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,585,180,24 en=True off=False
+        [Pane] '3,80 GHz' id=68624 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-358,527,610,24 en=True off=False
+        [Pane] 'Clock' id=68626 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,527,180,24 en=True off=False
+        [Pane] '8 Cores / 8 Threads' id=68628 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-358,469,610,24 en=True off=False
+        [Pane] 'Cores/Threads' id=68630 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,469,180,24 en=True off=False
+        [Pane] 'AMD Ryzen 7 5800X 8-Core Processor             ' id=68632 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-494,399,746,30 en=True off=False
+        [Pane] 'CPU' id=68636 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-494,376,746,20 en=True off=False
+        [Pane] 'customSeparator1' id=68638 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-550,456,802,1 en=True off=False
+    [Pane] '' id=68508 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Pane] '' id=68510 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+        [Pane] '' id=68512 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,204 en=True off=False
+          [Pane] '' id=68514 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=18,231,258,40 en=True off=False
+            [Pane] '' id=68516 cls=WindowsForms10.EDIT.app.0.2c6361f_r6_ad1 rect=60,244,202,14 en=True off=False
+        [Pane] '' id=68518 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,407,173,232 en=True off=False
+        [Pane] '' id=68520 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-661,407,173,232 en=True off=False
+        [Pane] '' id=68522 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-472,407,173,232 en=True off=False
+        [Pane] '' id=68524 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-283,407,173,232 en=True off=False
+        [Pane] '' id=68526 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-94,407,173,232 en=True off=False
+        [Pane] '' id=68528 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=95,407,173,232 en=True off=False
+        [Pane] '' id=68530 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,657,173,232 en=True off=False
+        [Pane] '' id=68532 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-661,657,173,232 en=True off=False
+        [Pane] '' id=68406 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-472,657,173,232 en=True off=False
+    [Pane] '' id=68640 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Pane] '' id=68642 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+        [Pane] '' id=68644 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+          [Pane] '' id=68400 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=310,369,4,62 en=True off=False
+          [Pane] '' id=68646 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,158 en=True off=False
+            [Text] 'SOFTWARE' id=68648 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,225,61,14 en=True off=False
+            [Text] 'Instaladores' id=68650 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,246,161,35 en=True off=False
+            [Text] 'Programas essenciais, sem sair do Honest.' id=68652 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,282,276,18 en=True off=False
+            [Pane] '' id=68654 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=18,231,258,40 en=True off=False
+              [Pane] '' id=68656 cls=WindowsForms10.EDIT.app.0.2c6361f_r6_ad1 rect=60,241,204,15 en=True off=False
+            [Pane] 'Todos' id=68658 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,316,52,34 en=True off=False
+            [Pane] 'Sistema' id=68660 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-772,316,64,34 en=True off=False
+            [Pane] 'Drivers' id=68662 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-682,316,60,34 en=True off=False
+            [Pane] 'Plataformas' id=68664 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-596,316,87,34 en=True off=False
+            [Pane] 'Jogos' id=68666 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-483,316,52,34 en=True off=False
+            [Pane] 'Monitor.' id=68668 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-405,316,64,34 en=True off=False
+            [Pane] 'Web' id=68670 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-315,316,43,34 en=True off=False
+            [Pane] 'Mídia' id=68672 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-246,316,49,34 en=True off=False
+            [Pane] 'Perif.' id=68674 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-171,316,47,34 en=True off=False
+          [Pane] '' id=68676 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,361,1214,534 en=True off=False
+            [Pane] '' id=68678 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,361,1214,4496 en=True off=False
+              [Text] 'SISTEMA E UTILITÁRIOS' id=68680 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,383,1126,18 en=True off=False
+              [Pane] '' id=68682 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,411,1126,72 en=True off=False
+              [Pane] '' id=68684 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,483,1126,72 en=True off=False
+              [Pane] '' id=68686 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,555,1126,72 en=True off=False
+              [Pane] '' id=68688 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,627,1126,72 en=True off=False
+              [Pane] '' id=68690 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,699,1126,72 en=True off=False
+              [Pane] '' id=68692 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,771,1126,72 en=True off=False
+              [Pane] '' id=68694 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,843,1126,72 en=True off=False
+              [Pane] '' id=68696 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,915,1126,72 en=True off=False
+              [Pane] '' id=68698 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,987,1126,72 en=True off=False
+              [Pane] '' id=68700 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1059,1126,72 en=True off=False
+              [Text] 'DRIVERS  RUNTIMES' id=68702 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,1157,1126,18 en=True off=False
+              [Pane] '' id=68704 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1185,1126,72 en=True off=False
+              [Pane] '' id=68706 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1257,1126,72 en=True off=False
+              [Pane] '' id=68708 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1329,1126,72 en=True off=False
+              [Pane] '' id=68710 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1401,1126,72 en=True off=False
+              [Pane] '' id=68712 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1473,1126,72 en=True off=False
+              [Pane] '' id=68714 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1545,1126,72 en=True off=False
+              [Pane] '' id=68716 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1617,1126,72 en=True off=False
+              [Pane] '' id=68718 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1689,1126,72 en=True off=False
+              [Pane] '' id=68720 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1761,1126,72 en=True off=False
+              [Pane] '' id=68722 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1833,1126,72 en=True off=False
+              [Text] 'PLATAFORMAS DE JOGOS' id=68724 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,1931,1126,18 en=True off=False
+              [Pane] '' id=68726 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,1959,1126,72 en=True off=False
+              [Pane] '' id=68728 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2031,1126,72 en=True off=False
+              [Pane] '' id=68730 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2103,1126,72 en=True off=False
+              [Pane] '' id=68732 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2175,1126,72 en=True off=False
+              [Pane] '' id=68734 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2247,1126,72 en=True off=False
+              [Pane] '' id=68736 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2319,1126,72 en=True off=False
+              [Text] 'JOGOS' id=68738 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,2417,1126,18 en=True off=False
+              [Pane] '' id=68740 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2445,1126,72 en=True off=False
+              [Pane] '' id=68742 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2517,1126,72 en=True off=False
+              [Pane] '' id=68744 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2589,1126,72 en=True off=False
+              [Text] 'MONITORAMENTO' id=68746 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,2687,1126,18 en=True off=False
+              [Pane] '' id=68748 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2715,1126,72 en=True off=False
+              [Pane] '' id=68750 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2787,1126,72 en=True off=False
+              [Pane] '' id=68752 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2859,1126,72 en=True off=False
+              [Pane] '' id=68754 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,2931,1126,72 en=True off=False
+              [Pane] '' id=68756 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3003,1126,72 en=True off=False
+              [Pane] '' id=68758 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3075,1126,72 en=True off=False
+              [Pane] '' id=68760 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3147,1126,72 en=True off=False
+              [Pane] '' id=68762 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3219,1126,72 en=True off=False
+              [Pane] '' id=68764 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3291,1126,72 en=True off=False
+              [Pane] '' id=68766 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3363,1126,72 en=True off=False
+              [Pane] '' id=68768 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3435,1126,72 en=True off=False
+              [Pane] '' id=68770 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3507,1126,72 en=True off=False
+              [Text] 'WEB E CHAT' id=68772 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,3605,1126,18 en=True off=False
+              [Pane] '' id=68774 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3633,1126,72 en=True off=False
+              [Pane] '' id=68776 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3705,1126,72 en=True off=False
+              [Pane] '' id=68778 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3777,1126,72 en=True off=False
+              [Pane] '' id=68780 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3849,1126,72 en=True off=False
+              [Pane] '' id=68782 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3921,1126,72 en=True off=False
+              [Pane] '' id=68784 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,3993,1126,72 en=True off=False
+              [Text] 'DESENVOLVIMENTO E MÍDIA' id=68786 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,4091,1126,18 en=True off=False
+              [Pane] '' id=68788 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4119,1126,72 en=True off=False
+              [Pane] '' id=68790 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4191,1126,72 en=True off=False
+              [Pane] '' id=68792 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4263,1126,72 en=True off=False
+              [Pane] '' id=68794 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4335,1126,72 en=True off=False
+              [Pane] '' id=68796 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4407,1126,72 en=True off=False
+              [Pane] '' id=68798 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4479,1126,72 en=True off=False
+              [Text] 'PERIFÉRICOS' id=68800 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,4577,1126,18 en=True off=False
+              [Pane] '' id=68802 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4605,1126,72 en=True off=False
+              [Pane] '' id=68804 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4677,1126,72 en=True off=False
+              [Pane] '' id=68806 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,4749,1126,72 en=True off=False
+    [Pane] '' id=68808 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Text] 'HARDWARE' id=68810 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-846,225,760,18 en=True off=False
+      [Text] 'GPU' id=68812 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-846,248,760,38 en=True off=False
+      [Text] 'Ajustes de driver para a sua placa de vídeo.' id=68814 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-846,290,760,24 en=True off=False
+      [Pane] 'NVIDIA GeForce RTX 4060 Ti' id=68816 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-58,238,330,64 en=True off=False
+      [Text] 'Os ajustes são exclusivos da GPU detectada.' id=68818 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-846,390,1118,24 en=True off=False
+      [Text] 'Aplique somente os ajustes adequados ao seu uso.' id=68820 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-846,860,1118,20 en=True off=False
+      [Pane] 'NVIDIA' id=68822 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,338,279,44 en=True off=False
+      [Pane] 'AMD' id=68824 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-565,338,279,44 en=False off=False
+      [Pane] '' id=68826 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,430,1118,415 en=True off=False
+        [Pane] '' id=133330 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,430,1118,415 en=True off=False
+          [Pane] '' id=133324 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,430,1118,415 en=True off=False
+            [Pane] '' id=133326 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,430,1118,415 en=True off=False
+              [Pane] '' id=133320 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-401,430,1,408 en=True off=False
+              [Pane] '' id=133322 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-377,774,633,64 en=True off=False
+              [Pane] 'AJUSTES DO DRIVER' id=133316 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,430,421,48 en=True off=False
+              [Pane] 'PERFIL GRÁFICO' id=133318 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-377,430,633,48 en=True off=False
+              [Pane] '' id=133312 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,478,421,84 en=True off=False
+                [Pane] 'modernToggle1' id=133314 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-457,500,32,18 en=True off=False
+              [Pane] '' id=198844 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,562,421,84 en=True off=False
+                [Pane] 'modernToggle2' id=657584 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-457,584,32,18 en=True off=False
+              [Pane] '' id=133332 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,646,421,84 en=True off=False
+                [Pane] 'modernToggle9' id=1902782 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-457,668,32,18 en=True off=False
+              [Pane] '' id=3279030 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-846,730,421,84 en=True off=False
+                [Pane] 'Abrir' id=264376 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-517,752,92,30 en=True off=False
+              [Pane] 'Básico' id=133346 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-377,478,310,62 en=True off=False
+              [Pane] 'Casual' id=133928 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-55,478,311,62 en=True off=False
+              [Pane] 'Competitivo' id=133886 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-377,550,310,62 en=True off=False
+              [Pane] 'FPS' id=133888 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-55,550,311,62 en=True off=False
+              [Pane] 'FPS 2.0' id=133890 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-377,622,310,62 en=True off=False
+              [Pane] 'Latência' id=133926 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-55,622,311,62 en=True off=False
+              [Pane] 'Avançado' id=133924 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-377,694,310,62 en=True off=False
+    [Pane] '' id=68830 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Pane] '' id=68832 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+        [Pane] '' id=68834 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+          [Pane] '' id=68836 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,203,640,1434 en=True off=False
+            [Text] 'Ajustes' id=68838 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,259,91,31 en=True off=False
+            [Text] '3 de 10 ativos.' id=68840 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,299,97,18 en=True off=False
+            [Text] 'Sistema' id=68842 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,355,56,18 en=True off=False
+            [Pane] '' id=68844 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,385,640,76 en=True off=False
+              [Pane] 'Toggle1' id=68846 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,407,32,18 en=True off=False
+            [Pane] '' id=68848 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,461,640,76 en=True off=False
+              [Pane] 'modernToggle3' id=68850 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,483,32,18 en=True off=False
+            [Pane] '' id=68852 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,537,640,76 en=True off=False
+              [Pane] 'modernToggle12' id=68854 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,559,32,18 en=True off=False
+            [Pane] '' id=68856 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,613,640,76 en=True off=False
+              [Pane] 'modernToggle4' id=68858 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,635,32,18 en=True off=False
+            [Pane] '' id=68860 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,689,640,76 en=True off=False
+              [Pane] 'toggleAppx' id=68862 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,711,32,18 en=True off=False
+            [Pane] '' id=68864 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,765,640,76 en=True off=False
+              [Pane] '' id=68866 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,787,32,18 en=True off=False
+            [Pane] '' id=68868 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,841,640,76 en=True off=False
+              [Pane] '' id=68870 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,863,32,18 en=True off=False
+            [Text] 'Rede' id=68872 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,949,40,18 en=True off=False
+            [Pane] '' id=68874 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,979,640,76 en=True off=False
+              [Pane] 'Toggle2' id=68876 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,1001,32,18 en=True off=False
+            [Text] 'Jogos' id=68878 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,1087,46,18 en=True off=False
+            [Text] 'Energia' id=68880 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,1149,55,18 en=True off=False
+            [Pane] '' id=68882 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,1179,640,76 en=True off=False
+              [Pane] '' id=68884 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-227,1201,260,24 en=True off=False
+                [Text] '1a' id=68886 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-227,1201,36,24 en=True off=False
+                [Text] '2a' id=68888 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-187,1201,36,24 en=True off=False
+                [Text] '26' id=68890 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-147,1201,36,24 en=True off=False
+                [Text] '28' id=68892 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-107,1201,36,24 en=True off=False
+                [Text] 'ffff311' id=68894 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-67,1201,62,24 en=True off=False
+            [Text] 'Avançado' id=68896 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,1287,68,18 en=True off=False
+            [Pane] '' id=68898 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,1317,640,76 en=True off=False
+              [Pane] 'modernToggle2' id=68900 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1,1339,32,18 en=True off=False
+            [Pane] 'Limpeza do sistema' id=68902 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,1425,640,40 en=True off=False
+            [Pane] 'Mostrar correções de problemas  +' id=68904 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-607,1509,640,40 en=True off=False
+            [Text] 'Use apenas para resolver um problema específico.
+Estas opções não são ajustes de desempenho.' id=68906 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-607,1561,640,48 en=True off=False
+    [Pane] '' id=68456 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-894,203,1214,692 en=True off=False
+      [Text] 'OTIMIZAÇÃO' id=68458 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,233,71,14 en=True off=False
+      [Text] 'Início' id=68460 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,255,80,35 en=True off=False
+      [Text] 'Windows · Monitorando em tempo real' id=68462 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,289,250,18 en=True off=False
+      [Text] 'MONITORES AO VIVO' id=68464 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,323,113,14 en=True off=False
+      [Pane] '' id=68466 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,345,272,118 en=True off=False
+      [Pane] '' id=68468 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-564,345,272,118 en=True off=False
+      [Pane] '' id=68470 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-278,345,272,118 en=True off=False
+      [Pane] '' id=68472 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=8,345,272,118 en=True off=False
+      [Text] 'SISTEMA' id=68474 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,475,50,14 en=True off=False
+      [Pane] '' id=68476 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,497,1130,62 en=True off=False
+        [Text] 'CPU' id=68478 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-832,507,27,14 en=True off=False
+        [Text] 'Ryzen 7 5800X' id=68480 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-832,525,258,24 en=True off=False
+        [Pane] '' id=68482 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-568,509,1,38 en=True off=False
+        [Text] 'GPU' id=68484 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-550,507,27,14 en=True off=False
+        [Text] 'RTX 4060 Ti' id=68486 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-550,525,258,24 en=True off=False
+        [Pane] '' id=68488 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-286,509,1,38 en=True off=False
+        [Text] 'RAM' id=68490 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-268,507,29,14 en=True off=False
+        [Text] '32 GB · 3200 MHz' id=68492 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-268,525,258,24 en=True off=False
+        [Pane] '' id=68494 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-4,509,1,38 en=True off=False
+        [Text] 'SO' id=68496 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=14,507,21,14 en=True off=False
+        [Text] 'Windows 11 Pro · 25H2' id=68498 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=14,525,258,24 en=True off=False
+      [Text] 'RECURSOS' id=68500 cls=WindowsForms10.STATIC.app.0.2c6361f_r6_ad1 rect=-850,573,59,14 en=True off=False
+      [Pane] '' id=68502 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-850,595,367,174 en=True off=False
+      [Pane] '' id=68504 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-469,595,367,174 en=True off=False
+      [Pane] '' id=68506 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=-88,595,368,174 en=True off=False
+    [Pane] '' id=68980 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1600,203,1214,692 en=True off=False
+      [Pane] '' id=68982 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1600,203,1214,692 en=True off=False
+        [Pane] '' id=68436 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=2804,211,4,553 en=True off=False
+        [Pane] '' id=68984 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1600,203,1200,845 en=True off=False
+          [Pane] '' id=68986 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,418,960,455 en=True off=False
+            [Pane] 'Inicialização' id=68988 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,418,960,24 en=True off=False
+            [Pane] '' id=68990 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,453,960,106 en=True off=False
+              [Pane] '' id=68992 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1738,462,924,88 en=True off=False
+                [Pane] '' id=68994 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=2624,484,32,18 en=True off=False
+            [Pane] 'Comportamento do aplicativo' id=68996 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,582,960,24 en=True off=False
+            [Pane] '' id=68998 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,617,960,194 en=True off=False
+              [Pane] '' id=69000 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1738,626,924,88 en=True off=False
+                [Pane] '' id=69002 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=2624,648,32,18 en=True off=False
+              [Pane] '' id=69004 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1738,714,924,88 en=True off=False
+                [Pane] '' id=69006 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=2624,736,32,18 en=True off=False
+            [Pane] 'Verificar inicialização' id=69008 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,829,205,36 en=True off=False
+          [Pane] 'SEU HONEST' id=69010 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,233,960,18 en=True off=False
+          [Pane] 'Configurações do aplicativo' id=69012 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,256,960,37 en=True off=False
+          [Pane] 'Deixe o Honest do seu jeito, dentro e fora da tela.' id=69014 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,303,960,34 en=True off=False
+          [Pane] '' id=69016 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,351,960,43 en=True off=False
+          [Pane] 'As alterações são salvas automaticamente.' id=69018 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,889,960,55 en=True off=False
+          [Pane] 'Honest · 2.5.1' id=69020 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=1720,954,960,20 en=True off=False
+    [Pane] '' id=69022 cls=WindowsForms10.Window.8.app.0.2c6361f_r6_ad1 rect=386,202,1214,1 en=True off=False
+

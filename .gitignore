@@ -1,0 +1,5 @@
+bin/
+obj/
+# relatórios gerados localmente (podem conter specs do PC do usuário)
+relatorio-pc.md
+relatorio-pc.json

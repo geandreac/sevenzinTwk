@@ -1,0 +1,117 @@
+<UserControl x:Class="Sevenzin.Wpf.Views.ConfiguracoesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="44,24,40,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="SEU SEVENZIN" Foreground="{StaticResource Brand400Brush}" FontSize="11" FontWeight="SemiBold" Margin="0,8,0,4"/>
+            <TextBlock Text="Configurações do aplicativo" Style="{StaticResource TituloTela}"/>
+            <TextBlock Text="Deixe o Sevenzin do seu jeito. Tudo local, sem login." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                <Border x:Name="TabGeral" Tag="0" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,28,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                    <TextBlock Text="Geral" FontSize="14"/>
+                </Border>
+                <Border x:Name="TabCapturas" Tag="1" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,28,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                    <TextBlock Text="Capturas" FontSize="14"/>
+                </Border>
+                <Border x:Name="TabPref" Tag="2" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                    <TextBlock Text="Preferências" FontSize="14"/>
+                </Border>
+            </StackPanel>
+            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,0,0,24"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,24">
+            <Grid>
+                <!-- GERAL -->
+                <StackPanel x:Name="GeralPanel">
+                    <TextBlock Text="INICIALIZAÇÃO" Style="{StaticResource SectionLabel}"/>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="Iniciar com o Windows" FontSize="14"/>
+                                <TextBlock Text="Abre o Sevenzin automaticamente ao entrar no Windows (atalho no seu usuário, sem administrador)." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="SwInicio" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Inicio_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="COMPORTAMENTO DO APLICATIVO" Style="{StaticResource SectionLabel}"/>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Minimizar para a bandeja" FontSize="14"/>
+                                    <TextBlock Text="Mantém o Sevenzin perto do relógio. Requer ícone de bandeja — próxima fatia." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleButton Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" IsEnabled="False"/>
+                            </Grid>
+                            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,6,0,6"/>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Fechar para a bandeja" FontSize="14"/>
+                                    <TextBlock Text="O botão × mantém o app em segundo plano. Requer ícone de bandeja — próxima fatia." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleButton Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" IsEnabled="False"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="As alterações são salvas automaticamente." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,12,0,0"/>
+                </StackPanel>
+
+                <!-- CAPTURAS -->
+                <StackPanel x:Name="CapturasPanel" Visibility="Collapsed">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Capturas" FontSize="16" FontWeight="SemiBold"/>
+                            <TextBlock Text="A captura de tela não faz parte da reconstrução segura — o app original enviava screenshots a um webhook. Se entrar, será uma captura local, só sua, nunca enviada." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- PREFERÊNCIAS -->
+                <StackPanel x:Name="PrefPanel" Visibility="Collapsed">
+                    <TextBlock Text="DADOS E PRIVACIDADE" Style="{StaticResource SectionLabel}"/>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="Pasta de dados local" FontSize="14"/>
+                                <TextBlock x:Name="PastaTxt" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="Backup/auditoria dos tweaks e relatórios. Nada sai do PC; não há login, telemetria nem envio a webhook." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="Abrir pasta" VerticalAlignment="Center" Click="AbrirPasta_Click"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock Text="SOBRE" Style="{StaticResource SectionLabel}"/>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock x:Name="VersaoTxt"/>
+                            <TextBlock Text="Reconstrução segura, somente leitura por padrão, tudo reversível." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

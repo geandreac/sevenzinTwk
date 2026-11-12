@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Sevenzin</AssemblyName>
+    <RootNamespace>Sevenzin.Wpf</RootNamespace>
+    <AssemblyTitle>Sevenzin Program</AssemblyTitle>
+    <ApplicationIcon>Assets\sevenzin.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+    <ProjectReference Include="..\Sevenzin.Diagnostics\Sevenzin.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Fonts\*.ttf" />
+    <Resource Include="Assets\sevenzin.ico" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+<UserControl x:Class="Sevenzin.Wpf.Views.AjustesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="44,24,40,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Ajustes" Style="{StaticResource TituloTela}" Margin="0,8,0,2"/>
+            <TextBlock x:Name="Contador" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,20"/>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,24">
+            <StackPanel x:Name="Lista"/>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
