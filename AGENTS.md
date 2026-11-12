@@ -43,7 +43,7 @@ src/Sevenzin.Wpf/          app WPF do usuário (.NET 8, Windows): Views/, MainWi
 src/Sevenzin.Admin/        app Admin SEPARADO (auditoria, acessos, segurança) — fica SÓ LOCAL (gitignored)
 src/Sevenzin.Diagnostics/  motor SEM UI (testável): Tweaks, Autenticacao, Usuarios, Coletores, Jogos, Gpu, Capturas…
 src/Sevenzin.Report/       runner de linha de comando (relatorio-pc.md/.json)
-tests/Sevenzin.Tests/      xUnit (158 testes)
+tests/Sevenzin.Tests/      xUnit (171 testes)
 docs/                      documentação; docs/engenharia-reversa/ = inventário do original
 ```
 
@@ -62,7 +62,7 @@ use no PowerShell: `$env:DOTNET_ROOT='C:\re\geandre\dotnet'; $env:PATH="C:\re\ge
 
 ```powershell
 dotnet build src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug   # compilar o app
-dotnet test                                                   # rodar os 158 testes
+dotnet test                                                   # rodar os 171 testes
 dotnet run --project src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug   # abrir o app
 ```
 

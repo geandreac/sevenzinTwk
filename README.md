@@ -40,7 +40,7 @@ tudo **reversível, auditado e confirmado** por você.
 - `src/Sevenzin.Admin/` — **app Admin separado** (auditoria de tweaks, log de acessos, segurança) — local, não
   publicado no GitHub.
 - `src/Sevenzin.Report/` — runner de linha de comando (`relatorio-pc.md`/`.json`, self-test).
-- `tests/Sevenzin.Tests/` — **158 testes** automatizados (motor de tweaks, autenticação + MFA, GPU, inventário,
+- `tests/Sevenzin.Tests/` — **171 testes** automatizados (motor de tweaks, autenticação + MFA, GPU, inventário,
   modos de vídeo, CPU, timer, fila, detecção de jogos, DISM, assistente…).
 - `docs/` — análise do original, design system, paridade funcional e revisões.
 

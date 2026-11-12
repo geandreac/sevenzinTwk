@@ -62,6 +62,10 @@ aprovados** — não será inventada; se o produto exigir, será decisão explí
 | **F6** ✅ | Assistente: envio explícito por mensagem, consentimento por conversa, IncludeInContext (HumanMode = lacuna de servidor) | F5 |
 | **F7.1** ✅ | Windows Media: análise da ISO **somente leitura** (edições/apps/features via DISM, parsers testados) | F6 |
 | **F7.2** ✅ | Windows Media: **construção** — ISO personalizada (edição única, UEFI via IMAPI2FS + efisys da origem) e **pendrive** (SafeUsb, FAT32 + split de WIM 3.800 MB). Sem ADK/GPL. Boot UEFI; BIOS/Legacy = limitação registrada | F7.1 |
+| **F9** ✅ | Catálogo completo do original (MMCSS Games, TdrDelay, AMD, rede, memória, visual, WER, Copilot — valores literais) | F7 |
+| **F10** ✅ | GPU alto desempenho + priority boost por jogo (UserGpuPreferences + boost temporário) | F9 |
+| **F11** ✅ | Desinstalação assistida de Edge/OneDrive (setups oficiais + confirmação) | F9 |
+| **F12** ✅ | Serviço de imagem na construção (remover apps/features, injetar drivers INF) | F7.2 |
 | **F8** 🟡 | Consolidação: docs atualizados (paridade/plano/registro); validação visual e manual = pendente | todas |
 
 ---

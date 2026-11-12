@@ -234,6 +234,28 @@ SHA-256 atravessando blocos, validação do pedido de construção).
 **Pendências / validação manual:** construir uma ISO real e bootar numa VM; gravar num pendrive de teste;
 confirmar o hash de arquivos grandes na cópia.
 
+## §12. F9–F12 — Catálogo completo, GPU/boost por jogo, desinstalação e serviço de imagem (13/11/2026)
+
+- **F9 — Catálogo completo do original** (commits `22e68bc`): +20 itens com os VALORES LITERAIS recuperados
+  (`01_registro_setvalues.txt`): MMCSS Games (GPU Priority=8, Priority=2, SFIO=Normal, Scheduling=Medium),
+  TdrDelay=8, DisableDynamicPstate=1 (AMD), ChillEnabled=0, RMPriorityThrottleDelay=0, NetworkThrottlingIndex=10,
+  DisablePagingExecutive/LargeSystemCache=1, transparência/AeroPeek/DragFullWindows/MenuShowDelay/Toast, WER e
+  Copilot off. Teste `CatalogoOriginalTests` valida a fidelidade valor por valor.
+- **F10 — GPU alta + boost por jogo**: `PerfilJogo.PrefereGpuAlta` (grava/remove `HKCU DirectX\UserGpuPreferences
+  <exe> = "GpuPreference=2;"`) e `PriorityBoost` (temporário, revertido); `RegistroUsuario` (IRegistro HKCU no
+  motor); `EstadoProcesso` com Boost; UI com 2ª linha de opt-ins por jogo.
+- **F11 — Desinstalação assistida**: `DesinstaladorApps` usa os setups OFICIAIS (Edge `--uninstall
+  --force-uninstall --system-level`; OneDrive `/uninstall`) com confirmação explícita; localização dos setups
+  testada (SysWOW64 → System32, Installer por versão).
+- **F12 — Serviço de imagem na construção**: `ConstrutorIso.BuildAsync` monta o WIM exportado em RW e aplica
+  remoção de apps provisionados, remoção de features e injeção de drivers INF assinados (`dism /Commit`;
+  `/Discard` em falha). UI da Mídia: lista real de apps da edição escolhida (checkbox) + pasta de drivers.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **171/171**.
+
+**Lacunas registradas:** OfflineHive; boot BIOS/Legacy; CPU Sets por processo; rede por interface; lista de
+serviços/tarefas do original (#US cifrado); lista fixa de apps do debloat (o Sevenzin usa a lista real da imagem).
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`

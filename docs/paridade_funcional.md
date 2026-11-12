@@ -81,7 +81,7 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | 04 §2 / 05 §1 | Perfil de hardware + WMI + PCI IDs | **a/b** | `Coletores`, `Inventario`, `TopologiaCpu` |
 | 04 §3 | 12 grupos de tweaks | **a/b** | `CatalogoTweaks` (28, inclui Segurança/Mouse/Localização) |
 | 04 §4-5 | Debloat Appx + remover Edge/OneDrive | **e** | não implementado (alto impacto sem opt-in) — registrado |
-| 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **c** | **análise (F7.1) e construção (F7.2) implementadas**: ISO personalizada (edição única, UEFI) + pendrive (SafeUsb, FAT32, split de WIM). Ficam fora: remoção de apps/features, injeção de drivers e boot BIOS/Legacy — registrados como próximos passos |
+| 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **b** | **análise (F7.1) + construção (F7.2) + serviço de imagem (F12)**: ISO personalizada com remoção de apps provisionados/features e injeção de drivers INF assinados (DISM /Commit); pendrive SafeUsb/FAT32/split. Ficam fora: preferências offline (OfflineHive) e boot BIOS/Legacy — registrados |
 | 04 §7 / 05 §6-8 | Catálogo de instaladores + winget allowlist | **b** | 36 utilitários oficiais + allowlist literal de 5 IDs |
 | 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **b** | afinidade+prioridade+WS+timer opt-in por jogo, revertidos ao fechar |
 | 04 §9 | Captura + anotação | **b** | 4 modos + editor + envio explícito (webhook do usuário) |
@@ -95,10 +95,14 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | 06 F13 | Atualização autenticada | **d** | não implementado |
 
 ## Pendências / lacunas registradas
-- **Edição da imagem (próximos passos da F7)**: remoção de apps/features, injeção de drivers e preferências
-  offline (OfflineHive) — réplicas das etapas 5–9 do fluxo F6; exigem DISM de serviço e montagem RW do WIM.
-- **Boot BIOS/Legacy** — a ISO/pendrive do Sevenzin bootam por **UEFI**; BIOS/Legacy não é suportado
-  (limitação registrada, coerente com o alerta do próprio original).
+- **Preferências offline (OfflineHive)** e **boot BIOS/Legacy** — não implementados (o boot é UEFI, coerente
+  com o alerta do original; OfflineHive exige montagem RW do hive SYSTEM/SOFTWARE).
+- **CPU Sets por processo** (Get/SetProcessDefaultCpuSets) e **rede por interface** (TcpAckFrequency,
+  EnableMulticast, NetbiosOptions — chaves dinâmicas por adaptador) — pendentes; a afinidade por máscara
+  P-cores já cobre o caso principal de jogos.
+- **Lista de serviços/tarefas** do original não foi recuperada (fica no `#US` cifrado) — lacuna registrada;
+  o serviço confirmado (lfsvc) já é um tweak do catálogo. O mesmo vale para a lista exata de apps do debloat
+  (o Sevenzin usa a lista REAL lida da imagem via DISM, não uma lista fixa inventada).
 - **HumanMode do assistente** — comportamento de servidor; o Sevenzin só envia/recebe via endpoint do usuário.
 - **Validação manual**: efeito real dos tweaks de segurança (admin + reinício), winget real, captura nos 4 modos, análise de ISO com uma ISO real, fluxo Supabase/MFA num projeto real, render visual de todas as telas novas (Assistente, Perfil, Proteção, Guias, Notificações).
 - Categorias **d** (rede, DPC/MSI, serviços, MMCSS Games, IFEO) permanecem ausentes por risco/retorno — decisão registrada, não esquecimento.
