@@ -31,7 +31,43 @@ public partial class ConfiguracoesView : UserControl
         var cfg = new Sevenzin.Diagnostics.ConfigCapturasStore().Carregar();
         WebhookTxt.Text = cfg.WebhookUrl ?? "";
         AtualizarStatusWebhook();
+        var cfgAssistente = new Sevenzin.Diagnostics.ConfigAssistenteStore().Carregar();
+        AssistenteTxt.Text = cfgAssistente.EndpointUrl ?? "";
+        AtualizarStatusAssistente();
         SelecionarAba(0);
+    }
+
+    void AtualizarStatusAssistente()
+    {
+        var url = AssistenteTxt.Text.Trim();
+        AssistenteStatus.Text = Sevenzin.Diagnostics.Assistente.UrlEndpointValida(url)
+            ? "Endpoint configurado — a tela Assistente envia cada mensagem só quando você aperta Enviar."
+            : "Nenhum endpoint configurado — a tela Assistente fica com o envio desligado.";
+    }
+
+    void AssistenteSalvar_Click(object sender, RoutedEventArgs e)
+    {
+        var url = AssistenteTxt.Text.Trim();
+        if (url.Length == 0)
+        {
+            new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(null));
+            AtualizarStatusAssistente();
+            return;
+        }
+        if (!Sevenzin.Diagnostics.Assistente.UrlEndpointValida(url))
+        {
+            MessageBox.Show("Use uma URL HTTPS absoluta.", "URL inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(url));
+        AtualizarStatusAssistente();
+    }
+
+    void AssistenteLimpar_Click(object sender, RoutedEventArgs e)
+    {
+        AssistenteTxt.Text = "";
+        new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(null));
+        AtualizarStatusAssistente();
     }
 
     void AtualizarStatusWebhook()

@@ -103,6 +103,20 @@
 
                 <!-- PREFERÊNCIAS -->
                 <StackPanel x:Name="PrefPanel" Visibility="Collapsed">
+                    <TextBlock Text="ASSISTENTE (OPCIONAL)" Style="{StaticResource SectionLabel}"/>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="Endpoint do assistente (HTTPS)" FontSize="14"/>
+                            <TextBlock Text="Sem URL, a tela Assistente fica com o envio desligado. Com URL, cada mensagem é enviada apenas quando você aperta Enviar — nunca em segundo plano." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <TextBox x:Name="AssistenteTxt" Style="{StaticResource DarkBox}" Width="420" Tag="https://seu-endpoint/assistente" VerticalContentAlignment="Center"/>
+                                <Button Style="{StaticResource PrimaryButton}" Content="Salvar" Margin="8,0,0,0" Click="AssistenteSalvar_Click"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="Limpar" Margin="8,0,0,0" Click="AssistenteLimpar_Click"/>
+                            </StackPanel>
+                            <TextBlock x:Name="AssistenteStatus" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,10,0,0" TextWrapping="Wrap"
+                                       Text="Nenhum endpoint configurado."/>
+                        </StackPanel>
+                    </Border>
                     <TextBlock Text="DADOS E PRIVACIDADE" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,24">
                         <Grid>

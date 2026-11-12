@@ -1,0 +1,36 @@
+<UserControl x:Class="Sevenzin.Wpf.Views.AssistenteView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="44,24,40,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="0,8,0,12">
+            <TextBlock Text="ASSISTENTE" Style="{StaticResource Eyebrow}"/>
+            <TextBlock Text="Assistente" Style="{StaticResource TituloTela}"/>
+            <TextBlock Text="Conversa por um endpoint HTTPS que VOCÊ configura. Cada mensagem só é enviada quando você aperta Enviar — nada sai sozinho e nada é enviado em segundo plano." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,10,8,10">
+                <StackPanel x:Name="Conversa"/>
+            </ScrollViewer>
+        </Border>
+        <StackPanel Grid.Row="2" Margin="0,0,0,16">
+            <CheckBox x:Name="IncluirContexto" Content="Incluir o contexto do meu PC nesta mensagem (SO, CPU, GPU, RAM)" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,8"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="Mensagem" Style="{StaticResource DarkBox}" Height="40" VerticalContentAlignment="Center"
+                         Tag="Escreva sua mensagem…" KeyDown="Mensagem_KeyDown"/>
+                <Button x:Name="BtnEnviar" Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="Enviar"
+                        Margin="10,0,0,0" Click="Enviar_Click" IsEnabled="False"/>
+            </Grid>
+            <TextBlock x:Name="StatusLbl" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,8,0,0" TextWrapping="Wrap"
+                       Text="Sem endpoint configurado — configure a URL em Configurações › Preferências para habilitar o envio."/>
+        </StackPanel>
+    </Grid>
+</UserControl>
