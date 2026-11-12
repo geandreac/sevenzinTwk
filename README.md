@@ -1,56 +1,72 @@
-# Sevenzin — ferramenta de diagnóstico e otimização (reconstrução segura)
+# Sevenzin — otimizador de PC (reconstrução segura)
 
-App novo e limpo que substitui o binário analisado em `C:\re\geandre`. Segue as seções 21–24 de
-`07_funcionalidades.md`: **medir antes de otimizar**, somente leitura primeiro, tudo reversível e transparente.
+Aplicativo de **diagnóstico e otimização** do Windows, em WPF (.NET 8), que **reconstrói de forma segura** um
+programa analisado por engenharia reversa. O princípio é simples: **medir antes de otimizar**, só leitura primeiro,
+tudo **reversível, auditado e confirmado** por você.
 
-**O que este app NÃO faz** (ao contrário do original): sem login (HWID/Discord), sem telemetria invasiva, sem ler
-memória de outros processos, sem screenshot enviado a webhook, **sem desligar Defender/UAC/HVCI/mitigações**, sem
-ativador do Windows, sem downloads sem verificação.
+> **O que este app NÃO faz** (ao contrário do original): não desliga Defender/UAC/HVCI/mitigações, não faz login por
+> HWID/Discord, não envia IP/HWID/captura de tela para webhooks, não altera o relógio do sistema, não faz flash de BIOS
+> nem constrói ISO do Windows. Esses comportamentos são **detectados e barrados** — nunca aplicados. Uma trava de
+> segurança no código (`GuardaSeguranca`) recusa qualquer ajuste que toque em mecanismos de segurança do SO.
 
-## Estado atual
+## Funcionalidades
 
-Interface única em **WPF** (shell escuro alinhado ao Figma), motor desacoplado e testado.
+- **Login + Admin** por e-mail e senha: hash **bcrypt**, sessão com expiração/renovação/logout, proteção de rota por
+  papel (administrador × usuário), proteção contra força bruta e seed do primeiro admin por variável de ambiente.
+- **Início** — monitores ao vivo de CPU, GPU, memória e latência (leituras reais; "—" quando a métrica é indisponível,
+  nunca um valor forjado) + faixa de sistema + atalhos.
+- **Ajustes** — otimizações **reversíveis** com prévia, backup do estado anterior, desfazer e auditoria.
+- **GPU** — diagnóstico somente leitura (sem DDU, sem alterar flags do driver) + link oficial do fabricante.
+- **Instaladores** — utilitários de **fontes oficiais** com verificação por assinatura/hash antes de executar.
+- **Jogos** — perfil por jogo **temporário** (afinidade/prioridade revertidas ao fechar).
+- **Capturas** — captura de tela **local**, salva no PC, nunca enviada à rede.
+- **BIOS / Windows** — telas **informativas e seguras** (estado só leitura + instruções com classificação de risco);
+  nenhuma ação altera BIOS/Windows automaticamente.
+- **Inventário / Telemetria / Benchmark** — inventário com grau de confiança (Fato/Inferência), medição A/B e
+  benchmark de frametime interno.
 
-- `src/Sevenzin.Diagnostics/` — biblioteca de coleta e lógica, **sem UI** (19 testes). Inventário somente leitura
-  (cada dado com origem e confiança **Fato/Inferência/Hipótese**, sem identificadores pessoais), **topologia de CPU**
-  (P/E + domínios L3 ≈ CCD), **telemetria** (sessão + média/p95/p99/desvio + overhead medido + **A/B** inconclusivo‑vs‑ruído),
-  **benchmark de frametime** (FPS/1% low/p95/p99/stutter) e o **motor de tweaks** reversível com a trava de segurança
-  (`GuardaSeguranca`) que recusa Defender/UAC/HVCI/mitigações/SmartScreen/Windows Update/write‑cache.
-- `src/Sevenzin.Wpf/` — aplicativo **WPF**, tokens em [docs/design-system.md](docs/design-system.md). Telas prontas:
-  **Início** (dashboard com monitores ao vivo + sistema), **Ajustes** (tweaks com toggles; segurança bloqueada),
-  **Configurações** (abas Geral/Capturas/Preferências; "Iniciar com o Windows" real via chave Run do HKCU, sem login),
-  **Inventário** (grade agrupada por categoria, confiança por cor), **Telemetria** (sessão ao vivo + resumo + A/B) e
-  **Benchmark** (cena interna reproduzível) e **Jogos** (perfil reversível por jogo: prioridade — nunca Realtime — e
-  afinidade por P-core, com "aplicar ao abrir / restaurar ao fechar" e busca) e **GPU** (diagnóstico de GPU/driver +
-  link oficial do driver, somente leitura) e **Instaladores** (catálogo oficial com download verificado por assinatura/hash
-  antes de executar, nada silencioso), **Capturas** (captura de tela local, salva no PC, nunca enviada) e **Admin**
-  (painel local de auditoria dos tweaks, somente leitura). Entrada **sem login** — abre direto, sem HWID/Discord/licença.
-  Tipografia **Inter/Geist** embutida e transição suave entre telas.
-- `src/Sevenzin.Report/` — runner de linha de comando: `relatorio-pc.md`/`.json`, `--selftest`, `--telemetria <seg>`.
-- `tests/Sevenzin.Tests/` — 19 testes do motor (relatório/inventário, topologia, telemetria + A/B, frametime, tweaks + trava).
+## Arquitetura
 
-### Rodar
+- `src/Sevenzin.Diagnostics/` — biblioteca de coleta e lógica, **sem UI** (WMI, contadores de performance, motor de
+  tweaks reversível, autenticação). Testável de forma isolada.
+- `src/Sevenzin.Wpf/` — aplicativo **WPF** (tema escuro alinhado ao Figma, tipografia Inter, ícone oficial "S em raio").
+- `src/Sevenzin.Report/` — runner de linha de comando (`relatorio-pc.md`/`.json`, self-test).
+- `tests/Sevenzin.Tests/` — **84 testes** automatizados (motor de tweaks, autenticação, GPU, inventário…).
+- `docs/` — análise do original, design system, paridade funcional e revisões.
 
+## Como usar
+
+Requisitos: **.NET SDK 8** no Windows.
+
+```bash
+# compilar
+dotnet build src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
+
+# rodar o app
+dotnet run --project src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
+
+# testes
+dotnet test
 ```
-dotnet build Sevenzin.sln -c Release
-dotnet run --project src/Sevenzin.Wpf -c Release        # interface gráfica (WPF)
-dotnet run --project src/Sevenzin.Report -c Release     # gera o relatório no diretório atual
-dotnet test Sevenzin.sln -c Release                     # roda os testes
+
+Ao abrir pela primeira vez, o app pede para **criar o primeiro administrador** (e-mail + senha forte: ≥12 caracteres,
+com maiúsculas/minúsculas, número e símbolo). Depois disso, o login passa a ser normal.
+
+Para provisionar o admin sem interface (ex.: em uma instalação de escola), defina antes de abrir:
+
+```bash
+set SEVENZIN_ADMIN_EMAIL=admin@suaescola.edu
+set SEVENZIN_ADMIN_SENHA=UmaSenhaForte#2026
 ```
 
-> Requer o .NET SDK 8. Neste ambiente ele está em `C:\re\geandre\dotnet` — exporte `DOTNET_ROOT` e o `PATH` para ele antes de chamar `dotnet`.
+> ⚠️ A tela **Ajustes** altera o registro do Windows de verdade (reversível e auditado, pede administrador). Teste em
+> uma máquina/VM que você controla e, de preferência, com um ponto de restauração criado.
 
-## Roadmap e otimizações
+## Como clonar
 
-- **Plano completo, fase a fase e por tela** (com ações, desafios e soluções): [docs/roadmap-fases-telas.md](docs/roadmap-fases-telas.md).
-- **Catálogo de otimizações do original** (338 escritas de registro, 110 chaves, 299 comandos), classificado
-  🟢 reversível / 🟡 hardware‑A/B / 🔴 proibido: [docs/catalogo-otimizacoes.md](docs/catalogo-otimizacoes.md)
-  (dados brutos em `docs/otimizacoes-originais/`).
-
-Ordem atual: Fase 5 (consolidação) em andamento — **WinForms aposentado**; a seguir fontes/bandeja, depois **Jogos**
-(perfis reversíveis por título), ampliação dos tweaks HKLM (elevação sob demanda + A/B) e **GPU** (diagnóstico seguro).
-
-## Princípios (§24)
-
-Medir antes de otimizar · padrões seguros · uma mudança por vez · transparência · compatibilidade detectada, não
-presumida · reversibilidade testada · segurança nunca desligada · sem promessas de FPS fixo.
+```bash
+git clone https://github.com/geandreac/sevenzinTwk.git
+cd sevenzinTwk
+dotnet build src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
+dotnet run --project src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
+```
