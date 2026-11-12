@@ -40,6 +40,42 @@ Por isso as fases seguintes tratam esses itens como ação de risco: aviso na de
 e desfazer pelo motor — conforme a regra de segurança nº 2 do `AGENTS.md` (nunca executar na máquina de
 desenvolvimento sem confirmação do dono).
 
+## §5. Fase 1 — Segurança avançada + tela Proteção (12/11/2026)
+
+**F1.1 — tweaks de segurança com confirmação + tela Proteção** (commit `a08654b`)
+- `Tweak.ExigeConfirmacao` (novo campo opcional): itens de risco pedem confirmação explícita na UI.
+- 7 tweaks novos no `CatalogoTweaks` (categoria "Segurança", todos HKLM/admin/confirmação, risco ALTO/CRÍTICO):
+  `uac-off` (EnableLUA=0), `defender-rt-off`, `defender-antispyware-off`, `smartscreen-off` (política
+  EnableSmartScreen=0), `hvci-off` (CRÍTICO, requer reinício), `mitigacoes-off` (FeatureSettingsOverride),
+  `wu-pausar` (NoAutoUpdate).
+- Leitores só-leitura em `SegurancaSistema.cs`: UAC, Defender tempo real, SmartScreen, HVCI, mitigações,
+  atualizações automáticas (+ Secure Boot/TPM já existentes) + `Interpretar` puro.
+- Nova tela `ProtecaoView` + item "Proteção" na navegação (ícone `ic_protecao`): estado real por mecanismo +
+  toggle do tweak correspondente com confirmação; avisos de reinício e de Tamper Protection.
+- `AjustesView`: diálogo de confirmação para `ExigeConfirmacao` + risco na descrição.
+
+**F1.2 — write-cache por disco** (commit `d30a1d8`)
+- `CacheEscrita.cs`: descoberta dos discos via WMI (`Win32_DiskDrive`) → resolução do nó
+  `HKLM\SYSTEM\CurrentControlSet\Enum\<PnP>\<instância>\Device Parameters` → tweak dinâmico por disco
+  (`CacheIsPowerProtected=1`, Id = SHA-256 do PnP) aplicado pelo `MotorTweaks` (backup/desfazer/auditoria).
+- Seção "WRITE-CACHE (por disco)" na `ProtecaoView` com estado atual e aviso de perda de dados.
+
+**Arquivos alterados:** `Tweaks.cs`, `SegurancaSistema.cs`, `CacheEscrita.cs` (novo), `AjustesView.xaml.cs`,
+`ProtecaoView.xaml/.cs` (novos), `MainWindow.xaml.cs`, `Icons.xaml`, `TweaksTests.cs`,
+`SegurancaSistemaTests.cs` (novo), `CacheEscritaTests.cs` (novo), `plano-implementacao-completa.md` (novo),
+`paridade_funcional.md`, `roadmap_implementacao.md`, `roadmap-fases-telas.md` (marcado histórico), `AGENTS.md`, `README.md`.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **109/109** (conformidade dos itens de segurança, motor
+aplica/desfaz UAC e write-cache no registro fake, interpretação pura, leitores determinísticos, vínculo
+tela↔catálogo).
+
+**Pendências / validação manual:**
+- Render visual da `ProtecaoView` e dos novos itens de Ajustes (F8).
+- Efeito real de cada item exige administrador e, para UAC/HVCI/mitigações, **reinício** — validar em máquina
+  controlada, um por vez, com desfazer.
+- Defender com Tamper Protection ativa ignora os valores — a UI avisa, mas o efeito real depende do ambiente.
+- Plano por fases: `docs/plano-implementacao-completa.md` (F0 ✅ · F1.1 ✅ · F1.2 ✅ · F2 a F8 a seguir).
+
 
 ## Resumo por item
 | # | Item | Status |
