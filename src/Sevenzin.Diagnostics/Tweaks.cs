@@ -205,5 +205,59 @@ public static class CatalogoTweaks
             Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors", "HideSCALocation", 1, "Baixo — cosmético (política de máquina)", true),
         new Tweak("localizacao-servico-off", "Desativar o serviço de localização", "Desliga o serviço lfsvc (Start=4). AVISO: alguns jogos usam localização e podem não abrir sem ele.", "Localização",
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Services\lfsvc", "Start", 4, "Médio — alguns jogos dependem do serviço; requer reinício para valer", true),
+
+        // ── MMCSS "Games" (HKLM; valores literais do original: GPU Priority=8, Priority=2, SFIO=Normal, Scheduling=Medium) ──
+        new Tweak("mmcss-games-gpu", "MMCSS Games — prioridade de GPU", "Perfil MMCSS 'Games' do Windows: GPU Priority=8 (valor literal do original).", "Desempenho",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "GPU Priority", 8, "Baixo — perfil padrão do Windows, reversível", true),
+        new Tweak("mmcss-games-prio", "MMCSS Games — prioridade", "Perfil MMCSS 'Games': Priority=2 (valor literal do original).", "Desempenho",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Priority", 2, "Baixo — perfil padrão do Windows, reversível", true),
+        new Tweak("mmcss-games-sfio", "MMCSS Games — prioridade de I/O", "Perfil MMCSS 'Games': SFIO Priority=Normal (valor literal do original, REG_SZ).", "Desempenho",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "SFIO Priority", 0, "Baixo — perfil padrão do Windows, reversível", true,
+            Tipo: TipoValor.String, ValorTexto: "Normal"),
+        new Tweak("mmcss-games-sched", "MMCSS Games — categoria de agendamento", "Perfil MMCSS 'Games': Scheduling Category=Medium (valor literal do original, REG_SZ).", "Desempenho",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Scheduling Category", 0, "Baixo — perfil padrão do Windows, reversível", true,
+            Tipo: TipoValor.String, ValorTexto: "Medium"),
+
+        // ── GPU (HKLM, admin; valores do original) ──
+        new Tweak("tdr-delay", "TDR Delay (driver de vídeo)", "Aumenta o tempo de recuperação de GPU travada (TdrDelay=8, valor do original) — mascara travas de driver em jogos.", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "TdrDelay", 8, "Médio — mascara travas de driver; meça A/B", true),
+        new Tweak("amd-pstate-off", "Desligar Power gating (AMD)", "Desativa o power gating dinâmico da GPU AMD (DisableDynamicPstate=1, valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "DisableDynamicPstate", 1, "Médio — pode aumentar calor/consumo; só AMD; meça A/B", true),
+        new Tweak("amd-chill-off", "Desligar Radeon Chill (AMD)", "Desativa o Radeon Chill (limita FPS para economizar energia) — ChillEnabled=0.", "GPU",
+            Colmeia.UsuarioAtual, @"Software\AMD\DVR", "ChillEnabled", 0, "Baixo — Chill limita FPS; desligar devolve o FPS livre", false),
+
+        // ── Rede / multimídia (HKLM, admin; valores do original) ──
+        new Tweak("rm-throttle-off", "Desligar atraso de throttle (RM)", "Zera o RMPriorityThrottleDelay (valor do original) — reduz o atraso do throttling de multimídia.", "Rede",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "RMPriorityThrottleDelay", 0, "Médio — afeta o escalonamento de multimídia; meça A/B", true),
+        new Tweak("rede-throttle-off", "Desligar limite de rede (MMCSS)", "NetworkThrottlingIndex=10 (valor do original) — remove o limite de 10 pacotes/s imposto a tarefas de multimídia.", "Rede",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex", 10, "Médio — pode aumentar latência em multitarefa; meça A/B", true),
+
+        // ── Memória (HKLM, admin; debatível — meça A/B) ──
+        new Tweak("paginacao-off", "Kernel residente (DisablePagingExecutive)", "Mantém o núcleo do sistema na RAM (DisablePagingExecutive=1, valor do original).", "Memória",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "DisablePagingExecutive", 1, "Médio — mais RAM usada; meça A/B", true),
+        new Tweak("large-cache-on", "Cache grande de sistema (LargeSystemCache)", "Amplia o cache de arquivos do sistema (LargeSystemCache=1, valor do original).", "Memória",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "LargeSystemCache", 1, "Médio — pode piorar em pouca RAM; meça A/B", true),
+
+        // ── Visual (HKCU, cosmético; valores do original) ──
+        new Tweak("transparencia-off", "Desligar transparência", "Desativa a transparência das janelas (EnableTransparency=0, valor do original).", "Visual",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency", 0, "Baixo (cosmético)", false),
+        new Tweak("taskbar-transparencia-off", "Desligar transparência da barra", "Desativa a transparência da barra de tarefas (UseOLEDTaskbarTransparency=0, valor do original).", "Visual",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "UseOLEDTaskbarTransparency", 0, "Baixo (cosmético)", false),
+        new Tweak("aero-peek-off", "Desligar Aero Peek", "Desativa a prévia de janelas ao passar o mouse (EnableAeroPeek=0, valor do original).", "Visual",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\DWM", "EnableAeroPeek", 0, "Baixo (cosmético)", false),
+        new Tweak("arrastar-janela-off", "Arrastar janela sem conteúdo", "Desliga o arrasto com conteúdo da janela (DragFullWindows=0, valor do original, REG_SZ).", "Visual",
+            Colmeia.UsuarioAtual, @"Control Panel\Desktop", "DragFullWindows", 0, "Baixo (cosmético)", false,
+            Tipo: TipoValor.String, ValorTexto: "0"),
+        new Tweak("menu-delay-0", "Menus instantâneos", "Zera o atraso de abertura dos menus (MenuShowDelay=0, valor do original, REG_SZ).", "Visual",
+            Colmeia.UsuarioAtual, @"Control Panel\Desktop", "MenuShowDelay", 0, "Baixo (cosmético)", false,
+            Tipo: TipoValor.String, ValorTexto: "0"),
+        new Tweak("notificacoes-off", "Desligar notificações do Windows", "Desativa os toasts de notificação (ToastEnabled=0, valor do original).", "Privacidade",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\PushNotifications", "ToastEnabled", 0, "Baixo — você deixa de ver notificações de apps", false),
+
+        // ── Privacidade extra (valores do catálogo §8 do original) ──
+        new Tweak("wer-off", "Desligar relatório de erros (WER)", "Desativa o envio do Windows Error Reporting (Disabled=1).", "Telemetria",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\Windows Error Reporting", "Disabled", 1, "Baixo — menos diagnóstico em caso de falha", true),
+        new Tweak("copilot-off", "Desligar Copilot do Windows", "Desativa o Copilot por política de usuário (TurnOffWindowsCopilot=1).", "Telemetria",
+            Colmeia.UsuarioAtual, @"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", 1, "Baixo — remove o botão e o painel do Copilot", false),
     };
 }

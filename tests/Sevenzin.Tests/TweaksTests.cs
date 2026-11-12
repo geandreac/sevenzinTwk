@@ -52,9 +52,9 @@ public class TweaksTests
     {
         var ids = CatalogoTweaks.Todos.Select(t => t.Id).ToList();
         Assert.Equal(ids.Count, ids.Distinct(StringComparer.OrdinalIgnoreCase).Count()); // sem id duplicado
-        // Grupos derivados do original: privacidade/telemetria/visual/jogos/desempenho/segurança presentes.
+        // Grupos derivados do original: privacidade/telemetria/visual/jogos/desempenho/segurança + ampliação F9.
         var cats = CatalogoTweaks.Todos.Select(t => t.Categoria).ToHashSet();
-        Assert.Superset(new HashSet<string> { "Jogos", "Privacidade", "Visual", "Telemetria", "Desempenho", "Segurança" }, cats);
+        Assert.Superset(new HashSet<string> { "Jogos", "Privacidade", "Visual", "Telemetria", "Desempenho", "Segurança", "Mouse", "Localização", "GPU", "Rede", "Memória" }, cats);
         Assert.All(CatalogoTweaks.Todos, t => Assert.False(string.IsNullOrWhiteSpace(t.Descricao)));
     }
 

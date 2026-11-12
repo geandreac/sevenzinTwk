@@ -63,6 +63,22 @@ public partial class WindowsView : UserControl
         en.Children.Add(botoes);
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = en });
 
+        // Desinstalação assistida (Edge/OneDrive): instaladores OFICIAIS, confirmação explícita.
+        Raiz.Children.Add(new TextBlock { Text = "DESINSTALAÇÃO ASSISTIDA (EDGE / ONEDRIVE)", Style = SectionStyle });
+        var desinst = new StackPanel();
+        desinst.Children.Add(new TextBlock
+        {
+            Text = "Usa os desinstaladores OFICIAIS da Microsoft (setup.exe do Edge, OneDriveSetup.exe do Windows). Cada ação pede confirmação explícita. O Edge pode ser reinstalado pelo site oficial; o OneDrive também.",
+            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+        });
+        var desinstStatus = new TextBlock { Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap };
+        var botoesDes = new StackPanel { Orientation = Orientation.Horizontal };
+        botoesDes.Children.Add(Botao(Primario, "Desinstalar Microsoft Edge", () => DesinstalarAsync("Microsoft Edge", DesinstaladorApps.DesinstalarEdgeAsync, desinstStatus)));
+        botoesDes.Children.Add(Botao(Secundario, "Desinstalar OneDrive", () => DesinstalarAsync("OneDrive", DesinstaladorApps.DesinstalarOneDriveAsync, desinstStatus)));
+        desinst.Children.Add(botoesDes);
+        desinst.Children.Add(desinstStatus);
+        Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = desinst });
+
         // Análise de imagem do Windows (SÓ LEITURA): monta a ISO, lista edições/apps/features via DISM.
         Raiz.Children.Add(new TextBlock { Text = "ANÁLISE DE IMAGEM DO WINDOWS (SÓ LEITURA)", Style = SectionStyle });
         var analise = new StackPanel();
@@ -112,6 +128,27 @@ public partial class WindowsView : UserControl
     }
 
     void AtualizarEnergia() => _energiaLbl.Text = $"Plano de energia ativo agora: {GestorEnergia.NomeAtivo() ?? "—"}";
+
+    async void DesinstalarAsync(string nome, Func<CancellationToken, System.Threading.Tasks.Task<ResultadoDesinstalacao>> acao, TextBlock status)
+    {
+        if (!Elevacao.EhAdmin())
+        {
+            if (MessageBox.Show($"Desinstalar {nome} exige administrador.\n\nReabrir o Sevenzin como administrador?",
+                    "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                Elevacao.ReabrirComoAdmin();
+            return;
+        }
+        if (MessageBox.Show($"Desinstalar {nome} usando o instalador OFICIAL?\n\n" +
+                "A desinstalação pode afetar outros perfis do Windows nesta máquina.\n\nContinuar?",
+                $"Confirmação — desinstalar {nome}", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        status.Foreground = Muted;
+        status.Text = $"Desinstalando {nome}…";
+        var r = await System.Threading.Tasks.Task.Run(() => acao(CancellationToken.None));
+        status.Foreground = r.Ok ? Secondary : (Brush)Application.Current.Resources["DangerBrush"];
+        status.Text = r.Ok ? $"✔ {nome}: {r.Detalhe}" : $"Falha: {r.Detalhe}";
+    }
 
     async System.Threading.Tasks.Task AnalisarIsoAsync(TextBlock status, Button botao)
     {

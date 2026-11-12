@@ -189,13 +189,24 @@ public partial class JogosView : UserControl
         var acoes = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         acoes.Children.Add(Botao(Secundario, $"Prioridade: {NomePrio(j.Prioridade)}", () => CiclarPrioridade(j)));
         if (Hibrido) acoes.Children.Add(Botao(Secundario, $"Afinidade: {NomeAfinidade(j)}", () => CiclarAfinidade(j)));
-        acoes.Children.Add(Botao(Secundario, $"Working set: {(j.TrimWorkingSet ? "trim" : "não")}", () => AlternarWorkingSet(j)));
-        acoes.Children.Add(Botao(Secundario, $"Timer 1 ms: {(j.TimerAltaResolucao ? "sim" : "não")}", () => AlternarTimer(j)));
         acoes.Children.Add(Botao(Primario, "Aplicar", () => Aplicar(j)));
         acoes.Children.Add(Botao(Secundario, "Reverter", () => Reverter(j)));
         acoes.Children.Add(Botao(Secundario, "Remover", () => Remover(j)));
         Grid.SetColumn(acoes, 1);
         grid.Children.Add(acoes);
+
+        // 2ª linha: otimizações OPT-IN com aviso (working set, timer, GPU alta, boost).
+        var optins = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        optins.Children.Add(Botao(Secundario, $"Working set: {(j.TrimWorkingSet ? "trim" : "não")}", () => AlternarWorkingSet(j)));
+        optins.Children.Add(Botao(Secundario, $"Timer 1 ms: {(j.TimerAltaResolucao ? "sim" : "não")}", () => AlternarTimer(j)));
+        optins.Children.Add(Botao(Secundario, $"GPU: {(j.PrefereGpuAlta ? "alto desempenho" : "automática")}", () => AlternarGpu(j)));
+        optins.Children.Add(Botao(Secundario, $"Boost: {(j.PriorityBoost ? "sim" : "não")}", () => AlternarBoost(j)));
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Grid.SetRow(info, 0);
+        Grid.SetRow(acoes, 0);
+        Grid.SetRow(optins, 1);
+        Grid.SetColumnSpan(optins, 2);
+        grid.Children.Add(optins);
 
         return new Border { Style = (Style)Application.Current.Resources["Card"], Margin = new Thickness(0, 0, 0, 12), Child = grid };
     }
@@ -242,6 +253,24 @@ public partial class JogosView : UserControl
         StatusLbl.Text = j.TimerAltaResolucao
             ? "Timer de 1 ms ligado — ATENÇÃO: aumenta o consumo de energia enquanto o jogo estiver aplicado; revertido ao fechar."
             : "Timer de alta resolução desligado.";
+    }
+
+    void AlternarGpu(PerfilJogo j)
+    {
+        _catalogo.Adicionar(j with { PrefereGpuAlta = !j.PrefereGpuAlta });
+        Montar();
+        StatusLbl.Text = j.PrefereGpuAlta
+            ? "GPU de alto desempenho marcada para este .exe (UserGpuPreferences) — aplicada com o perfil e removida ao reverter."
+            : "Preferência de GPU removida (volta à automática).";
+    }
+
+    void AlternarBoost(PerfilJogo j)
+    {
+        _catalogo.Adicionar(j with { PriorityBoost = !j.PriorityBoost });
+        Montar();
+        StatusLbl.Text = j.PriorityBoost
+            ? "Boost de prioridade ligado — temporário (revertido ao fechar)."
+            : "Boost de prioridade desligado.";
     }
 
     void Aplicar(PerfilJogo j)

@@ -10,14 +10,16 @@ namespace Sevenzin.Diagnostics;
 public enum PrioridadeJogo { Normal, AcimaDoNormal, Alta }
 
 /// <summary>Perfil reversível por jogo: afinidade de CPU (máscara de bits; 0 = todos os núcleos), prioridade e
-/// duas otimizações OPT-IN com aviso (§5.3 do roadmap): <paramref name="TrimWorkingSet"/> libera as páginas
-/// residentes ao aplicar (ação pontual, sem estado a reverter) e <paramref name="TimerAltaResolucao"/> sobe a
-/// resolução do timer do sistema (1 ms) enquanto o jogo estiver aplicado — revertida ao fechar.</summary>
+/// três otimizações OPT-IN com aviso (§5.3 do roadmap): <paramref name="TrimWorkingSet"/> libera as páginas
+/// residentes ao aplicar (ação pontual, sem estado a reverter), <paramref name="TimerAltaResolucao"/> sobe a
+/// resolução do timer do sistema (1 ms) enquanto o jogo estiver aplicado — revertida ao fechar —,
+/// <paramref name="PrefereGpuAlta"/> marca o .exe como "alto desempenho" no UserGpuPreferences (HKCU, removido
+/// ao reverter) e <paramref name="PriorityBoost"/> ativa o boost de prioridade do processo enquanto aplicado.</summary>
 public sealed record PerfilJogo(string Nome, string Executavel, long MascaraAfinidade, PrioridadeJogo Prioridade,
-    bool TrimWorkingSet = false, bool TimerAltaResolucao = false);
+    bool TrimWorkingSet = false, bool TimerAltaResolucao = false, bool PrefereGpuAlta = false, bool PriorityBoost = false);
 
 /// <summary>Estado de afinidade/prioridade de um processo, guardado para restaurar depois.</summary>
-public sealed record EstadoProcesso(long Afinidade, ProcessPriorityClass Prioridade);
+public sealed record EstadoProcesso(long Afinidade, ProcessPriorityClass Prioridade, bool Boost);
 
 /// <summary>Aplica e reverte um perfil a um processo em execução. O estado anterior é devolvido por
 /// <see cref="Aplicar"/> para que <see cref="Reverter"/> restaure exatamente (§21.4: temporário e reversível).</summary>
@@ -33,13 +35,14 @@ public static class AplicadorPerfil
         _ => ProcessPriorityClass.Normal, // nunca Realtime
     };
 
-    public static EstadoProcesso Aplicar(Process p, long mascaraAfinidade, PrioridadeJogo prio)
+    public static EstadoProcesso Aplicar(Process p, long mascaraAfinidade, PrioridadeJogo prio, bool boost = false)
     {
-        var anterior = new EstadoProcesso((long)p.ProcessorAffinity, p.PriorityClass);
+        var anterior = new EstadoProcesso((long)p.ProcessorAffinity, p.PriorityClass, p.PriorityBoostEnabled);
         long mascara = mascaraAfinidade == 0 ? MascaraTodosNucleos : (mascaraAfinidade & MascaraTodosNucleos);
         if (mascara == 0) mascara = MascaraTodosNucleos; // nunca deixar o processo sem nenhum núcleo
         p.ProcessorAffinity = (IntPtr)mascara;
         p.PriorityClass = Mapear(prio);
+        if (boost) p.PriorityBoostEnabled = true;
         return anterior;
     }
 
@@ -47,6 +50,7 @@ public static class AplicadorPerfil
     {
         p.ProcessorAffinity = (IntPtr)anterior.Afinidade;
         p.PriorityClass = anterior.Prioridade;
+        p.PriorityBoostEnabled = anterior.Boost;
     }
 
     /// <summary>Trim do working set (SetProcessWorkingSetSize -1/-1): libera as páginas residentes do processo.
@@ -112,14 +116,21 @@ public interface IControleProcesso
 
 /// <summary>Implementação real: localiza o processo pelo nome do executável e aplica/reverte o perfil,
 /// guardando o estado anterior por jogo. Trim de working set é aplicado uma vez (opt-in) e o timer de alta
-/// resolução sobe enquanto houver jogo usando e baixa quando o último for revertido.</summary>
+/// resolução sobe enquanto houver jogo usando e baixa quando o último for revertido. A preferência de GPU
+/// (HKCU UserGpuPreferences) é gravada ao aplicar e REMOVIDA ao reverter.</summary>
 public sealed class ControleProcessoWindows : IControleProcesso
 {
     readonly Dictionary<string, (Process proc, EstadoProcesso estado)> _estados = new(StringComparer.OrdinalIgnoreCase);
     readonly HashSet<string> _usandoTimer = new(StringComparer.OrdinalIgnoreCase);
+    readonly HashSet<string> _gpuPref = new(StringComparer.OrdinalIgnoreCase);
     readonly TimerAltaResolucao _timer;
+    readonly IRegistro _registro;
 
-    public ControleProcessoWindows(TimerAltaResolucao? timer = null) => _timer = timer ?? new TimerAltaResolucao();
+    public ControleProcessoWindows(TimerAltaResolucao? timer = null, IRegistro? registro = null)
+    {
+        _timer = timer ?? new TimerAltaResolucao();
+        _registro = registro ?? new RegistroUsuario();
+    }
 
     static string Nome(string exe) => Path.GetFileNameWithoutExtension(exe);
 
@@ -137,10 +148,16 @@ public sealed class ControleProcessoWindows : IControleProcesso
         if (procs.Length == 0) return false;
         try
         {
-            var estado = AplicadorPerfil.Aplicar(procs[0], jogo.MascaraAfinidade, jogo.Prioridade);
+            var estado = AplicadorPerfil.Aplicar(procs[0], jogo.MascaraAfinidade, jogo.Prioridade, jogo.PriorityBoost);
             if (jogo.TrimWorkingSet) { try { AplicadorPerfil.TrimWorkingSet(procs[0]); } catch { } }
             _estados[jogo.Executavel] = (procs[0], estado);
             if (jogo.TimerAltaResolucao) { _usandoTimer.Add(jogo.Executavel); _timer.Iniciar(); }
+            if (jogo.PrefereGpuAlta)
+            {
+                _registro.EscreverString(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences",
+                    Path.GetFileName(jogo.Executavel), "GpuPreference=2;");
+                _gpuPref.Add(jogo.Executavel);
+            }
             return true;
         }
         catch { return false; } // acesso negado / anti-cheat / exige admin
@@ -152,6 +169,11 @@ public sealed class ControleProcessoWindows : IControleProcesso
         try { if (!e.proc.HasExited) AplicadorPerfil.Reverter(e.proc, e.estado); } catch { }
         _estados.Remove(executavel);
         if (_usandoTimer.Remove(executavel)) _timer.Parar();
+        if (_gpuPref.Remove(executavel))
+        {
+            try { _registro.ApagarValor(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences", Path.GetFileName(executavel)); }
+            catch { }
+        }
         return true;
     }
 }
