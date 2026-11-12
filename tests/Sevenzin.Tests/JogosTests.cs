@@ -17,7 +17,7 @@ public class JogosTests
     public void Aplicar_e_reverter_restaura_afinidade_e_prioridade()
     {
         using var proc = Process.GetCurrentProcess();
-        var original = new EstadoProcesso((long)proc.ProcessorAffinity, proc.PriorityClass, proc.PriorityBoostEnabled);
+        var original = new EstadoProcesso((long)proc.ProcessorAffinity, proc.PriorityClass, proc.PriorityBoostEnabled, null);
         try
         {
             long umNucleo = 1L; // só o núcleo 0
@@ -41,7 +41,7 @@ public class JogosTests
     public void Mascara_zero_vira_todos_os_nucleos()
     {
         using var proc = Process.GetCurrentProcess();
-        var original = new EstadoProcesso((long)proc.ProcessorAffinity, proc.PriorityClass, proc.PriorityBoostEnabled);
+        var original = new EstadoProcesso((long)proc.ProcessorAffinity, proc.PriorityClass, proc.PriorityBoostEnabled, null);
         try
         {
             AplicadorPerfil.Aplicar(proc, 0, PrioridadeJogo.Normal); // 0 = todos

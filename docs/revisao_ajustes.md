@@ -256,6 +256,21 @@ confirmar o hash de arquivos grandes na cópia.
 **Lacunas registradas:** OfflineHive; boot BIOS/Legacy; CPU Sets por processo; rede por interface; lista de
 serviços/tarefas do original (#US cifrado); lista fixa de apps do debloat (o Sevenzin usa a lista real da imagem).
 
+## §13. CPU Sets + rede por interface (13/11/2026)
+
+- **CPU Sets** (`CpuSets.cs`, novo): `GetSystemCpuSetInformation` com parser puro dos offsets do winnt.h
+  (Id/Group/LogicalProcessorIndex/EfficiencyClass) e filtro `IdsDePerformance` (maior EfficiencyClass; null em
+  CPU homogênea — sem restrição a aplicar). `AplicadorPerfil` salva os conjuntos atuais, aplica os P-cores e
+  **restaura exatamente ao reverter**. Novo opt-in `PerfilJogo.CpuSetsPCores` (mostrado só em CPU híbrida),
+  complementando a afinidade por máscara.
+- **Rede por interface** (`RedePorInterface.cs`, novo): adaptadores IP ativos via WMI → 5 tweaks dinâmicos por
+  {GUID} com os valores literais do original (TcpAckFrequency=1, TCPNoDelay=1, TcpDelAckTicks=0, NetbiosOptions=2,
+  EnableMulticast=0), aplicados pelo `MotorTweaks` (backup/desfazer/auditoria). Seção "REDE (POR ADAPTADOR)" na
+  `AjustesView` com "Aplicar os 5" (confirmação) e "Desfazer" por adaptador.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **177/177** (parser de CPU Sets, filtro P/E, aplicar/reverter no
+próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem de adaptadores sem exceção).
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`

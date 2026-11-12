@@ -29,7 +29,7 @@ Fonte: análise estática já produzida — [`catalogo-otimizacoes.md`](catalogo
 | TdrDelay / Preferência de GPU / Power gating AMD / AMD DVR‑Chill | — | **d** | não implementados (risco/baixo retorno) |
 | Overclock de clock/memória do driver | — | **e** | não é otimização segura |
 | Limpeza de driver (DDU) | GPU **somente leitura** | **e** | ação destrutiva; app não usa DDU (DDU fica só no catálogo de downloads) |
-| Rede/latência (TcpAckFrequency, throttling, offloads…) | — | **d** | A/B dependente de NIC |
+| Rede/latência (TcpAckFrequency, throttling, offloads…) | `RedePorInterface` (TcpAckFrequency=1, TCPNoDelay=1, TcpDelAckTicks=0, NetbiosOptions=2, EnableMulticast=0 — valores literais) + `NetworkThrottlingIndex`/`RMPriorityThrottleDelay` no catálogo | **b** | por adaptador, reversível; offloads de NIC pendentes |
 | Memória/armazenamento (DisablePagingExecutive, MMAgent) | — | **d** | debatível; não implementado |
 | DPC/MSI/IRQ affinity | — | **d** | mascara instabilidade |
 | Serviços/tarefas não essenciais off | — | **d** | não implementado como toggles |
@@ -83,7 +83,7 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | 04 §4-5 | Debloat Appx + remover Edge/OneDrive | **e** | não implementado (alto impacto sem opt-in) — registrado |
 | 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **b** | **análise (F7.1) + construção (F7.2) + serviço de imagem (F12)**: ISO personalizada com remoção de apps provisionados/features e injeção de drivers INF assinados (DISM /Commit); pendrive SafeUsb/FAT32/split. Ficam fora: preferências offline (OfflineHive) e boot BIOS/Legacy — registrados |
 | 04 §7 / 05 §6-8 | Catálogo de instaladores + winget allowlist | **b** | 36 utilitários oficiais + allowlist literal de 5 IDs |
-| 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **b** | afinidade+prioridade+WS+timer opt-in por jogo, revertidos ao fechar |
+| 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **b** | `Jogos.cs`: afinidade+prioridade+boost+CPU Sets (P-cores, `Get/SetProcessDefaultCpuSets`)+WS+timer opt-in por jogo, tudo revertido ao fechar |
 | 04 §9 | Captura + anotação | **b** | 4 modos + editor + envio explícito (webhook do usuário) |
 | 04 §10 / 06 F12 | Assistente IA/humano via webhook | **b/e** | endpoint HTTPS **configurado pelo usuário**, envio explícito, contexto com consentimento; **HumanMode = lacuna** (lado servidor) |
 | 05 §2 | Enumeração de modos de vídeo (DEVMODE/Hz) | **b** | `LeitorModosVideo` + cartão na `GpuView` |
@@ -96,10 +96,8 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 
 ## Pendências / lacunas registradas
 - **Preferências offline (OfflineHive)** e **boot BIOS/Legacy** — não implementados (o boot é UEFI, coerente
-  com o alerta do original; OfflineHive exige montagem RW do hive SYSTEM/SOFTWARE).
-- **CPU Sets por processo** (Get/SetProcessDefaultCpuSets) e **rede por interface** (TcpAckFrequency,
-  EnableMulticast, NetbiosOptions — chaves dinâmicas por adaptador) — pendentes; a afinidade por máscara
-  P-cores já cobre o caso principal de jogos.
+  com o alerta do original; OfflineHive exige montagem RW do hive SYSTEM/SOFTWARE). Offloads de NIC
+  (`Disable-NetAdapter*`) pendentes — dependem da NIC e exigem A/B.
 - **Lista de serviços/tarefas** do original não foi recuperada (fica no `#US` cifrado) — lacuna registrada;
   o serviço confirmado (lfsvc) já é um tweak do catálogo. O mesmo vale para a lista exata de apps do debloat
   (o Sevenzin usa a lista REAL lida da imagem via DISM, não uma lista fixa inventada).

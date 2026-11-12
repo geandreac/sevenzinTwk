@@ -26,7 +26,78 @@ public partial class AjustesView : UserControl
             Lista.Children.Add(new TextBlock { Text = grupo.Key.ToUpperInvariant(), Style = SectionStyle });
             Lista.Children.Add(Cartao(grupo.Select(LinhaTweak)));
         }
+        // Rede por adaptador (dinâmica): 5 tweaks por interface, valores do original, reversíveis.
+        Lista.Children.Add(new TextBlock { Text = "REDE (POR ADAPTADOR)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(CartaoRede());
         AtualizarContador();
+    }
+
+    Border CartaoRede()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Ajustes de rede por adaptador (valores do original: ACK imediato, NoDelay, DelAck, NetBIOS off, DNS multicast off). Exige administrador; cada aplicação pede confirmação e tudo é desfazível.",
+            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+        });
+        var lista = new StackPanel();
+        sp.Children.Add(lista);
+        var atualizar = new Button { Style = (Style)Application.Current.Resources["SecondaryButton"], Content = "Atualizar adaptadores", HorizontalAlignment = HorizontalAlignment.Left, Padding = new Thickness(12, 7, 12, 7) };
+        atualizar.Click += (_, _) => MontarRede(lista);
+        sp.Children.Add(atualizar);
+        MontarRede(lista);
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 20), Child = sp };
+    }
+
+    void MontarRede(StackPanel host)
+    {
+        host.Children.Clear();
+        var interfaces = RedePorInterface.Listar();
+        if (interfaces.Count == 0)
+        {
+            host.Children.Add(new TextBlock { Text = "Nenhum adaptador IP ativo.", Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) });
+            return;
+        }
+        foreach (var i in interfaces)
+        {
+            var tweaks = RedePorInterface.TweaksPara(i.Guid);
+            int aplicados = tweaks.Count(_motor.Aplicado);
+
+            var info = new StackPanel { Margin = new Thickness(0, 0, 16, 0), VerticalAlignment = VerticalAlignment.Center };
+            info.Children.Add(new TextBlock { Text = i.Descricao, FontSize = 14, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+            info.Children.Add(new TextBlock { Text = $"{aplicados} de {tweaks.Count} ajustes aplicados · reversível e auditado", Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 2, 0, 0) });
+
+            var botoes = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            var aplicar = new Button { Style = (Style)Application.Current.Resources["PrimaryButton"], Content = "Aplicar os 5", Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 7, 12, 7) };
+            aplicar.Click += (_, _) =>
+            {
+                if (MessageBox.Show($"Aplicar os 5 ajustes de rede no adaptador:\n\n{i.Descricao}\n\nRisco médio — meça A/B. O estado anterior fica salvo para desfazer.",
+                        "Confirmação — rede por adaptador", MessageBoxButton.OKCancel, MessageBoxImage.Information) != MessageBoxResult.OK) return;
+                try
+                {
+                    foreach (var t in tweaks) _motor.Aplicar(t);
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning); }
+                MontarRede(host);
+            };
+            var desfazer = new Button { Style = (Style)Application.Current.Resources["SecondaryButton"], Content = "Desfazer", Padding = new Thickness(12, 7, 12, 7) };
+            desfazer.Click += (_, _) =>
+            {
+                foreach (var t in tweaks) _motor.Desfazer(t);
+                MontarRede(host);
+            };
+            botoes.Children.Add(aplicar);
+            botoes.Children.Add(desfazer);
+
+            var linha = new Grid { Margin = new Thickness(0, 6, 0, 6) };
+            linha.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            linha.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(info, 0);
+            Grid.SetColumn(botoes, 1);
+            linha.Children.Add(info);
+            linha.Children.Add(botoes);
+            host.Children.Add(linha);
+        }
     }
 
     static Border Cartao(IEnumerable<UIElement> linhas)

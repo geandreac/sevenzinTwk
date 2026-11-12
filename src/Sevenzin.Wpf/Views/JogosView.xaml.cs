@@ -201,6 +201,7 @@ public partial class JogosView : UserControl
         optins.Children.Add(Botao(Secundario, $"Timer 1 ms: {(j.TimerAltaResolucao ? "sim" : "não")}", () => AlternarTimer(j)));
         optins.Children.Add(Botao(Secundario, $"GPU: {(j.PrefereGpuAlta ? "alto desempenho" : "automática")}", () => AlternarGpu(j)));
         optins.Children.Add(Botao(Secundario, $"Boost: {(j.PriorityBoost ? "sim" : "não")}", () => AlternarBoost(j)));
+        if (Hibrido) optins.Children.Add(Botao(Secundario, $"Núcleos P (CPU Sets): {(j.CpuSetsPCores ? "sim" : "não")}", () => AlternarCpuSets(j)));
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         Grid.SetRow(info, 0);
         Grid.SetRow(acoes, 0);
@@ -271,6 +272,15 @@ public partial class JogosView : UserControl
         StatusLbl.Text = j.PriorityBoost
             ? "Boost de prioridade ligado — temporário (revertido ao fechar)."
             : "Boost de prioridade desligado.";
+    }
+
+    void AlternarCpuSets(PerfilJogo j)
+    {
+        _catalogo.Adicionar(j with { CpuSetsPCores = !j.CpuSetsPCores });
+        Montar();
+        StatusLbl.Text = j.CpuSetsPCores
+            ? "Núcleos P (CPU Sets) ligado — os threads do jogo passam a preferir os P-cores enquanto aplicado; revertido ao fechar."
+            : "Núcleos P (CPU Sets) desligado — volta ao agendamento padrão do Windows.";
     }
 
     void Aplicar(PerfilJogo j)

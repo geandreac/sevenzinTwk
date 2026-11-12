@@ -16,10 +16,11 @@ public enum PrioridadeJogo { Normal, AcimaDoNormal, Alta }
 /// <paramref name="PrefereGpuAlta"/> marca o .exe como "alto desempenho" no UserGpuPreferences (HKCU, removido
 /// ao reverter) e <paramref name="PriorityBoost"/> ativa o boost de prioridade do processo enquanto aplicado.</summary>
 public sealed record PerfilJogo(string Nome, string Executavel, long MascaraAfinidade, PrioridadeJogo Prioridade,
-    bool TrimWorkingSet = false, bool TimerAltaResolucao = false, bool PrefereGpuAlta = false, bool PriorityBoost = false);
+    bool TrimWorkingSet = false, bool TimerAltaResolucao = false, bool PrefereGpuAlta = false, bool PriorityBoost = false,
+    bool CpuSetsPCores = false);
 
-/// <summary>Estado de afinidade/prioridade de um processo, guardado para restaurar depois.</summary>
-public sealed record EstadoProcesso(long Afinidade, ProcessPriorityClass Prioridade, bool Boost);
+/// <summary>Estado de afinidade/prioridade/CPU Sets de um processo, guardado para restaurar depois.</summary>
+public sealed record EstadoProcesso(long Afinidade, ProcessPriorityClass Prioridade, bool Boost, uint[]? CpuSetsAnteriores);
 
 /// <summary>Aplica e reverte um perfil a um processo em execução. O estado anterior é devolvido por
 /// <see cref="Aplicar"/> para que <see cref="Reverter"/> restaure exatamente (§21.4: temporário e reversível).</summary>
@@ -35,9 +36,15 @@ public static class AplicadorPerfil
         _ => ProcessPriorityClass.Normal, // nunca Realtime
     };
 
-    public static EstadoProcesso Aplicar(Process p, long mascaraAfinidade, PrioridadeJogo prio, bool boost = false)
+    public static EstadoProcesso Aplicar(Process p, long mascaraAfinidade, PrioridadeJogo prio, bool boost = false, uint[]? cpuSets = null)
     {
-        var anterior = new EstadoProcesso((long)p.ProcessorAffinity, p.PriorityClass, p.PriorityBoostEnabled);
+        uint[]? anteriores = null;
+        if (cpuSets is { Length: > 0 })
+        {
+            anteriores = CpuSets.Atual(p);
+            CpuSets.AplicarAoProcesso(p, cpuSets);
+        }
+        var anterior = new EstadoProcesso((long)p.ProcessorAffinity, p.PriorityClass, p.PriorityBoostEnabled, anteriores);
         long mascara = mascaraAfinidade == 0 ? MascaraTodosNucleos : (mascaraAfinidade & MascaraTodosNucleos);
         if (mascara == 0) mascara = MascaraTodosNucleos; // nunca deixar o processo sem nenhum núcleo
         p.ProcessorAffinity = (IntPtr)mascara;
@@ -51,6 +58,8 @@ public static class AplicadorPerfil
         p.ProcessorAffinity = (IntPtr)anterior.Afinidade;
         p.PriorityClass = anterior.Prioridade;
         p.PriorityBoostEnabled = anterior.Boost;
+        if (anterior.CpuSetsAnteriores is { } ids)
+            CpuSets.AplicarAoProcesso(p, ids.Length > 0 ? ids : null); // vazio = restaura o padrão do sistema
     }
 
     /// <summary>Trim do working set (SetProcessWorkingSetSize -1/-1): libera as páginas residentes do processo.
@@ -148,7 +157,9 @@ public sealed class ControleProcessoWindows : IControleProcesso
         if (procs.Length == 0) return false;
         try
         {
-            var estado = AplicadorPerfil.Aplicar(procs[0], jogo.MascaraAfinidade, jogo.Prioridade, jogo.PriorityBoost);
+            uint[]? cpuSets = null;
+            if (jogo.CpuSetsPCores) cpuSets = CpuSets.IdsDePerformance(CpuSets.Listar()); // null em CPU homogênea
+            var estado = AplicadorPerfil.Aplicar(procs[0], jogo.MascaraAfinidade, jogo.Prioridade, jogo.PriorityBoost, cpuSets);
             if (jogo.TrimWorkingSet) { try { AplicadorPerfil.TrimWorkingSet(procs[0]); } catch { } }
             _estados[jogo.Executavel] = (procs[0], estado);
             if (jogo.TimerAltaResolucao) { _usandoTimer.Add(jogo.Executavel); _timer.Iniciar(); }
