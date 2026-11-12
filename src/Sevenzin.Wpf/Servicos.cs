@@ -11,6 +11,12 @@ public static class Servicos
     public static readonly ServicoAutenticacao Auth = new(Repo);
     public static readonly ServicoSessao Sessao = new();
 
+    /// <summary>Quando o Supabase está configurado (SEVENZIN_SUPABASE_URL/ANON), a autenticação usa o Supabase.</summary>
+    public static bool UsaSupabase => ConfigSupabase.Ativo;
+
+    /// <summary>Cliente Supabase da sessão logada (login, criar conta, acessos). Null quando no modo local.</summary>
+    public static ClienteSupabase? ClienteSupabase { get; set; }
+
     /// <summary>Semeia o admin das variáveis de ambiente (idempotente). Chamar uma vez na inicialização.</summary>
     public static string? SemearAdmin() => SemeadorAdmin.Semear(Contas, Environment.GetEnvironmentVariable);
 

@@ -29,7 +29,8 @@ public partial class LoginWindow : Window
     {
         InitializeComponent();
         JanelaArredondada.Arredondar(this);
-        _bootstrap = Servicos.Contas.Todos.Count == 0;
+        // Com Supabase não há "primeiro admin" local — o admin já existe no backend.
+        _bootstrap = !Servicos.UsaSupabase && Servicos.Contas.Todos.Count == 0;
 
         if (ModoAdmin)
         {
@@ -74,11 +75,18 @@ public partial class LoginWindow : Window
         if (e.Key == Key.Enter) Entrar_Click(sender, e);
     }
 
-    void Entrar_Click(object sender, RoutedEventArgs e)
+    async void Entrar_Click(object sender, RoutedEventArgs e)
     {
         var email = Email.Text;
         var senha = SenhaAtual();
         if (_bootstrap) { CriarPrimeiroAdmin(email, senha); return; }
+
+        // Modo Supabase: autentica no backend; o papel (admin/usuário) vem da tabela perfis (RLS).
+        if (Servicos.UsaSupabase)
+        {
+            await EntrarSupabase(email, senha);
+            return;
+        }
 
         // 2ª etapa do 2FA: senha já validada, falta o código do autenticador.
         if (_email2fa is not null)
@@ -125,6 +133,32 @@ public partial class LoginWindow : Window
             : r.Mensagem);
     }
 
+    async Task EntrarSupabase(string email, string senha)
+    {
+        EntrarBtn.IsEnabled = false;
+        Mensagem.Visibility = Visibility.Collapsed;
+        try
+        {
+            var cliente = new ClienteSupabase();
+            var r = await cliente.LoginAsync(email, senha);
+            if (!r.Ok)
+            {
+                _ = cliente.RegistrarAcessoAsync(email, "Falha de login", false);
+                Erro(r.Mensagem ?? "E-mail ou senha inválidos.");
+                return;
+            }
+            // Sessão local sintética com o papel do Supabase — o resto da UI (checagem de admin) segue igual.
+            var papel = cliente.EhAdmin ? PapelUsuario.Administrador : PapelUsuario.Usuario;
+            var nome = string.IsNullOrWhiteSpace(r.Dado) ? ValidacaoCredenciais.NomeDeEmail(cliente.Sessao!.Email) : r.Dado!;
+            Servicos.Sessao.Abrir(new Usuario(cliente.Sessao!.Email, nome, papel, "-", DateTime.UtcNow));
+            Servicos.ClienteSupabase = cliente;
+            _ = cliente.RegistrarAcessoAsync(email, "Sucesso", true);
+            LembrarCredenciais(email, senha);
+            DialogResult = true;
+        }
+        finally { if (DialogResult != true) EntrarBtn.IsEnabled = true; }
+    }
+
     void CriarPrimeiroAdmin(string email, string senha)
     {
         var nome = ValidacaoCredenciais.NomeDeEmail(email);
@@ -140,8 +174,19 @@ public partial class LoginWindow : Window
         catch (Exception ex) { Erro(ex.Message); }
     }
 
-    void Esqueci_Click(object sender, RoutedEventArgs e)
+    async void Esqueci_Click(object sender, RoutedEventArgs e)
     {
+        if (Servicos.UsaSupabase)
+        {
+            var email = Email.Text.Trim();
+            if (email.Length == 0) { Erro("Digite seu e-mail para receber o link de redefinição."); return; }
+            var ok = await new ClienteSupabase().ResetSenhaAsync(email);
+            MessageBox.Show(this, ok
+                ? $"Se houver uma conta com {email}, enviamos um link para redefinir a senha. Verifique seu e-mail."
+                : "Não foi possível solicitar a redefinição agora. Tente de novo em instantes.",
+                "Esqueci minha senha", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
         MessageBox.Show(this,
             "Este é um app local, sem servidor: não há recuperação por e-mail.\n\n" +
             "Para redefinir a senha, peça a outro administrador (tela Admin) ou refaça o seed " +
