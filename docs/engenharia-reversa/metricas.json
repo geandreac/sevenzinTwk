@@ -1,0 +1,429 @@
+{
+  "alvo": "C:\\re\\geandre_v3\\geandre.exe",
+  "sha256": "70DC5163CF1343D22484D0B2702AFDA125D37A38904D74EE9F90FAA489AFCB72",
+  "metodo": "analise estatica; nenhum binario executado",
+  "legenda_confianca": {
+    "CONFIRMADO": "nome/campo/API lido diretamente do binario ou de recurso extraido",
+    "INFERIDO": "deduzido de evidencia citada, sem prova da coleta ou do valor exibido",
+    "LACUNA": "nao foi possivel determinar"
+  },
+  "perfil_estatico": [
+    {
+      "id": "device_type",
+      "nome": "Tipo de dispositivo",
+      "categoria": "perfil",
+      "unidade": "desktop | notebook",
+      "fonte_confirmada": "SavedPcProfile.DeviceType",
+      "fonte_provavel": "deteccao de chassi/bateria",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: DeviceType",
+      "observacao": "campo existe no modelo; o metodo de deteccao nao foi recuperado"
+    },
+    {
+      "id": "notebook_model",
+      "nome": "Modelo do notebook",
+      "categoria": "perfil",
+      "unidade": "texto",
+      "fonte_confirmada": "SavedPcProfile.NotebookModel",
+      "fonte_provavel": "WMI/ACPI",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: NotebookModel",
+      "observacao": "aparece separado de Motherboard, sugerindo campo proprio para portateis"
+    },
+    {
+      "id": "motherboard",
+      "nome": "Placa-mae",
+      "categoria": "perfil",
+      "unidade": "fabricante/modelo",
+      "fonte_confirmada": "SavedPcProfile.Motherboard",
+      "fonte_provavel": "WMI Win32_BaseBoard (nao confirmado)",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: Motherboard",
+      "observacao": "nenhuma string Win32_* em claro"
+    },
+    {
+      "id": "memory_total",
+      "nome": "Memoria RAM total",
+      "categoria": "perfil",
+      "unidade": "GB",
+      "fonte_confirmada": "SavedPcProfile.Memory; GlobalMemoryStatusEx",
+      "fonte_provavel": "GlobalMemoryStatusEx",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: Memory, GlobalMemoryStatusEx",
+      "observacao": "API de memoria global confirmada; campo do perfil confirmado; conversao/exibicao inferida"
+    },
+    {
+      "id": "storage",
+      "nome": "Armazenamento",
+      "categoria": "perfil",
+      "unidade": "modelo/tipo/capacidade",
+      "fonte_confirmada": "SavedPcProfile.Storage; DriveInfo",
+      "fonte_provavel": "DriveInfo + WMI de disco",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: Storage; strings_ascii.txt: [IO.DriveInfo]",
+      "observacao": "DriveInfo e usado com certeza para espaco livre na criacao de midia"
+    },
+    {
+      "id": "display",
+      "nome": "Monitor",
+      "categoria": "perfil",
+      "unidade": "modelo/resolucao/taxa",
+      "fonte_confirmada": "SavedPcProfile.Display; EnumDisplayDevices",
+      "fonte_provavel": "EnumDisplayDevices + EDID",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: Display, EnumDisplayDevices",
+      "observacao": "resolucao e taxa Hz nao comprovadas como exibidas"
+    },
+    {
+      "id": "country",
+      "nome": "Pais/regiao",
+      "categoria": "perfil",
+      "unidade": "ISO 3166 / cultura",
+      "fonte_confirmada": "SavedPcProfile.Country; TwoLetterISOLanguageName",
+      "fonte_provavel": "cultura do Windows",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: Country, get_TwoLetterISOLanguageName",
+      "observacao": "usado tambem para idioma da UI (en/pt/es)"
+    },
+    {
+      "id": "cpu_model",
+      "nome": "Processador",
+      "categoria": "perfil",
+      "unidade": "fabricante/modelo/nucleos",
+      "fonte_confirmada": "tela Processador; IconIntel; GetSystemCpuSetInformation",
+      "fonte_provavel": "CPUID/registry (nao confirmado)",
+      "confianca": "INFERIDO",
+      "evidencia": "resources_clean/008__.resources: IconIntel.Image; icone cpu; API de CPU Sets",
+      "observacao": "nao ha campo Cpu explicito no modelo recuperado; marca Intel comprovada por imagem"
+    },
+    {
+      "id": "gpu_model",
+      "nome": "Placa de video",
+      "categoria": "perfil",
+      "unidade": "fabricante/modelo",
+      "fonte_confirmada": "Honest.Nvidia.PciIds; tela GPU",
+      "fonte_provavel": "PCI ID offline + Windows",
+      "confianca": "CONFIRMADO",
+      "evidencia": "recurso Honest.Nvidia.PciIds (112604 B): '# NVIDIA vendor section bundled for offline GPU identification.'",
+      "observacao": "identificacao NVIDIA offline comprovada; GPUs AMD/Intel sem tabela dedicada confirmada"
+    },
+    {
+      "id": "psu",
+      "nome": "Fonte",
+      "categoria": "perfil",
+      "unidade": "watts/modelo",
+      "fonte_confirmada": "SavedPcProfile.PowerSupply",
+      "fonte_provavel": "entrada manual",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: PowerSupply",
+      "observacao": "nao existe sensor de fonte; campo e manual"
+    },
+    {
+      "id": "case",
+      "nome": "Gabinete",
+      "categoria": "perfil",
+      "unidade": "modelo",
+      "fonte_confirmada": "SavedPcProfile.Case",
+      "fonte_provavel": "entrada manual",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: Case",
+      "observacao": "sem deteccao automatica possivel"
+    },
+    {
+      "id": "cooler",
+      "nome": "Cooler",
+      "categoria": "perfil",
+      "unidade": "modelo",
+      "fonte_confirmada": "SavedPcProfile.Cooler",
+      "fonte_provavel": "entrada manual",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: Cooler",
+      "observacao": "nao implica leitura de RPM"
+    },
+    {
+      "id": "profile_state",
+      "nome": "Estado do perfil",
+      "categoria": "perfil",
+      "unidade": "salvo | recomendado | customizado",
+      "fonte_confirmada": "SavedPcProfile, RecommendedProfile, HasCustomSettings, HasDetails, SelectedId, UpdatedUtc",
+      "fonte_provavel": "persistencia local",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "permite comparar perfil do usuario com o recomendado"
+    }
+  ],
+  "sistema_dinamico": [
+    {
+      "id": "ram_usage",
+      "nome": "Uso de memoria",
+      "categoria": "sistema",
+      "unidade": "% ou MB",
+      "fonte_confirmada": "GlobalMemoryStatusEx",
+      "fonte_provavel": "GlobalMemoryStatusEx",
+      "confianca": "INFERIDO",
+      "evidencia": "output/strings_heap.txt: GlobalMemoryStatusEx",
+      "observacao": "API presente; nao ha prova de exibicao periodica"
+    },
+    {
+      "id": "disk_free",
+      "nome": "Espaco livre em disco",
+      "categoria": "sistema",
+      "unidade": "bytes/GB",
+      "fonte_confirmada": "IO.DriveInfo.AvailableFreeSpace",
+      "fonte_provavel": "DriveInfo",
+      "confianca": "CONFIRMADO",
+      "evidencia": "resources_clean/110_Honest.WindowsMedia.BuildMedia.ps1: $outDrive.AvailableFreeSpace; strings_ascii.txt: [IO.DriveInfo]::new",
+      "observacao": "comprovado como validacao de espaco na criacao de ISO/USB"
+    },
+    {
+      "id": "recycle_bin_size",
+      "nome": "Tamanho da lixeira",
+      "categoria": "sistema",
+      "unidade": "bytes/itens",
+      "fonte_confirmada": "SHQueryRecycleBin",
+      "fonte_provavel": "shell32",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt: SHQueryRecycleBin, SHEmptyRecycleBin",
+      "observacao": "consulta e limpeza confirmadas; tela exata [LACUNA]"
+    },
+    {
+      "id": "cpu_usage",
+      "nome": "Uso de CPU",
+      "categoria": "sistema",
+      "unidade": "%",
+      "fonte_confirmada": "PerformanceCounter (tipo); GetSystemTimes (ausente)",
+      "fonte_provavel": "PerformanceCounter",
+      "confianca": "LACUNA",
+      "evidencia": "output/strings_heap.txt: PerformanceCounter; nenhuma categoria/contador em claro",
+      "observacao": "nao e possivel afirmar medicao nem exibicao"
+    },
+    {
+      "id": "cpu_clock",
+      "nome": "Clock da CPU",
+      "categoria": "sistema",
+      "unidade": "MHz",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem registry/PDH/NVAPI em claro",
+      "observacao": "nao afirmar leitura de clock em tempo real"
+    },
+    {
+      "id": "cpu_temp",
+      "nome": "Temperatura da CPU",
+      "categoria": "sistema",
+      "unidade": "C",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem MSAcpi_ThermalZoneTemperature, WinRing0, OpenHardwareMonitor ou similar",
+      "observacao": "nao ha evidencia de sensor de temperatura"
+    },
+    {
+      "id": "gpu_usage",
+      "nome": "Uso da GPU",
+      "categoria": "sistema",
+      "unidade": "%",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem PDH 'GPU Engine', NVML, NVAPI, DXGI ou D3DKMT em claro",
+      "observacao": "identificar a GPU nao implica medir uso"
+    },
+    {
+      "id": "gpu_temp",
+      "nome": "Temperatura da GPU",
+      "categoria": "sistema",
+      "unidade": "C",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem NVAPI/NVML/ADL/IGCL",
+      "observacao": "nao afirmar leitura termica"
+    },
+    {
+      "id": "gpu_clock",
+      "nome": "Clock da GPU",
+      "categoria": "sistema",
+      "unidade": "MHz",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem APIs de clock",
+      "observacao": "MSI Afterburner e apenas item de download"
+    },
+    {
+      "id": "gpu_vram",
+      "nome": "VRAM",
+      "categoria": "sistema",
+      "unidade": "MB/GB",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "registry/Display",
+      "confianca": "LACUNA",
+      "evidencia": "sem campo Vram no modelo recuperado",
+      "observacao": "capacidade pode vir do nome comercial na tabela PCI, nao de medicao"
+    },
+    {
+      "id": "fan_speed",
+      "nome": "Rotacao de fans",
+      "categoria": "sistema",
+      "unidade": "RPM",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem EC/SMBus/NVAPI",
+      "observacao": "nao ha evidencia"
+    },
+    {
+      "id": "disk_io",
+      "nome": "I/O de disco",
+      "categoria": "sistema",
+      "unidade": "MB/s",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "PerformanceCounter",
+      "confianca": "LACUNA",
+      "evidencia": "PerformanceCounter presente, sem contador nomeado",
+      "observacao": "o app ajusta prioridade de I/O por processo, mas nao mede throughput"
+    },
+    {
+      "id": "network",
+      "nome": "Rede",
+      "categoria": "sistema",
+      "unidade": "Mbps",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem NetworkInterface/GetAdaptersInfo em claro",
+      "observacao": "download de instaladores nao expoe metrica de rede"
+    },
+    {
+      "id": "fps",
+      "nome": "FPS / frametime",
+      "categoria": "jogo",
+      "unidade": "fps / ms",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem PresentMon, ETW, DXGI ou hook de apresentacao; 'Fps' e ProductName",
+      "observacao": "o nome do produto e 'Fps', mas nao ha prova de medicao de frames"
+    },
+    {
+      "id": "uptime",
+      "nome": "Tempo ligado",
+      "categoria": "sistema",
+      "unidade": "h",
+      "fonte_confirmada": "nenhuma",
+      "fonte_provavel": "desconhecida",
+      "confianca": "LACUNA",
+      "evidencia": "sem GetTickCount64 em claro",
+      "observacao": "nao ha evidencia"
+    }
+  ],
+  "controles_de_desempenho": [
+    {
+      "id": "affinity",
+      "nome": "Afinidade de CPU",
+      "tipo": "controle",
+      "fonte_confirmada": "GetProcessAffinityMask, SetProcessAffinityMask",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "aplicado por processo de jogo"
+    },
+    {
+      "id": "cpu_sets",
+      "nome": "CPU Sets",
+      "tipo": "controle",
+      "fonte_confirmada": "GetSystemCpuSetInformation, Get/SetProcessDefaultCpuSets, Get/SetThreadSelectedCpuSets",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "permite fixar threads em CCDs/P-cores"
+    },
+    {
+      "id": "priority",
+      "nome": "Prioridade do processo/thread",
+      "tipo": "controle",
+      "fonte_confirmada": "Get/SetPriorityClass, Get/SetThreadPriority, PriorityClass",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "campo CpuPriority no perfil por jogo"
+    },
+    {
+      "id": "priority_boost",
+      "nome": "Priority boost",
+      "tipo": "controle",
+      "fonte_confirmada": "Get/SetProcessPriorityBoost, Get/SetThreadPriorityBoost",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "ajuste fino de escalonamento"
+    },
+    {
+      "id": "io_priority",
+      "nome": "Prioridade de I/O",
+      "tipo": "controle",
+      "fonte_confirmada": "propriedade IoPriority / CpuIoEnabled",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt: get_IoPriority, set_IoPriority, CpuIoEnabled",
+      "observacao": "API usada nao recuperada; sem NtSetInformationProcess em claro"
+    },
+    {
+      "id": "working_set",
+      "nome": "Working set",
+      "tipo": "controle",
+      "fonte_confirmada": "SetProcessWorkingSetSize",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "reduz memoria residente do jogo"
+    }
+  ],
+  "aplicacao": [
+    {
+      "id": "license_days",
+      "nome": "Dias restantes de licenca",
+      "categoria": "conta",
+      "fonte_confirmada": "KeyAuth_ExpiryDaysLeft",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "exibido na conta/configuracoes"
+    },
+    {
+      "id": "app_version",
+      "nome": "Versao do aplicativo",
+      "categoria": "app",
+      "fonte_confirmada": "FileVersionInfo, get_Version; FileVersion 2.5.1.0",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/triage.txt; output/strings_heap.txt",
+      "observacao": "string de build 'Version: 2026.10.07'"
+    },
+    {
+      "id": "online_users",
+      "nome": "Usuarios online",
+      "categoria": "app",
+      "fonte_confirmada": "KeyAuth_FetchOnline, KeyAuth_FetchStats",
+      "confianca": "CONFIRMADO",
+      "evidencia": "output/strings_heap.txt",
+      "observacao": "dado vem do backend, nao do PC"
+    },
+    {
+      "id": "hwid",
+      "nome": "Identificacao do dispositivo (HWID)",
+      "categoria": "conta",
+      "fonte_confirmada": "icone fingerprint ('Identificacao'), AccountKey",
+      "confianca": "INFERIDO",
+      "evidencia": "Honest.UI.Icons.manifest.json; output/strings_heap.txt: AccountKey",
+      "observacao": "algoritmo de composicao [LACUNA]"
+    }
+  ],
+  "resumo": {
+    "total_entradas": 38,
+    "confirmados": 13,
+    "inferidos": 13,
+    "lacunas": 12,
+    "por_secao": {
+      "perfil_estatico": 13,
+      "sistema_dinamico": 15,
+      "controles_de_desempenho": 6,
+      "aplicacao": 4
+    },
+    "aviso": "Nenhum valor numerico de hardware foi inventado. Onde nao ha API confirmada, a entrada e LACUNA."
+  }
+}
