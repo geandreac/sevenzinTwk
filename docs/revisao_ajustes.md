@@ -103,6 +103,31 @@ handler fake 2xx/5xx/rede).
 **Pendências / validação manual:** render visual e captura real nos 4 modos (F8); envio real contra um webhook de
 teste do usuário; suavidade do desenho a lápis em imagens grandes (re-render por ponto).
 
+## §7. Fase 3 — Instaladores completos (12/11/2026)
+
+- `WingetRunner.cs` (novo): allowlist winget **literal** do original (5 IDs: Steam/Discord/7-Zip/Chrome/VLC),
+  código "já instalado" `-1978335189` e construção do comando como função pura; `InstalarAsync` recusa qualquer
+  ID fora da lista sem iniciar processo.
+- `Instaladores.cs`: catálogo ampliado para **36 utilitários** — os 7 existentes + os nomes confirmados na RE
+  (05_metricas §6): 7-Zip, Brave, Chrome, Edge, DirectX, Epic, Rockstar, Ubisoft, VALORANT, FACEIT, Gamers Club,
+  TeamSpeak, LatencyMon, MSI Afterburner, G HUB, NVCleanstall, OCAT, Open-Shell, StartAllBack, VS Code, Visual
+  Studio, DDU, Radeon Software Slimmer, ZenTimings, Prime95, Geekbench, OCCT, DriverStore Explorer, driver de rede
+  Intel. **Sempre fonte oficial**; download direto continua só para URLs estáveis (Sysinternals). URLs/hashes do
+  original são lacuna no `#US` — não inventados.
+- `InstaladoresView`: cartão "Instalação rápida (winget)" com checkboxes dos 5 IDs, confirmação explícita antes
+  de executar e andamento registrado na fila persistida.
+- **Exclusão registrada:** KMS Activator (logo confirmado no original) NÃO entra no catálogo — ativador de licença
+  não-oficial, risco de malware e violação de licença (`CatalogoUtilitarios.Excluidos` + teste).
+
+**Arquivos alterados:** `WingetRunner.cs` (novo), `Instaladores.cs`, `InstaladoresView.xaml.cs`,
+`WingetTests.cs` (novo).
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **123/123** (allowlist literal, comando exato, rejeição fora da
+lista, cobertura dos nomes da RE, exclusão do KMS).
+
+**Pendências / validação manual:** instalação real via winget em máquina controlada (confirmação na UI);
+validação visual do cartão (F8).
+
 
 ## Resumo por item
 | # | Item | Status |

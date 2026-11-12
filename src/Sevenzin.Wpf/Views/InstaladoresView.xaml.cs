@@ -29,6 +29,7 @@ public partial class InstaladoresView : UserControl
     {
         InitializeComponent();
         foreach (var u in CatalogoUtilitarios.Todos) Lista.Children.Add(Cartao(u));
+        Lista.Children.Add(CartaoWinget());
         Lista.Children.Add(CartaoFila());
     }
 
@@ -125,8 +126,65 @@ public partial class InstaladoresView : UserControl
         catch (Exception ex) { MessageBox.Show(ex.Message, "Erro ao abrir", MessageBoxButton.OK, MessageBoxImage.Warning); }
     }
 
-    static string NomeEstado(EstadoFila e) => e switch
+    static string NomeAmigavelWinget(string chave) => chave switch
     {
+        "steam" => "Steam",
+        "discord" => "Discord",
+        "7zip" => "7-Zip",
+        "chrome" => "Google Chrome",
+        "vlc" => "VLC",
+        _ => chave,
+    };
+
+    /// <summary>Instalação rápida via winget: SOMENTE os 5 IDs da allowlist confirmada na engenharia
+    /// reversa. Cada execução exige confirmação explícita; nada roda sozinho.</summary>
+    Border CartaoWinget()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock { Text = "INSTALAÇÃO RÁPIDA (WINGET)", Style = SectionStyle });
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Instala pelos IDs oficiais do winget (lista fechada do original). Cada item pede confirmação; o andamento aparece na fila abaixo.",
+            Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 2, 0, 8), TextWrapping = TextWrapping.Wrap,
+        });
+
+        var caixas = WingetAllowlist.Lista.Select(item =>
+        {
+            var cb = new CheckBox { Content = $"{NomeAmigavelWinget(item.Chave)}  —  {item.Id}", Tag = item.Id, FontSize = 13, Margin = new Thickness(0, 3, 0, 3) };
+            return cb;
+        }).ToList();
+        foreach (var cb in caixas) sp.Children.Add(cb);
+
+        var status = new TextBlock { FontSize = 12, Margin = new Thickness(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        var botao = new Button { Style = Primario, Content = "Instalar selecionados", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 12, 0, 0), Padding = new Thickness(12, 7, 12, 7) };
+        botao.Click += async (_, _) =>
+        {
+            var escolhidos = caixas.Where(c => c.IsChecked == true).Select(c => (string)c.Tag).ToList();
+            if (escolhidos.Count == 0) { status.Text = "Selecione ao menos um item."; status.Foreground = Muted; status.Visibility = Visibility.Visible; return; }
+            if (MessageBox.Show($"O winget vai instalar:\n\n• {string.Join("\n• ", escolhidos)}\n\nConfirmar?", "Instalação via winget",
+                    MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+
+            botao.IsEnabled = false;
+            status.Visibility = Visibility.Visible;
+            foreach (var id in escolhidos)
+            {
+                status.Foreground = Muted;
+                status.Text = $"Instalando {id}…";
+                _fila.Marcar(new ItemFila(id, "winget:" + id, EstadoFila.Baixando, null, null));
+                var r = await WingetRunner.InstalarAsync(id);
+                status.Foreground = r.Ok ? Success : Danger;
+                status.Text = $"{id}: {(r.JaInstalado ? "já estava instalado" : r.Detalhe)}";
+                _fila.Marcar(new ItemFila(id, "winget:" + id, r.Ok ? EstadoFila.Concluido : EstadoFila.Falhou, r.Detalhe, null));
+            }
+            botao.IsEnabled = true;
+            AtualizarFila();
+        };
+        sp.Children.Add(botao);
+        sp.Children.Add(status);
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
+    }
+
+    static string NomeEstado(EstadoFila e) => e switch    {
         EstadoFila.Pendente => "Pendente",
         EstadoFila.Baixando => "Baixando…",
         EstadoFila.Verificando => "Verificando…",
