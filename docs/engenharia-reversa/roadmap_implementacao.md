@@ -1,10 +1,12 @@
 # Roadmap de implementação — do inventário ao sistema de otimização
 
 Derivado da análise das 7 fases ([`00_resumo`](00_resumo.md) … [`06_fluxos`](06_fluxos.md) + [`metricas.json`](metricas.json)).
-Guia: **medir antes de otimizar**, só o subconjunto **seguro, reversível e auditado**; o conjunto perigoso do original
-(ver §C) é **excluído por design**, não "a implementar". Fonte da trava: `GuardaSeguranca` em `Tweaks.cs`.
+Guia: **medir antes de otimizar**, tudo **reversível e auditado**, com aviso e confirmação para itens de risco.
+**Atualização (12/11/2026):** por decisão do dono, a trava `GuardaSeguranca` foi removida (ver `revisao_ajustes.md` §4)
+e o conjunto antes "excluído por design" (§7) passou a **em escopo**, implementado por fases — o plano detalhado
+por tela/funcionalidade vive em [`roadmap-fases-telas.md`](../../roadmap-fases-telas.md).
 
-Legenda de estado: ✅ pronto · 🟡 pronto (validação manual pendente) · 🔜 próximo · ⛔ não replicar.
+Legenda de estado: ✅ pronto · 🟡 pronto (validação manual pendente) · 🔜 próximo · ⛔ não replicar (histórico).
 
 ---
 
@@ -23,8 +25,8 @@ Legenda de estado: ✅ pronto · 🟡 pronto (validação manual pendente) · �
 | 05 métricas §2 | Enumeração de modos de vídeo (DEVMODE, Hz) | — (só modo atual via WMI) | 🔜 |
 | 05 métricas §3 | Memória/disco/lixeira reais; CPU/GPU uso | `Coletores`, `LeitorGpuUso` (GPU Engine); CPU% | 🟡 |
 | 05 §6-8 | Catálogo de instaladores (fontes oficiais) + winget allowlist | `Instaladores.cs` (`CatalogoUtilitarios`, verificação de assinatura) | ✅ subconjunto benigno |
-| 06 fluxos F5-F8 | Windows Media / ISO / USB / pós-instalação | — | ⛔ fora do escopo (instalação de SO, GPL, alto risco) |
-| 06 fluxos F12 | Assistente IA/humano via webhook | — | ⛔ não replicado (exfiltração/telemetria remota) |
+| 06 fluxos F5-F8 | Windows Media / ISO / USB / pós-instalação | — | 🔜 em escopo desde 12/11/2026 (fase Windows Media) |
+| 06 fluxos F12 | Assistente IA/humano via webhook | — | 🔜 em escopo desde 12/11/2026 (fase Assistente; envio explícito por mensagem) |
 
 ## 2. Telas: original × Sevenzin
 
@@ -42,7 +44,7 @@ Legenda de estado: ✅ pronto · 🟡 pronto (validação manual pendente) · �
 | Capturas | `CapturasView` | local, sem webhook |
 | Telemetria/Benchmark/Inventário | `TelemetriaView`, `BenchmarkView`, `InventarioView` | A/B, frametime, inventário |
 | Configurações | `ConfiguracoesView` | — |
-| Assistente / Pendrive / Proteção | — | ⛔ não replicados (ver §C) |
+| Assistente / Pendrive / Proteção | — | 🔜 em escopo desde 12/11/2026 (fases dedicadas) |
 
 ## 3. Pré-requisitos
 
@@ -111,14 +113,19 @@ Build 0/0, 101/101 testes.
 Aplicar/desfazer os 16 tweaks em máquina real com admin; uso de GPU/CPU sob carga; suavidade das animações e "reduzir
 movimento". Registrado em [`revisao_ajustes.md`](../revisao_ajustes.md) e [`paridade_funcional.md`](../paridade_funcional.md).
 
-## 7. ⛔ Fora do escopo (não replicar — §C do charter)
+## 7. Antigo "fora do escopo" — agora em escopo (por decisão do dono, 12/11/2026)
 
-| do original | por quê |
+Cada item abaixo entra por fase com **aviso, confirmação explícita e desfazer** (regra de segurança nº 2 do AGENTS.md);
+nenhum roda sem o usuário pedir. O plano por fase está em [`roadmap-fases-telas.md`](../../roadmap-fases-telas.md).
+
+| do original | tratamento no Sevenzin |
 |---|---|
-| `EnableLUA=0` (desliga UAC), grupo `uac` | remove consentimento de elevação — `GuardaSeguranca` recusa |
-| Remoção forçada de Edge/OneDrive | alto impacto sem opt-in claro |
-| Construtor de ISO/USB/debloat do Windows (F5–F8) | instalação de SO; reaproveita binários GPL; alto risco |
-| Assistente IA via webhook, HWID/Discord, captura→webhook, KeyAuth | exfiltração / telemetria remota de dados do usuário |
-| Desligar Defender/HVCI/mitigações/SmartScreen/Update, write-cache forçado | segurança do SO / risco de perda de dados |
+| `EnableLUA=0` (desliga UAC), grupo `uac` | 🔜 fase de tweaks avançados: aviso alto, confirmação, desfazer via `MotorTweaks` |
+| Remoção forçada de Edge/OneDrive | 🔜 fase de desinstalação assistida: aviso alto + opt-in por item |
+| Construtor de ISO/USB/debloat do Windows (F5–F8) | 🔜 fase Windows Media: réplica das etapas confirmadas na engenharia reversa (análise, remoção de apps, drivers, ISO/USB) |
+| Assistente IA via webhook | 🔜 fase assistente: envio explícito por mensagem, consentimento por conversa |
+| HWID/Discord/KeyAuth | 🔜 fase de licenciamento: substituído por fluxo próprio e-mail+senha + licença local |
+| Captura→webhook | 🔜 fase captura: salvar local permanece padrão; envio só por ação explícita |
+| Desligar Defender/HVCI/mitigações/SmartScreen/Update, write-cache forçado | 🔜 fase de tweaks avançados: risco ALTO, confirmação + desfazer |
 
-O Sevenzin, no máximo, **detecta e oferece restaurar** o estado protegido desses mecanismos — nunca os desliga.
+O Sevenzin não tem comportamento oculto: toda ação de rede é explícita e todo ajuste mantém prévia/backup/desfazer.

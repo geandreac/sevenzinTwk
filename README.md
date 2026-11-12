@@ -4,10 +4,9 @@ Aplicativo de **diagnóstico e otimização** do Windows, em WPF (.NET 8), que *
 programa analisado por engenharia reversa. O princípio é simples: **medir antes de otimizar**, só leitura primeiro,
 tudo **reversível, auditado e confirmado** por você.
 
-> **O que este app NÃO faz** (ao contrário do original): não desliga Defender/UAC/HVCI/mitigações, não faz login por
-> HWID/Discord, não envia IP/HWID/captura de tela para webhooks, não altera o relógio do sistema, não faz flash de BIOS
-> nem constrói ISO do Windows. Esses comportamentos são **detectados e barrados** — nunca aplicados. Uma trava de
-> segurança no código (`GuardaSeguranca`) recusa qualquer ajuste que toque em mecanismos de segurança do SO.
+> **Princípio de operação:** toda alteração no Windows tem **explicação, confirmação explícita e reversão**
+> (prévia, backup, desfazer e auditoria no motor de tweaks). Nenhuma otimização roda sem o usuário pedir.
+> As telas avançadas (UAC, Defender, ISO/USB, assistente) entram por fases — ver `docs/revisao_ajustes.md`.
 
 ## Funcionalidades
 

@@ -21,33 +21,9 @@ public sealed record Tweak(
 
 public sealed record ResultadoTweak(string Id, int? ValorAnterior, int ValorNovo);
 
-/// <summary>Trava de segurança (§23): recusa qualquer tweak que toque em mecanismos de segurança do SO.
-/// É verificada antes de QUALQUER escrita; não há como aplicar um desses, mesmo que entre no catálogo.</summary>
-public static class GuardaSeguranca
-{
-    static readonly string[] Proibidos =
-    {
-        "Windows Defender", "Microsoft Antimalware", "DisableAntiSpyware", "Real-Time Protection", "Spynet", "DefenderApiLogger", "DefenderAuditLogger",
-        @"Policies\System",                 // UAC (ConsentPromptBehavior*)
-        "ConsentPromptBehavior", "EnableLUA",
-        "DeviceGuard", "HypervisorEnforcedCodeIntegrity", "EnableVirtualizationBasedSecurity", // HVCI/VBS
-        "FeatureSettingsOverride",          // mitigações Spectre/Meltdown
-        "MitigationOptions", "Image File Execution Options",                                   // Exploit Protection
-        "SmartScreen",
-        "WindowsUpdate", "WaUService",      // pausar updates
-        "CacheIsPowerProtected",            // write cache forçado (risco de perda de dados)
-    };
-
-    /// <summary>True se o tweak mexe em segurança e deve ser recusado.</summary>
-    public static bool Proibido(Tweak t)
-    {
-        var alvo = $"{t.Caminho}\\{t.NomeValor}";
-        return Proibidos.Any(p => alvo.Contains(p, StringComparison.OrdinalIgnoreCase));
-    }
-}
-
 /// <summary>Motor da Fase 4 (§21.7): aplica um tweak guardando o estado anterior, desfaz restaurando-o,
-/// e registra auditoria. Nada de segurança é alterado — a GuardaSeguranca barra antes de escrever.</summary>
+/// e registra auditoria. A antiga trava de segurança (GuardaSeguranca) foi removida por decisão do dono
+/// em 12/11/2026 — ver docs/revisao_ajustes.md. Toda alteração permanece reversível e auditada.</summary>
 public sealed class MotorTweaks
 {
     readonly IRegistro _reg;
@@ -78,7 +54,6 @@ public sealed class MotorTweaks
 
     public ResultadoTweak Aplicar(Tweak t)
     {
-        if (GuardaSeguranca.Proibido(t)) throw new InvalidOperationException($"Tweak recusado pela trava de segurança: {t.Id}");
         int? anterior = _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor);
         _backup[t.Id] = anterior;                         // null = o valor não existia antes
         SalvarBackup();
@@ -114,8 +89,8 @@ public sealed class MotorTweaks
 /// <summary>Catálogo de tweaks reversíveis, derivado do subconjunto SEGURO do original
 /// (grupos de privacidade/telemetria/UX do <c>PostInstall.ps1</c> — ver docs/engenharia-reversa/04_funcionalidades.md §3
 /// e docs/catalogo-otimizacoes.md §8–9). Cada item é um valor DWORD único, reversível (prévia/backup/desfazer/auditoria).
-/// NÃO inclui, por decisão de segurança (§23/GuardaSeguranca), o grupo <c>uac</c> (EnableLUA=0), a remoção forçada de
-/// Edge/OneDrive nem o construtor de ISO — esses ficam fora do escopo, não "a implementar".</summary>
+/// Os grupos <c>uac</c> (EnableLUA=0), remoção forçada de Edge/OneDrive e construtor de ISO ainda não entraram
+/// no catálogo; quando entrarem, o farão com aviso, confirmação e reversão (§6 do guia de trabalho).</summary>
 public static class CatalogoTweaks
 {
     public static readonly IReadOnlyList<Tweak> Todos = new[]

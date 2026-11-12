@@ -13,16 +13,21 @@ A análise completa do original está em [`docs/engenharia-reversa/`](docs/engen
 o roadmap em [`docs/engenharia-reversa/roadmap_implementacao.md`](docs/engenharia-reversa/roadmap_implementacao.md) e o
 mapa de paridade em [`docs/paridade_funcional.md`](docs/paridade_funcional.md). Comece por esses.
 
-## 🔴 Regras de segurança — INEGOCIÁVEIS
+## 🔴 Regras de segurança — operação
 
 1. **NUNCA execute** o binário original `geandre.exe` (em `C:\re\geandre_v3\` ou `Z:\Computador\Downloads\honest*`),
    nem qualquer binário dele extraído. SHA-256 `70DC5163…AFCB72`. Só análise **estática**; use os docs já prontos.
-2. O app **nunca replica** o conjunto perigoso do original: desligar Defender/UAC/HVCI/mitigações/SmartScreen/Windows
-   Update/write-cache; login por HWID/Discord; captura→webhook; `SetSystemTime`; flash de BIOS; construtor de ISO/debloat.
-   A trava `GuardaSeguranca` (`src/Sevenzin.Diagnostics/Tweaks.cs`) recusa qualquer tweak que toque em segurança —
-   **não a enfraqueça**. Todo tweak novo passa por ela e tem teste.
+2. **Toda ação que altera o Windows** (registro, serviços, ISO/USB, desinstalação, modo de vídeo) exige: explicação
+   clara do efeito, **confirmação explícita do usuário** e **opção de desfazer** quando possível (prévia/backup/
+   auditoria no `MotorTweaks`). **Nunca execute otimizações na máquina de desenvolvimento sem confirmação do dono.**
 3. Senhas **nunca** em texto puro — hash **bcrypt** (`Usuarios.cs`/`Autenticacao.cs`).
-4. Nada de telemetria/exfiltração: o app não envia dados do usuário para fora da máquina.
+4. **Nada de exfiltração oculta**: qualquer envio pela rede (assistente, captura, licença) precisa ser uma ação
+   explícita e configurada pelo usuário, com consentimento por envio — nunca em segundo plano sem aviso.
+
+> **Nota (12/11/2026):** a trava `GuardaSeguranca` (que recusava tweaks de segurança) foi **removida por decisão do
+> dono** (ver `docs/revisao_ajustes.md` §4). Para restaurá-la: branch `arquivo/guardaseguranca` (commit `7091d90`).
+> Os grupos avançados (UAC, Defender, etc.) estão **em escopo** e entram no catálogo com aviso, confirmação e
+> reversão, conforme a regra 2 acima. O catálogo NÃO ganha item sem explicação de risco e teste.
 
 ## 🔴 Autoria no Git — INEGOCIÁVEL
 
@@ -43,8 +48,8 @@ docs/                      documentação; docs/engenharia-reversa/ = inventári
 
 Arquitetura: a lógica fica em `Sevenzin.Diagnostics` (sem dependência de UI, 100% testável); a UI (`Sevenzin.Wpf`)
 só orquestra. Tweaks são DWORDs de registro reversíveis via `MotorTweaks` (prévia → backup → aplicar → desfazer →
-auditoria). O catálogo `CatalogoTweaks` é renderizado automaticamente pela `AjustesView` — adicionar um tweak seguro
-é só adicionar uma entrada ao array (e um teste).
+auditoria). O catálogo `CatalogoTweaks` é renderizado automaticamente pela `AjustesView` — adicionar um tweak
+é só adicionar uma entrada ao array (com explicação de risco, aviso na UI e um teste).
 
 ## Build, testar e rodar (Windows)
 
@@ -70,12 +75,9 @@ Para semear sem UI: variáveis `SEVENZIN_ADMIN_EMAIL` e `SEVENZIN_ADMIN_SENHA`. 
 - Métricas são **reais**: mostre "—" quando a métrica é indisponível; **nunca** invente número (FPS/temperatura não
   existem no original — seriam feature nova, ver `docs/engenharia-reversa/05_metricas_instaladores_jogos.md`).
 
-## Próximos passos (roadmap §5.1, todos seguros)
+## Próximos passos (implementação completa, por fases)
 
-Os 4 itens do roadmap §5 já foram implementados (modos de vídeo DEVMODE, CPU% via `GetSystemTimes`, working set +
-timer opt-in por jogo, fila de instaladores persistida). Candidatos para o próximo ciclo:
-
-1. Troca real do modo de vídeo (`ChangeDisplaySettingsEx`) com confirmação e reversão automática (hoje só listamos).
-2. Ajustes de GPU no nível do driver (perfis NVIDIA/AMD) — manter só leitura até provar reversibilidade.
-3. Detecção **informativa** dos mecanismos que o original desligava (Defender/HVCI/SmartScreen) com "restaurar
-   estado protegido" — detectar e restaurar, nunca desligar.
+A trava `GuardaSeguranca` foi removida por decisão do dono (12/11/2026) e o conjunto antes "fora do escopo"
+(UAC/Defender, ISO/USB, assistente, etc.) passou a ser **em escopo**. O plano de fases completo e o status por
+tela estão em `docs/plano-implementacao-completa.md`; cada fase só avança com build 0/0 e testes verdes, e toda
+ação no Windows mantém explicação + confirmação + desfazer (regra de segurança nº 2 acima).

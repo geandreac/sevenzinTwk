@@ -5,7 +5,7 @@ Fonte: análise estática já produzida — [`catalogo-otimizacoes.md`](catalogo
 ## Como ler a classificação
 **a)** Implementada e validada (com teste automatizado ou evidência) · **b)** Implementada, não validada · **c)** Parcial · **d)** Ausente · **e)** Incompatível/não aplicável (proibida pelo charter ou fora do escopo seguro).
 
-> **Resumo honesto:** o Sevenzin **não busca paridade 1:1** com o original. Ele reconstrói um **subconjunto seguro e reversível** de otimizações e **exclui** deliberadamente o que é perigoso. A maioria das categorias de tweak do original é, portanto, **parcial, ausente ou incompatível por projeto** — não por esquecimento.
+> **Resumo honesto:** o Sevenzin **não busca paridade 1:1** com o original. Ele reconstruiu um **subconjunto seguro e reversível** de otimizações e **excluiu** deliberadamente o que é perigoso. **Atualização (12/11/2026):** por decisão do dono, a trava `GuardaSeguranca` foi removida e o conjunto antes "fora do escopo" passou a ser **em escopo** — implementado por fases com aviso, confirmação e reversão (ver `revisao_ajustes.md` §4 e o plano em `roadmap-fases-telas.md`). As linhas **e** abaixo vão migrando para **b** conforme as fases concluem.
 
 ## 1. Otimizações (tweaks de registro/sistema)
 
@@ -19,7 +19,7 @@ Fonte: análise estática já produzida — [`catalogo-otimizacoes.md`](catalogo
 | ID de publicidade off | `advertising-id-off` | **b** | HKCU |
 | Sugestões de conteúdo off | `sugestoes-off`, `sugestoes-config-off`, `apps-promovidos-off`, `dicas-windows-off` | **b** | HKCU — 4 chaves do grupo `suggestions` do original |
 | Animações da barra off | `taskbar-animations-off` | **b** | HKCU |
-| Motor reversível (prévia, backup, desfazer, auditoria) + trava de segurança | `MotorTweaks` + `GuardaSeguranca` | **a** | testes automatizados do motor e da guarda |
+| Motor reversível (prévia, backup, desfazer, auditoria) | `MotorTweaks` | **a** | testes automatizados do motor; a antiga trava `GuardaSeguranca` foi removida em 12/11/2026 (ver `revisao_ajustes.md` §4) |
 | Perfil MMCSS "Games" (GPU Priority etc.) | — | **d** | não implementado |
 | Afinidade/prioridade por jogo (per‑título) | Jogos: perfil por `.exe`, **temporário** | **c** | escopo reduzido e reversível (não aplica afinidade permanente) |
 | IFEO PerfOptions por processo | — | **d** | risco em processos do sistema |
@@ -37,8 +37,11 @@ Fonte: análise estática já produzida — [`catalogo-otimizacoes.md`](catalogo
 | Debloat/Appx (remover apps, OneDrive, Edge) | — | **e** | alto impacto; charter cauteloso |
 | Construtor de ISO/debloat do Windows | Windows: **excluído**, com aviso | **e** | instalação de SO; proibido pelo charter |
 
-### 🔴 Conjunto proibido do original (Defender/UAC/HVCI/Spectre/Exploit Protection/SmartScreen/Windows Update/write‑cache)
-Classe **e** para todos. O Sevenzin **nunca aplica**: `GuardaSeguranca` recusa qualquer tweak que toque nesses mecanismos (verificado antes de qualquer escrita); as telas Windows/BIOS deixam isso explícito.
+### 🔴 Conjunto antes proibido do original (Defender/UAC/HVCI/Spectre/Exploit Protection/SmartScreen/Windows Update/write‑cache)
+Classe **e** até 12/11/2026 (a trava `GuardaSeguranca` recusava qualquer tweak nesses mecanismos). **Após a remoção
+da trava por decisão do dono, passam a ser implementados por fases** com aviso de risco, confirmação explícita e
+desfazer — o status por item vive no plano de fases (`roadmap-fases-telas.md`) e nesta matriz conforme cada fase
+conclui. Nenhum desses itens roda sem o usuário pedir.
 
 ## 2. Telas / fluxos
 

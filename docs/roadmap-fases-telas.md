@@ -1,5 +1,10 @@
 # Sevenzin — Funcionalidades, Otimizações e Roadmap por Fases/Telas
 
+> **⚠ DOCUMENTO HISTÓRICO (12/11/2026).** Este roadmap descreve as fases 0–10 já concluídas e a carta segura antiga
+> (trava `GuardaSeguranca`), que foi **removida por decisão do dono** (ver `docs/revisao_ajustes.md` §4). O plano
+> vigente da implementação completa (incluindo o conjunto antes excluído) está em
+> **[`docs/plano-implementacao-completa.md`](plano-implementacao-completa.md)**.
+
 Documento-guia do projeto. Cobre (1) tudo que o sistema já faz, (2) as otimizações realizadas e catalogadas,
 (3) o mapeamento fase a fase por tela com ações concretas, e (4) desafios e soluções de cada fase.
 Complementa [design-system.md](design-system.md) e [catalogo-otimizacoes.md](catalogo-otimizacoes.md).

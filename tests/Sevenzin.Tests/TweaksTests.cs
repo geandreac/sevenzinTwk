@@ -18,19 +18,21 @@ public class TweaksTests
     static Tweak Safe() => CatalogoTweaks.Todos[0]; // gamedvr-off, HKCU DWORD=0
 
     [Fact]
-    public void Trava_recusa_tweak_de_seguranca()
-    {
-        var defender = new Tweak("x", "x", "x", "Seg", Colmeia.MaquinaLocal,
-            @"SOFTWARE\Microsoft\Windows Defender\Real-Time Protection", "DisableRealtimeMonitoring", 1, "Alto", true);
-        Assert.True(GuardaSeguranca.Proibido(defender));
-        var motor = new MotorTweaks(new RegistroFake(), PastaTemp());
-        Assert.Throws<InvalidOperationException>(() => motor.Aplicar(defender));
-    }
-
-    [Fact]
     public void Catalogo_nao_tem_nenhum_tweak_de_seguranca()
     {
-        Assert.All(CatalogoTweaks.Todos, t => Assert.False(GuardaSeguranca.Proibido(t)));
+        // A antiga trava (GuardaSeguranca) foi removida em 12/11/2026; enquanto os grupos
+        // avançados não entrarem no catálogo, este teste garante que nada de segurança entrou "sem querer".
+        var proibidos = new[]
+        {
+            "Windows Defender", "DisableAntiSpyware", "Real-Time Protection",
+            "EnableLUA", "ConsentPromptBehavior",
+            "SmartScreen", "WindowsUpdate",
+        };
+        Assert.All(CatalogoTweaks.Todos, t =>
+        {
+            var alvo = $"{t.Caminho}\\{t.NomeValor}";
+            Assert.DoesNotContain(proibidos, p => alvo.Contains(p, StringComparison.OrdinalIgnoreCase));
+        });
         // Admin exigido exatamente para os ajustes de máquina (HKLM); HKCU nunca pede admin.
         Assert.All(CatalogoTweaks.Todos, t => Assert.Equal(t.Colmeia == Colmeia.MaquinaLocal, t.ExigeAdmin));
         Assert.Contains(CatalogoTweaks.Todos, t => t.Colmeia == Colmeia.UsuarioAtual); // há HKCU sem admin
@@ -45,7 +47,7 @@ public class TweaksTests
         // Expansão do subconjunto seguro do original: privacidade/telemetria/visual/jogos/desempenho presentes.
         var cats = CatalogoTweaks.Todos.Select(t => t.Categoria).ToHashSet();
         Assert.Superset(new HashSet<string> { "Jogos", "Privacidade", "Visual", "Telemetria", "Desempenho" }, cats);
-        // Nenhum tweak toca no UAC (EnableLUA) nem no caminho de política do UAC — barrado pela trava, mas aqui provamos que nem entra.
+        // Nenhum tweak toca no UAC (EnableLUA): os grupos avançados ainda não entraram no catálogo.
         Assert.DoesNotContain(CatalogoTweaks.Todos, t => t.NomeValor.Equals("EnableLUA", StringComparison.OrdinalIgnoreCase));
         Assert.All(CatalogoTweaks.Todos, t => Assert.False(string.IsNullOrWhiteSpace(t.Descricao)));
     }
@@ -56,7 +58,6 @@ public class TweaksTests
         var reg = new RegistroFake();
         var motor = new MotorTweaks(reg, PastaTemp());
         var hklm = CatalogoTweaks.Todos.First(t => t.Colmeia == Colmeia.MaquinaLocal);
-        Assert.False(GuardaSeguranca.Proibido(hklm)); // o HKLM do catálogo não é proibido
         reg.EscreverDword(hklm.Colmeia, hklm.Caminho, hklm.NomeValor, 123); // valor anterior
         motor.Aplicar(hklm);
         Assert.Equal(hklm.ValorOtimizado, reg.LerDword(hklm.Colmeia, hklm.Caminho, hklm.NomeValor));

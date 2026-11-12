@@ -7,8 +7,8 @@ using Sevenzin.Diagnostics;
 namespace Sevenzin.Wpf.Views;
 
 /// <summary>Tela "Ajustes" (Figma) — tweaks reversíveis por seção, backed pelo MotorTweaks real.
-/// Toggle liga = Aplicar (prévia no efeito descrito), desliga = Desfazer. Itens de segurança ficam
-/// bloqueados pela trava (GuardaSeguranca), mostrados desabilitados.</summary>
+/// Toggle liga = Aplicar (prévia no efeito descrito), desliga = Desfazer. Todo item tem prévia,
+/// backup, desfazer e auditoria.</summary>
 public partial class AjustesView : UserControl
 {
     readonly MotorTweaks _motor = new(new RegistroWindows());
@@ -26,12 +26,6 @@ public partial class AjustesView : UserControl
             Lista.Children.Add(new TextBlock { Text = grupo.Key.ToUpperInvariant(), Style = SectionStyle });
             Lista.Children.Add(Cartao(grupo.Select(LinhaTweak)));
         }
-        // Bloqueado pela carta segura (§23): mostrado, mas desligado e inoperante.
-        Lista.Children.Add(new TextBlock { Text = "AVANÇADO (BLOQUEADO)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
-        Lista.Children.Add(Cartao(new[]
-        {
-            LinhaBloqueada("Windows Defender, UAC, Isolamento de Núcleo", "O Sevenzin não desliga mecanismos de segurança — a trava recusa esses ajustes (§23)."),
-        }));
         AtualizarContador();
     }
 
@@ -54,15 +48,6 @@ public partial class AjustesView : UserControl
         var g = LinhaBase(t.Nome, desc, out _);
         var sw = new ToggleButton { Style = Switch, VerticalAlignment = VerticalAlignment.Center, Tag = t, IsChecked = _motor.Aplicado(t) };
         sw.Click += Toggle_Click;
-        Grid.SetColumn(sw, 1);
-        g.Children.Add(sw);
-        return g;
-    }
-
-    static UIElement LinhaBloqueada(string titulo, string descricao)
-    {
-        var g = LinhaBase(titulo, descricao, out _);
-        var sw = new ToggleButton { Style = Switch, VerticalAlignment = VerticalAlignment.Center, IsChecked = false, IsEnabled = false };
         Grid.SetColumn(sw, 1);
         g.Children.Add(sw);
         return g;

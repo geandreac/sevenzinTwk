@@ -2,6 +2,45 @@
 
 Tecnologia: WPF .NET 8 (`net8.0-windows`). Figma como fonte visual (parte das consultas ficou bloqueada pelo **limite do Figma MCP — plano Starter**; registrado onde afeta). Logo oficial "S em raio" reutilizada do asset do projeto (`Icons.xaml` → `ic_logo`), nunca redesenhada.
 
+## §4. Remoção da trava `GuardaSeguranca` (12/11/2026)
+
+**Decisão do dono do repositório** (confirmada em conversa, após alerta sobre o conflito com a regra antiga do
+AGENTS.md): remover a trava `GuardaSeguranca` e passar o conjunto antes "fora do escopo" (UAC/Defender, ISO/USB,
+assistente, etc.) para **em escopo**, implementado por fases com explicação, confirmação explícita e reversão.
+
+### O que foi removido
+| item | local | ação |
+|---|---|---|
+| Classe `GuardaSeguranca` (lista `Proibidos` + método `Proibido(Tweak)`) | `src/Sevenzin.Diagnostics/Tweaks.cs` | removida |
+| Chamada `GuardaSeguranca.Proibido(t)` em `MotorTweaks.Aplicar` (lançava `InvalidOperationException`) | `src/Sevenzin.Diagnostics/Tweaks.cs` | removida |
+| Teste `Trava_recusa_tweak_de_seguranca` | `tests/Sevenzin.Tests/TweaksTests.cs` | removido |
+| Seção estática "AVANÇADO (BLOQUEADO)" + método `LinhaBloqueada` (não era mais verdadeira) | `src/Sevenzin.Wpf/Views/AjustesView.xaml.cs` | removidos |
+
+### O que foi desacoplado / preservado
+- `MotorTweaks` **não foi alterado** além da chamada removida: prévia, backup (`tweaks-backup.json`), desfazer e
+  auditoria (`tweaks-auditoria.log`) continuam intactos — a reversibilidade agora é a única barreira, e permanece
+  obrigatória em todo caminho de escrita.
+- Teste `Catalogo_nao_tem_nenhum_tweak_de_seguranca` foi **adaptado** (lista proibida movida para o próprio teste,
+  como guarda transitória até os grupos avançados entrarem no catálogo com testes próprios). Demais testes de
+  tweaks inalterados.
+
+### Como restaurar a trava no futuro
+- Branch dedicada: **`arquivo/guardaseguranca`** (aponta para `7091d90`, último commit com a trava íntegra).
+- `git diff master arquivo/guardaseguranca -- src/Sevenzin.Diagnostics/Tweaks.cs` mostra exatamente o trecho removido.
+- Ou `git revert` do commit de remoção (ver `git log --oneline -- src/Sevenzin.Diagnostics/Tweaks.cs`).
+
+### Verificação após a remoção
+- `dotnet build` → **0 erros, 0 avisos**.
+- `dotnet test` → **100/100 aprovados** (o teste da trava foi o único removido).
+- `grep GuardaSeguranca` no código: nenhuma referência viva (só comentários históricos datados).
+
+### Consequência registrada
+Sem a trava, **qualquer** `Tweak` do catálogo é aplicável, inclusive os de segurança, quando forem adicionados.
+Por isso as fases seguintes tratam esses itens como ação de risco: aviso na descrição, confirmação explícita na UI
+e desfazer pelo motor — conforme a regra de segurança nº 2 do `AGENTS.md` (nunca executar na máquina de
+desenvolvimento sem confirmação do dono).
+
+
 ## Resumo por item
 | # | Item | Status |
 |---|---|---|
@@ -24,7 +63,7 @@ Tecnologia: WPF .NET 8 (`net8.0-windows`). Figma como fonte visual (parte das co
 **Não verificado:** acompanhamento sob carga real (jogo/benchmark) — teste manual pendente.
 
 ## Item 3 — Paridade funcional
-Matriz completa em [`paridade_funcional.md`](paridade_funcional.md). Conclusão: o app implementa um **subconjunto seguro e reversível** (8 tweaks com motor de prévia/backup/desfazer/auditoria + `GuardaSeguranca`) e **exclui** o conjunto perigoso do original. Não há paridade 1:1 — por projeto. Pendência: validar os tweaks aplicando em máquina real com admin.
+Matriz completa em [`paridade_funcional.md`](paridade_funcional.md). Conclusão histórica (antes de 12/11/2026): o app implementava um **subconjunto seguro e reversível** (8→16 tweaks com motor de prévia/backup/desfazer/auditoria + `GuardaSeguranca`) e **excluía** o conjunto perigoso do original. Pendência: validar os tweaks aplicando em máquina real com admin.
 
 ## Item 4 — Telas Windows e BIOS
 Antes eram placeholders. Agora:
