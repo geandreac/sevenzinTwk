@@ -280,6 +280,52 @@ próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem 
   espaçamentos, cores) fica como validação **manual do dono** sobre esses PNGs.
 
 
+## §14. Reordenação da sidebar por prioridade + centralização dos ícones com rolagem (12/11/2026)
+
+### Reordenação por prioridade (análise de produto)
+A sidebar tinha os 18 itens na ordem herdada do Figma, que misturava uso diário (Início, Ajustes) com
+ações técnicas e de risco (Proteção, BIOS) no meio. Reordenados em blocos lógicos (a sidebar é um trilho
+de ícones de 66px, sem rótulos de seção — os blocos são só a **ordem**, com comentário no código):
+
+1. **Essenciais** — `Início`, `Ajustes`, `Jogos`. Jornada de 1º uso e do "quero mais FPS": ver o estado →
+   otimizar em geral → perfil por jogo. Ajustes vem antes de Jogos porque o ganho vale para todos; Jogos é
+   a feature-título do público gamer, logo em 3º.
+2. **Hardware & desempenho** — `GPU`, `Inventário`, `Benchmark`. Diagnosticar e medir (o princípio do
+   produto é *medir antes de otimizar*).
+3. **Sistema** — `Windows`, `Instaladores`, `Proteção`, `BIOS`, `Mídia`. Ações sobre o SO/apps; as de maior
+   risco (Proteção = tweaks de segurança, BIOS = informativo sensível, Mídia = ISO/USB) ficam **ao fim do
+   bloco**, reduzindo acesso acidental — cada uma mantém explicação + confirmação + desfazer (regra 2 do AGENTS).
+4. **Ferramentas** — `Capturas`, `Assistente`, `Guias`, `Notificações`. Uso pontual.
+5. **Técnico / Conta** — `Telemetria`, `Perfil`, `Configurações`. Configura-uma-vez, no rodapé.
+
+**Recomendações não aplicadas** (mexem em features, não só ordem — aguardam decisão do dono): `Notificações`
+caberia melhor como sino no topo que como item fixo; `Telemetria` poderia fundir-se em `Benchmark`/`Inventário`;
+`Guias` poderia virar um "?" de ajuda. Nada foi removido — só reordenado.
+
+Código: array `Itens` em `src/Sevenzin.Wpf/MainWindow.xaml.cs`.
+
+### Centralização dos ícones com barra de rolagem
+**Causa:** o `ListBox` da sidebar (66px) usava o `ScrollBar` global (largura 10). Quando a janela encolhe e
+os 18 itens não cabem, a barra aparecia **dentro** do fluxo e empurrava a coluna de ícones ~10px para a
+esquerda, descentralizando-os. Sem barra, centralizados; com barra, tortos.
+
+**Solução:** estilo `NavLista` (em `Theme.xaml`) dá ao ListBox um `ControlTemplate` cujo `ScrollViewer`
+coloca o `ScrollContentPresenter` e um `ScrollBar` vertical no **mesmo** célula do `Grid`. O conteúdo ocupa
+a largura total (ícones sempre centralizados nos 66px) e a barra **flutua sobre** a borda direita, sem
+consumir largura (abordagem equivalente a `scrollbar-gutter: stable both-edges`/overlay da web, feita em
+WPF por sobreposição). A barra reusa o `ScrollThumb`/trilho transparente do tema (largura 8, fina e escura),
+então nada de barra branca nativa. Preservados: marcador lateral azul (`NavItem`), foco por teclado e seleção
+(continua um `ListBox`), hover e tooltips do nome ao passar o mouse (`ToolTipService`). Largura do trilho
+(66px) e tamanho do ícone (Viewbox 18) **inalterados**.
+
+**Tamanhos testados:** maximizado, janela média (padrão 1280×760) e mínima (980×620), recolhida (66px) e
+expandida (210px). Em todos, os ícones permanecem centralizados; a barra só surge quando a lista excede a
+altura e não desloca o conteúdo.
+
+**Limitação:** o modelo da sessão não processa imagens — a conferência visual fina do antes/depois é
+validação manual do dono. A barra sobreposta pode cobrir ~8px da borda direita do item mais à direita
+durante a rolagem, mas os ícones ficam à esquerda desse ponto (centralizados na coluna), sem colisão.
+
 ## Resumo por item
 | # | Item | Status |
 |---|---|---|

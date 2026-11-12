@@ -454,6 +454,38 @@
 
     <!-- Scrollbar escura (não especificada no Figma — segue o tema do sistema).
          Trilho transparente; indicador arredondado com estados repouso/hover/arraste. Clique no trilho pagina. -->
+    <!-- Lista da sidebar: scrollbar SOBREPOSTO (não consome largura), para os ícones ficarem centralizados
+         com ou sem rolagem, em qualquer tamanho de janela. Scrollbar segue o estilo fino/escuro global. -->
+    <Style x:Key="NavLista" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <ScrollViewer Focusable="False" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer.Template>
+                            <ControlTemplate TargetType="ScrollViewer">
+                                <Grid>
+                                    <!-- conteúdo ocupa a largura TOTAL (ícones centralizados sempre) -->
+                                    <ScrollContentPresenter/>
+                                    <!-- a barra flutua sobre a borda direita, sem tirar largura do conteúdo -->
+                                    <ScrollBar x:Name="PART_VerticalScrollBar" Orientation="Vertical" HorizontalAlignment="Right"
+                                               Width="8" Margin="0,2" Cursor="Arrow"
+                                               Value="{Binding VerticalOffset, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                               Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}"
+                                               Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                                </Grid>
+                            </ControlTemplate>
+                        </ScrollViewer.Template>
+                        <ItemsPresenter/>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="ScrollRepeatTransparente" TargetType="RepeatButton">
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="IsTabStop" Value="False"/>

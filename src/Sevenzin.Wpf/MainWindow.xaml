@@ -44,9 +44,8 @@
                 </StackPanel>
                 <Ellipse DockPanel.Dock="Bottom" Width="8" Height="8" Margin="0,0,0,18" HorizontalAlignment="Center"
                          Fill="{StaticResource SuccessBrush}" ToolTip="Monitorando · local"/>
-                <ListBox x:Name="Nav" Background="Transparent" BorderThickness="0" Margin="0,8,0,0" Foreground="{StaticResource TextSecondaryBrush}"
-                         ItemContainerStyle="{StaticResource NavItem}" SelectionChanged="Nav_SelectionChanged"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                <ListBox x:Name="Nav" Style="{StaticResource NavLista}" Margin="0,8,0,0"
+                         ItemContainerStyle="{StaticResource NavItem}" SelectionChanged="Nav_SelectionChanged"/>
             </DockPanel>
         </Border>
 

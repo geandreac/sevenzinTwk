@@ -10,27 +10,33 @@ namespace Sevenzin.Wpf;
 
 public partial class MainWindow : Window
 {
-    // (tag, glifo Segoe MDL2, rótulo). Ordem do Figma.
+    // (tag, glifo Segoe MDL2, rótulo). Ordem por prioridade de uso (blocos lógicos — ver docs/revisao_ajustes.md §6):
+    // Essenciais · Hardware & desempenho · Sistema (ações de risco mais abaixo) · Ferramentas · Técnico/Conta (no fim).
     static readonly (string Tag, string Glifo, string Rotulo)[] Itens =
     {
-        ("inicio", "", "Início"),
-        ("ajustes", "", "Ajustes"),
-        ("gpu", "", "GPU"),
-        ("instaladores", "", "Instaladores"),
-        ("jogos", "", "Jogos"),
-        ("guias", "", "Guias"),
-        ("notificacoes", "", "Notificações"),
-        ("bios", "", "BIOS"),
-        ("assistente", "", "Assistente"),
-        ("capturas", "", "Capturas"),
-        ("windows", "", "Windows"),
-        ("midia", "", "Mídia"),
-        ("protecao", "", "Proteção"),
-        ("config", "", "Configurações"),
-        ("perfil", "", "Perfil"),
-        ("inventario", "", "Inventário"),
-        ("telemetria", "", "Telemetria"),
-        ("benchmark", "", "Benchmark"),
+        // Essenciais (uso diário: ver estado → otimizar → por jogo)
+        ("inicio", "", "Início"),
+        ("ajustes", "", "Ajustes"),
+        ("jogos", "", "Jogos"),
+        // Hardware & desempenho (diagnosticar e medir)
+        ("gpu", "", "GPU"),
+        ("inventario", "", "Inventário"),
+        ("benchmark", "", "Benchmark"),
+        // Sistema (Windows e apps; ações de risco — Proteção/BIOS/Mídia — ao fim do bloco)
+        ("windows", "", "Windows"),
+        ("instaladores", "", "Instaladores"),
+        ("protecao", "", "Proteção"),
+        ("bios", "", "BIOS"),
+        ("midia", "", "Mídia"),
+        // Ferramentas (uso pontual)
+        ("capturas", "", "Capturas"),
+        ("assistente", "", "Assistente"),
+        ("guias", "", "Guias"),
+        ("notificacoes", "", "Notificações"),
+        // Técnico / Conta (configura-uma-vez — no fim)
+        ("telemetria", "", "Telemetria"),
+        ("perfil", "", "Perfil"),
+        ("config", "", "Configurações"),
     };
 
     readonly List<TextBlock> _rotulos = new(); // rótulos ocultos na sidebar estreita; aparecem ao expandir
