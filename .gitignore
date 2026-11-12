@@ -3,3 +3,6 @@ obj/
 # relatórios gerados localmente (podem conter specs do PC do usuário)
 relatorio-pc.md
 relatorio-pc.json
+
+# App Admin fica apenas local (nao publicar no GitHub)
+/src/Sevenzin.Admin/
