@@ -1,0 +1,18 @@
+<UserControl x:Class="Sevenzin.Wpf.Views.MediaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="44,24,40,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="0,8,0,12">
+            <TextBlock Text="WINDOWS MEDIA" Style="{StaticResource Eyebrow}"/>
+            <TextBlock Text="Mídia" Style="{StaticResource TituloTela}"/>
+            <TextBlock Text="Construa uma ISO personalizada (só a edição que você escolher) ou grave um pendrive bootável. Tudo exige administrador e confirmação explícita — gravar APAGA todo o conteúdo do pendrive." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,16">
+            <StackPanel x:Name="Lista"/>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

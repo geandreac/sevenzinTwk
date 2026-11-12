@@ -36,7 +36,7 @@ Base: 22 telas do original (`docs/engenharia-reversa/03_telas.md`) + área ADM p
 | 11 | BIOS | `BiosView` (Secure Boot/TPM só leitura + instruções por risco) | 🟡 | F8 |
 | 12 | Assistente (IA/humano) | `AssistenteView`: endpoint HTTPS configurado pelo usuário, envio explícito por mensagem, contexto com consentimento | 🟡 | F6 ✅ |
 | 13 | Capturas (região/janela/monitor + anotação) | `CapturasView` completa: 4 modos + editor (lápis/retângulo/seta/texto/desfazer) + envio explícito opcional | 🟡 | F2 ✅ |
-| 14 | Pendrive / Windows Media (ISO/USB) | `WindowsView`: estado + plano de energia + **análise de ISO só leitura (DISM)**; construção ISO/USB = lacuna F7.2 | ◐ | F7.1 ✅ |
+| 14 | Pendrive / Windows Media (ISO/USB) | `MediaView` (nova): construir ISO personalizada (edição única, UEFI) + gravar pendrive (SafeUsb + FAT32 + split de WIM); análise de ISO no WindowsView | 🟡 | F7 ✅ |
 | 15 | Perfil (conta + hardware) | `PerfilView`: conta local, 2FA (TOTP offline), licença local, resumo | 🟡 | F5 ✅ |
 | 16 | Configurações | `ConfiguracoesView` (iniciar com Windows, pasta de dados, preferências) | 🟡 | F8 |
 | 17 | Notificações / Tarefas agendadas | `NotificacoesView` (histórico local real + fila persistida) | 🟡 | F4 ✅ |
@@ -61,7 +61,7 @@ aprovados** — não será inventada; se o produto exigir, será decisão explí
 | **F5** ✅ | Perfil + licença local + 2FA (substitui KeyAuth; sem HWID/Discord) + completar ADM | F4 |
 | **F6** ✅ | Assistente: envio explícito por mensagem, consentimento por conversa, IncludeInContext (HumanMode = lacuna de servidor) | F5 |
 | **F7.1** ✅ | Windows Media: análise da ISO **somente leitura** (edições/apps/features via DISM, parsers testados) | F6 |
-| **F7.2** ⛔ | Windows Media: construção ISO/USB/debloat — **lacuna registrada** (ADK/IMAPI2FS/GPL do original; entra só com decisão explícita) | F7.1 |
+| **F7.2** ✅ | Windows Media: **construção** — ISO personalizada (edição única, UEFI via IMAPI2FS + efisys da origem) e **pendrive** (SafeUsb, FAT32 + split de WIM 3.800 MB). Sem ADK/GPL. Boot UEFI; BIOS/Legacy = limitação registrada | F7.1 |
 | **F8** 🟡 | Consolidação: docs atualizados (paridade/plano/registro); validação visual e manual = pendente | todas |
 
 ---

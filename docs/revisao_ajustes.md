@@ -208,6 +208,32 @@ atualizados. **Validação visual/manual = pendente** (render das telas novas e 
 **Lacunas registradas:** F7.2 (construção ISO/USB/debloat — ADK/IMAPI2FS/GPL; só com decisão explícita);
 HumanMode do assistente (servidor); categorias **d** antigas (rede/DPC/serviços/MMCSS Games) por risco/retorno.
 
+## §11. Fase 7.2 — Construção de mídia (13/11/2026)
+
+- **ISO personalizada** (`CriadorIso.cs` + `ConstrutorIso.BuildAsync`): monta a origem (read-only), copia os
+  arquivos com **SHA-256** (`CopiadorVerificado`, blocos de 1 MB como o MediaTransfer do original), exporta
+  **só a edição escolhida** via `dism /Export-Image` (compressão máxima), cria a ISO **UEFI-bootável** via
+  **IMAPI2FS** (COM embutido no Windows — sem ADK, sem binários GPL) usando o `efisys.bin` da própria mídia
+  de origem, desmonta e limpa o staging sempre (finally).
+- **Pendrive** (`GravadorUsb.cs` + `UsbMedia.cs`): réplica do **SafeUsb/CheckUsb** do original (USB, ≥ 8 GB,
+  nunca boot/sistema/offline/readonly, UniqueId presente, reidentificação por UniqueId+Serial+Tamanho antes
+  de gravar); prepara FAT32; copia com SHA-256; **divide o install.wim em partes de 3.800 MB** (limite FAT32)
+  via `dism /Split-Image` — o caminho FAT32 do original. Confirmação explícita na UI com modelo/tamanho do
+  pendrive e aviso de apagamento total.
+- **UI** (`MediaView`, nova + item "Mídia" na navegação): escolher ISO → edições detectadas → destino →
+  construir (etapas ao vivo); pendrives seguros → gravar.
+- **Limitação registrada:** boot **UEFI** apenas (sem BIOS/Legacy — coerente com o alerta do original); ficam
+  de fora por ora a remoção de apps/features, injeção de drivers e OfflineHive (etapas 5–9 do fluxo F6).
+
+**Arquivos alterados:** `ConstrutorMedia.cs`, `CriadorIso.cs`, `GravadorUsb.cs` (novos), `MediaView.xaml/.cs`
+(novos), `MainWindow.xaml.cs`, `Icons.xaml`, `ConstrutorMediaTests.cs` (novo).
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **162/162** (parser Get-Disk, SafeUsb completo, cópia com
+SHA-256 atravessando blocos, validação do pedido de construção).
+
+**Pendências / validação manual:** construir uma ISO real e bootar numa VM; gravar num pendrive de teste;
+confirmar o hash de arquivos grandes na cópia.
+
 
 ## Resumo por item
 | # | Item | Status |

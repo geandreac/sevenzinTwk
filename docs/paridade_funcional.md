@@ -63,7 +63,7 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | Jogos (perfil temporário + **detecção Steam/Epic só leitura**) | `JogosView` | **b** | F8; `DescobridorJogosTests` (parsers puros) |
 | Capturas (4 modos + editor + envio explícito) | `CapturasView` | **b** | F2 |
 | BIOS (informativa: Secure Boot/TPM) | `BiosView` | **a/b** | leitura real |
-| **Windows / Media** (estado + plano de energia + **análise de ISO só leitura via DISM**) | `WindowsView` | **c** | F7.1; construção de ISO/USB = lacuna registrada (F7.2) |
+| **Windows / Media** | `WindowsView` (estado + energia + análise de ISO) + **`MediaView`** (construir ISO personalizada UEFI + gravar pendrive SafeUsb/FAT32/split) | **b** | F7.1/F7.2; `ConstrutorMediaTests`, `WindowsMediaTests`; hardware real = manual |
 | **Assistente** (endpoint HTTPS do usuário, envio explícito, contexto com consentimento) | `AssistenteView` | **b** | F6; `AssistenteTests`; HumanMode = lacuna (comportamento de servidor) |
 | Guias (6) | `GuiasView` | **b** | F4 |
 | Notificações/Tarefas (histórico local + fila) | `NotificacoesView` | **b** | F4 |
@@ -81,7 +81,7 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | 04 §2 / 05 §1 | Perfil de hardware + WMI + PCI IDs | **a/b** | `Coletores`, `Inventario`, `TopologiaCpu` |
 | 04 §3 | 12 grupos de tweaks | **a/b** | `CatalogoTweaks` (28, inclui Segurança/Mouse/Localização) |
 | 04 §4-5 | Debloat Appx + remover Edge/OneDrive | **e** | não implementado (alto impacto sem opt-in) — registrado |
-| 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **c/e** | **análise de ISO só leitura** implementada (F7.1); **construção/edição = lacuna registrada** (F7.2: ADK/IMAPI2FS) |
+| 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **c** | **análise (F7.1) e construção (F7.2) implementadas**: ISO personalizada (edição única, UEFI) + pendrive (SafeUsb, FAT32, split de WIM). Ficam fora: remoção de apps/features, injeção de drivers e boot BIOS/Legacy — registrados como próximos passos |
 | 04 §7 / 05 §6-8 | Catálogo de instaladores + winget allowlist | **b** | 36 utilitários oficiais + allowlist literal de 5 IDs |
 | 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **b** | afinidade+prioridade+WS+timer opt-in por jogo, revertidos ao fechar |
 | 04 §9 | Captura + anotação | **b** | 4 modos + editor + envio explícito (webhook do usuário) |
@@ -95,7 +95,10 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | 06 F13 | Atualização autenticada | **d** | não implementado |
 
 ## Pendências / lacunas registradas
-- **F7.2 (construção ISO/USB/debloat)** — não implementada: exige DISM de serviço (ADK), boot BIOS/UEFI (oscdimg/IMAPI2FS) e reaproveita código GPL do original (Rufus/UEFI:NTFS). Registrado no plano; entra só com decisão explícita.
+- **Edição da imagem (próximos passos da F7)**: remoção de apps/features, injeção de drivers e preferências
+  offline (OfflineHive) — réplicas das etapas 5–9 do fluxo F6; exigem DISM de serviço e montagem RW do WIM.
+- **Boot BIOS/Legacy** — a ISO/pendrive do Sevenzin bootam por **UEFI**; BIOS/Legacy não é suportado
+  (limitação registrada, coerente com o alerta do próprio original).
 - **HumanMode do assistente** — comportamento de servidor; o Sevenzin só envia/recebe via endpoint do usuário.
 - **Validação manual**: efeito real dos tweaks de segurança (admin + reinício), winget real, captura nos 4 modos, análise de ISO com uma ISO real, fluxo Supabase/MFA num projeto real, render visual de todas as telas novas (Assistente, Perfil, Proteção, Guias, Notificações).
 - Categorias **d** (rede, DPC/MSI, serviços, MMCSS Games, IFEO) permanecem ausentes por risco/retorno — decisão registrada, não esquecimento.
