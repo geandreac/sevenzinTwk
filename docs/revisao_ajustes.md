@@ -179,6 +179,35 @@ confirmação).
 **Pendências / validação manual:** testar o login com 2FA num autenticador real (Google Authenticator/Authy);
 render da tela Perfil (F8).
 
+## §10. Fase 6, F7.1 e detecção de jogos (13/11/2026)
+
+**F6 — Assistente** (commit `0e789c0`): endpoint HTTPS **configurado pelo usuário** em Configurações (padrão:
+desligado — o servidor do original NÃO é reaproveitado). Envio explícito por mensagem (`Assistente.EnviarMensagemAsync`,
+JSON {mensagem, contexto, utc}), contexto do PC (`Assistente.ContextoPc`, só inventário, "—" sem valor) incluído
+só com o checkbox marcado. **HumanMode = lacuna registrada** (comportamento de servidor). Histórico em memória
+(nada persistido/automático). Testes: URL, config (corrompido→desligado), contexto sem valores forjados, POST com
+handler fake (2xx/5xx/vazio).
+
+**Detecção de jogos Steam/Epic** (commit `f05cfff`): `DescobridorJogos` só leitura — `libraryfolders.vdf`,
+`appmanifest_*.acf` (nome/appid/installdir) e manifestos `.item` da Epic (DisplayName/InstallLocation/
+LaunchExecutable combinados). `ExecutavelPrincipal` = heurística pura (nome da pasta → maior .exe → ignora
+unins/redist). Launcher ausente = lista vazia, sem erro. UI: seção "Jogos detectados" na `JogosView` com
+"Adicionar ao catálogo" (abre o seletor de .exe quando ambíguo; **nada é aplicado automaticamente**).
+
+**F7.1 — Análise de ISO (só leitura)** (commit `8799d89`): `ExecutorDism.AnalisarIsoAsync` monta a ISO
+(read-only via PowerShell), localiza `install.wim/esd`, roda `dism /Get-WimInfo`, `/Get-AppxProvisionedPackages`
+e `/Get-WindowsOptionalFeature`, desmonta sempre (finally). Parsers **puros e testados** (`AnalisadorImagem`) com
+amostras no formato real do DISM. UI: cartão na `WindowsView` com elevação sob demanda e resultado resumido.
+
+**F8 (parcial) — docs:** `paridade_funcional.md` **reescrito** com o estado real (28 tweaks, segurança, assistente,
+ISO, detecção de jogos, energia, Supabase/MFA/Mongo, dois apps, lacunas F7.2 e HumanMode); plano e AGENTS/README
+atualizados. **Validação visual/manual = pendente** (render das telas novas e fluxos reais).
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **158/158**.
+
+**Lacunas registradas:** F7.2 (construção ISO/USB/debloat — ADK/IMAPI2FS/GPL; só com decisão explícita);
+HumanMode do assistente (servidor); categorias **d** antigas (rede/DPC/serviços/MMCSS Games) por risco/retorno.
+
 
 ## Resumo por item
 | # | Item | Status |

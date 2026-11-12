@@ -20,10 +20,15 @@ tudo **reversível, auditado e confirmado** por você.
 - **Instaladores** — utilitários de **fontes oficiais** com verificação por assinatura/hash antes de executar e
   **fila persistida** em JSON local (sobrevive a reinícios).
 - **Jogos** — perfil por jogo **temporário** (afinidade/prioridade revertidas ao fechar) + **working set e timer de
-  1 ms opt-in** com aviso, também revertidos ao fechar.
-- **Capturas** — captura de tela **local**, salva no PC, nunca enviada à rede.
-- **BIOS / Windows** — telas **informativas e seguras** (estado só leitura + instruções com classificação de risco);
-  nenhuma ação altera BIOS/Windows automaticamente.
+  1 ms opt-in** com aviso, também revertidos ao fechar + **detecção automática de jogos Steam/Epic instalados**
+  (só leitura; adicionar ao catálogo não aplica nada).
+- **Capturas** — 4 modos (tela inteira/monitor/região/janela) + editor de anotações; salva local por padrão; envio
+  só com webhook configurado e confirmação por envio.
+- **Assistente** — conversa por endpoint HTTPS **configurado por você**; cada mensagem é enviada só quando você
+  aperta Enviar; contexto do PC só com consentimento.
+- **Windows** — estado só leitura + plano de energia "Sevenzin" (duplicável/restaurável) + **análise de ISO do
+  Windows somente leitura** (edições, apps e features via DISM).
+- **BIOS** — tela **informativa e segura** (estado só leitura + instruções com classificação de risco).
 - **Inventário / Telemetria / Benchmark** — inventário com grau de confiança (Fato/Inferência), medição A/B e
   benchmark de frametime interno.
 
@@ -32,8 +37,11 @@ tudo **reversível, auditado e confirmado** por você.
 - `src/Sevenzin.Diagnostics/` — biblioteca de coleta e lógica, **sem UI** (WMI, contadores de performance, motor de
   tweaks reversível, autenticação). Testável de forma isolada.
 - `src/Sevenzin.Wpf/` — aplicativo **WPF** (tema escuro alinhado ao Figma, tipografia Inter, ícone oficial "S em raio").
+- `src/Sevenzin.Admin/` — **app Admin separado** (auditoria de tweaks, log de acessos, segurança) — local, não
+  publicado no GitHub.
 - `src/Sevenzin.Report/` — runner de linha de comando (`relatorio-pc.md`/`.json`, self-test).
-- `tests/Sevenzin.Tests/` — **101 testes** automatizados (motor de tweaks, autenticação, GPU, inventário, modos de vídeo, CPU, timer, fila…).
+- `tests/Sevenzin.Tests/` — **158 testes** automatizados (motor de tweaks, autenticação + MFA, GPU, inventário,
+  modos de vídeo, CPU, timer, fila, detecção de jogos, DISM, assistente…).
 - `docs/` — análise do original, design system, paridade funcional e revisões.
 
 ## Como usar

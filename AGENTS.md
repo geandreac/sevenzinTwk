@@ -39,12 +39,16 @@ global (`geandreac` / `geandreac.dev@gmail.com`); não use `--author` com outro 
 
 ```
 Sevenzin.sln
-src/Sevenzin.Wpf/          app WPF (.NET 8, Windows): Views/, MainWindow, LoginWindow, Theme.xaml
+src/Sevenzin.Wpf/          app WPF do usuário (.NET 8, Windows): Views/, MainWindow, LoginWindow, Theme.xaml
+src/Sevenzin.Admin/        app Admin SEPARADO (auditoria, acessos, segurança) — fica SÓ LOCAL (gitignored)
 src/Sevenzin.Diagnostics/  motor SEM UI (testável): Tweaks, Autenticacao, Usuarios, Coletores, Jogos, Gpu, Capturas…
 src/Sevenzin.Report/       runner de linha de comando (relatorio-pc.md/.json)
-tests/Sevenzin.Tests/      xUnit (101 testes)
+tests/Sevenzin.Tests/      xUnit (158 testes)
 docs/                      documentação; docs/engenharia-reversa/ = inventário do original
 ```
+
+Login suporta **Supabase Auth + MFA (TOTP)** como opção (`ClienteSupabase.cs`, `Controle2FA.cs`) e contas
+locais em JSON ou **MongoDB** (ver seção abaixo).
 
 Arquitetura: a lógica fica em `Sevenzin.Diagnostics` (sem dependência de UI, 100% testável); a UI (`Sevenzin.Wpf`)
 só orquestra. Tweaks são DWORDs de registro reversíveis via `MotorTweaks` (prévia → backup → aplicar → desfazer →
@@ -58,7 +62,7 @@ use no PowerShell: `$env:DOTNET_ROOT='C:\re\geandre\dotnet'; $env:PATH="C:\re\ge
 
 ```powershell
 dotnet build src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug   # compilar o app
-dotnet test                                                   # rodar os 101 testes
+dotnet test                                                   # rodar os 158 testes
 dotnet run --project src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug   # abrir o app
 ```
 

@@ -26,7 +26,7 @@ Base: 22 telas do original (`docs/engenharia-reversa/03_telas.md`) + área ADM p
 | 1 | Login (KeyAuth: login/licença/2FA/web) | `LoginWindow` e-mail+senha bcrypt, sessão/papéis/anti-brute-force; sem licença nem 2FA | ◐ | F5 |
 | 2 | Shell de navegação | `MainWindow` (sidebar recolhível, animações) | ✅ | — |
 | 3 | Home | `InicioView` (CPU via GetSystemTimes, GPU, mem, latência, sistema, recursos) | ✅ | — |
-| 4 | Jogos | `JogosView` (afinidade P-cores, prioridade, working set, timer 1 ms opt-in) | 🟡 | F2 |
+| 4 | Jogos | `JogosView` (afinidade P-cores, prioridade, working set, timer 1 ms opt-in) + **detecção Steam/Epic só leitura** | 🟡 | F8 ✅ |
 | 5 | Placa de vídeo (GPU) | `GpuView` (driver, VRAM, modos de vídeo DEVMODE, link oficial) | 🟡 | F8 |
 | 6 | Processador (CPU) | `InventarioView` (WMI + topologia P/E/CCD, confiança) | ✅ | — |
 | 7 | Armazenamento / Localização / Mouse | Inventário cobre armazenamento; tweaks de mouse (REG_SZ) e localização (HideSCALocation + lfsvc) no catálogo | 🟡 | F4 ✅ |
@@ -34,9 +34,9 @@ Base: 22 telas do original (`docs/engenharia-reversa/03_telas.md`) + área ADM p
 | 9 | Instaladores (~85 itens + winget) | `InstaladoresView` com 36 utilitários oficiais + fila persistida + winget allowlist (5 IDs) | 🟡 | F3 ✅ |
 | 10 | Guias | `GuiasView` com 6 guias baseados no que o app realmente faz | 🟡 | F4 ✅ |
 | 11 | BIOS | `BiosView` (Secure Boot/TPM só leitura + instruções por risco) | 🟡 | F8 |
-| 12 | Assistente (IA/humano) | — | ⬜ | F6 |
+| 12 | Assistente (IA/humano) | `AssistenteView`: endpoint HTTPS configurado pelo usuário, envio explícito por mensagem, contexto com consentimento | 🟡 | F6 ✅ |
 | 13 | Capturas (região/janela/monitor + anotação) | `CapturasView` completa: 4 modos + editor (lápis/retângulo/seta/texto/desfazer) + envio explícito opcional | 🟡 | F2 ✅ |
-| 14 | Pendrive / Windows Media (ISO/USB) | `WindowsView` só informativa | ⬜ | F7 |
+| 14 | Pendrive / Windows Media (ISO/USB) | `WindowsView`: estado + plano de energia + **análise de ISO só leitura (DISM)**; construção ISO/USB = lacuna F7.2 | ◐ | F7.1 ✅ |
 | 15 | Perfil (conta + hardware) | `PerfilView`: conta local, 2FA (TOTP offline), licença local, resumo | 🟡 | F5 ✅ |
 | 16 | Configurações | `ConfiguracoesView` (iniciar com Windows, pasta de dados, preferências) | 🟡 | F8 |
 | 17 | Notificações / Tarefas agendadas | `NotificacoesView` (histórico local real + fila persistida) | 🟡 | F4 ✅ |
@@ -59,9 +59,10 @@ aprovados** — não será inventada; se o produto exigir, será decisão explí
 | **F3** ✅ | Instaladores completos: catálogo ampliado da RE (35 logos confirmados + lista provável, fontes oficiais + hash) + winget allowlist | F1 |
 | **F4** ✅ | Guias + Notificações/Tarefas agendadas + tweaks extras (mouse, localização) | F3 |
 | **F5** ✅ | Perfil + licença local + 2FA (substitui KeyAuth; sem HWID/Discord) + completar ADM | F4 |
-| **F6** | Assistente: envio explícito por mensagem, HumanMode, consentimento por conversa, IncludeInContext | F5 |
-| **F7** | Windows Media: analisar ISO, remover apps/features, injetar drivers, gerar ISO/USB (réplica das etapas confirmadas) | F6 |
-| **F8** | Consolidação: validação visual Figma em todas as telas, revisão de paridade, docs finais | todas |
+| **F6** ✅ | Assistente: envio explícito por mensagem, consentimento por conversa, IncludeInContext (HumanMode = lacuna de servidor) | F5 |
+| **F7.1** ✅ | Windows Media: análise da ISO **somente leitura** (edições/apps/features via DISM, parsers testados) | F6 |
+| **F7.2** ⛔ | Windows Media: construção ISO/USB/debloat — **lacuna registrada** (ADK/IMAPI2FS/GPL do original; entra só com decisão explícita) | F7.1 |
+| **F8** 🟡 | Consolidação: docs atualizados (paridade/plano/registro); validação visual e manual = pendente | todas |
 
 ---
 
