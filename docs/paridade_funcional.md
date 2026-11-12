@@ -15,9 +15,9 @@ Fonte: análise estática já produzida — [`catalogo-otimizacoes.md`](catalogo
 | SystemResponsiveness (MMCSS) | `mmcss-responsiveness` em Ajustes | **b** | idem |
 | HAGS (HwSchMode) | `hags` em Ajustes | **b** | idem |
 | Fast Startup off (HiberbootEnabled) | `fast-startup-off` em Ajustes | **b** | idem |
-| GameDVR/Game Bar off | `gamedvr-off` em Ajustes | **b** | HKCU, sem admin |
+| GameDVR/Game Bar off | `gamedvr-off` + `gamedvr-captura-off` (AppCaptureEnabled) | **b** | HKCU, sem admin |
 | ID de publicidade off | `advertising-id-off` | **b** | HKCU |
-| Sugestões de conteúdo off | `sugestoes-off` | **b** | HKCU |
+| Sugestões de conteúdo off | `sugestoes-off`, `sugestoes-config-off`, `apps-promovidos-off`, `dicas-windows-off` | **b** | HKCU — 4 chaves do grupo `suggestions` do original |
 | Animações da barra off | `taskbar-animations-off` | **b** | HKCU |
 | Motor reversível (prévia, backup, desfazer, auditoria) + trava de segurança | `MotorTweaks` + `GuardaSeguranca` | **a** | testes automatizados do motor e da guarda |
 | Perfil MMCSS "Games" (GPU Priority etc.) | — | **d** | não implementado |
@@ -32,8 +32,8 @@ Fonte: análise estática já produzida — [`catalogo-otimizacoes.md`](catalogo
 | Write cache forçado (`CacheIsPowerProtected`) | — | **e** | risco de perda de dados (charter) |
 | DPC/MSI/IRQ affinity | — | **d** | mascara instabilidade; não implementado |
 | Serviços/tarefas não essenciais off | — | **d** | não implementado como toggles |
-| Telemetria/privacidade (AllowTelemetry, Copilot, WER…) | parte (ID publicidade, sugestões) | **c** | subconjunto |
-| Visual/UI (efeitos, transparência, tema, ponteiro) | parte (animações, GameDVR) | **c** | subconjunto |
+| Telemetria/privacidade (AllowTelemetry, Copilot, WER…) | `telemetria-minima` (AllowTelemetry=1, mínimo), `historico-atividades-off`, `experiencias-sob-medida-off`, `destaques-busca-off`, `advertising-id-off`, sugestões | **c** | subconjunto seguro ampliado; **não** zera telemetria (Home/Pro clampa em 1) nem desliga Copilot por política agressiva |
+| Visual/UI (efeitos, transparência, tema, ponteiro) | `taskbar-animations-off`, `widgets-barra-off`, GameDVR | **c** | subconjunto |
 | Debloat/Appx (remover apps, OneDrive, Edge) | — | **e** | alto impacto; charter cauteloso |
 | Construtor de ISO/debloat do Windows | Windows: **excluído**, com aviso | **e** | instalação de SO; proibido pelo charter |
 
@@ -47,7 +47,7 @@ Classe **e** para todos. O Sevenzin **nunca aplica**: `GuardaSeguranca` recusa q
 | Login + Admin (contas, papéis, auditoria) | Implementado | **a** | 11 testes de autenticação; render `v3/v4` |
 | Início — monitores CPU/Memória/Latência | Implementado | **a** | leituras reais; render |
 | Início — monitor **GPU (%)** | Implementado | **b** | `LeitorGpuUso` (GPU Engine); lê valor real; sob carga = validação manual |
-| Ajustes (8 tweaks, motor reversível) | Implementado | **a**/**b** | motor testado; efeito por tweak exige admin |
+| Ajustes (16 tweaks, motor reversível) | Implementado | **a**/**b** | motor testado; catálogo seguro ampliado (ver §3); efeito por tweak exige admin |
 | GPU (diagnóstico só leitura) | Implementado | **a** | WMI; render |
 | Instaladores (fontes oficiais, assinatura) | Implementado | **c** | fluxo seguro; catálogo reduzido |
 | Jogos (perfil por `.exe` temporário) | Implementado | **c** | escopo seguro |
@@ -55,8 +55,32 @@ Classe **e** para todos. O Sevenzin **nunca aplica**: `GuardaSeguranca` recusa q
 | BIOS / Windows (informativas) | Implementado | **a** | estado só‑leitura real + instruções; render `v6` |
 | Configurações / Inventário / Telemetria / Benchmark | Implementado | **b** | funcionais; render |
 
+## 3. Cruzamento com o inventário de engenharia reversa
+
+Mapa dos documentos de [`engenharia-reversa/`](engenharia-reversa/) (itens `[CONFIRMADO]`) para a classe de paridade.
+`a/b` = implementado · `c` = parcial/subconjunto seguro · `d` = ausente (decisão de risco) · `e` = fora do escopo (charter).
+
+| inventário (doc) | item `[CONFIRMADO]` | classe | no Sevenzin |
+|---|---|---|---|
+| 04 §1 | KeyAuth (login/licença/2FA/HWID/webhook) | **e** | login próprio e-mail+senha (bcrypt); sem KeyAuth/HWID/Discord |
+| 04 §2 / 05 §1 | Perfil de hardware + WMI + PCI IDs | **a/b** | `Coletores`, `Inventario`, `TopologiaCpu` |
+| 04 §3 | 12 grupos de tweaks | **a/b** (seguros) · **e** (uac) | `CatalogoTweaks` (16) — ver §1; grupo `uac` recusado pela trava |
+| 04 §4-5 | Debloat Appx + remover Edge/OneDrive | **e** | não replicado (alto impacto sem opt-in) |
+| 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **e** | instalação de SO + GPL; fora do escopo |
+| 04 §7 / 05 §6-8 | Catálogo de instaladores + winget allowlist | **c** | `CatalogoUtilitarios` (fontes oficiais + assinatura); só benignos |
+| 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **c** | `Jogos.cs`: afinidade+prioridade, revertido ao fechar; working set/timer = 🔜 opt-in |
+| 04 §9 | Captura + anotação | **b** | `Capturas` local, sem webhook |
+| 04 §10 / 06 F12 | Assistente IA/humano via webhook | **e** | não replicado (exfiltração) |
+| 05 §2 | Enumeração de modos de vídeo (DEVMODE/Hz) | **d → 🔜** | só modo atual hoje; próximo item do roadmap §5.1 |
+| 05 §3 | FPS/frametime, temp/clock de GPU/CPU | **d** | **confirmado inexistente no original**; seria feature nova (`BenchmarkView` já faz frametime interno A/B) |
+| 05 §3 | Uso de GPU (%) | **b** | `LeitorGpuUso` (GPU Engine) |
+| 05 §3 | Uso de CPU (%) | **d → 🔜** | roadmap §5.2 (`GetSystemTimes`) |
+| 06 F13 | Atualização autenticada | **d** | não implementado |
+
+Detalhe e passo a passo em [`engenharia-reversa/roadmap_implementacao.md`](engenharia-reversa/roadmap_implementacao.md).
+
 ## Pendências / lacunas registradas
-- Validar os 8 tweaks aplicando/desfazendo em máquina real com admin (efeito no registro) — hoje só o **motor** é testado automaticamente.
+- Validar os 16 tweaks aplicando/desfazendo em máquina real com admin (efeito no registro) — hoje só o **motor** é testado automaticamente.
 - Monitor de GPU: confirmar que o `%` acompanha carga real (jogo/benchmark) — teste manual.
 - Categorias **d** (rede, memória, DPC/MSI, serviços) não foram implementadas por decisão de risco/retorno; adicionar só com A/B e reversão testada, se o produto exigir.
 - Nenhuma funcionalidade foi declarada "paridade completa" apenas por existir tela/botão: a coluna Classe reflete o que executa e é verificável.

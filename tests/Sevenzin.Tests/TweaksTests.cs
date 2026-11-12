@@ -38,6 +38,19 @@ public class TweaksTests
     }
 
     [Fact]
+    public void Catalogo_tem_ids_unicos_e_cobre_os_grupos_seguros()
+    {
+        var ids = CatalogoTweaks.Todos.Select(t => t.Id).ToList();
+        Assert.Equal(ids.Count, ids.Distinct(StringComparer.OrdinalIgnoreCase).Count()); // sem id duplicado
+        // Expansão do subconjunto seguro do original: privacidade/telemetria/visual/jogos/desempenho presentes.
+        var cats = CatalogoTweaks.Todos.Select(t => t.Categoria).ToHashSet();
+        Assert.Superset(new HashSet<string> { "Jogos", "Privacidade", "Visual", "Telemetria", "Desempenho" }, cats);
+        // Nenhum tweak toca no UAC (EnableLUA) nem no caminho de política do UAC — barrado pela trava, mas aqui provamos que nem entra.
+        Assert.DoesNotContain(CatalogoTweaks.Todos, t => t.NomeValor.Equals("EnableLUA", StringComparison.OrdinalIgnoreCase));
+        Assert.All(CatalogoTweaks.Todos, t => Assert.False(string.IsNullOrWhiteSpace(t.Descricao)));
+    }
+
+    [Fact]
     public void Aplicar_e_desfazer_tweak_de_maquina_hklm_funciona_igual()
     {
         var reg = new RegistroFake();

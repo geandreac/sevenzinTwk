@@ -77,5 +77,13 @@ public static class CatalogoUtilitarios
             "https://www.cpuid.com/softwares/cpu-z.html", null, "CPUID", null),
         new Utilitario("CrystalDiskInfo", "Saúde e S.M.A.R.T. dos discos (Crystal Dew World).",
             "https://crystalmark.info/en/software/crystaldiskinfo/", null, null, null),
+        new Utilitario("HWiNFO", "Monitoramento de sensores (temperatura, clock, uso) de CPU/GPU/placa (REALiX).",
+            "https://www.hwinfo.com/download/", null, null, null),
+        new Utilitario("GPU-Z", "Informações e sensores da placa de vídeo (TechPowerUp).",
+            "https://www.techpowerup.com/gpuz/", null, null, null),
+        new Utilitario("Process Explorer (Sysinternals)", "Gerenciador de processos avançado da Microsoft (handles, árvore, CPU por thread).",
+            "https://learn.microsoft.com/sysinternals/downloads/process-explorer", "https://live.sysinternals.com/procexp64.exe", "Microsoft", null),
+        new Utilitario("Autoruns (Sysinternals)", "Lista tudo que inicia com o Windows, para revisar e desligar itens de inicialização (Microsoft).",
+            "https://learn.microsoft.com/sysinternals/downloads/autoruns", "https://live.sysinternals.com/Autoruns64.exe", "Microsoft", null),
     };
 }
