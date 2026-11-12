@@ -1,20 +1,158 @@
 <Window x:Class="Sevenzin.Wpf.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sevenzin — Acesso" Height="620" Width="980" MinWidth="820" MinHeight="560"
+        Title="Sevenzin — Acesso" Height="740" Width="1280" MinWidth="1040" MinHeight="660"
         Icon="pack://application:,,,/Assets/sevenzin.ico"
         WindowStyle="None" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BgBaseBrush}"
+        Background="#FF05080E"
         FontFamily="{StaticResource UiFont}" TextElement.Foreground="{StaticResource TextPrimaryBrush}">
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="40" ResizeBorderThickness="0" CornerRadius="0" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
+    <Window.Resources>
+        <!-- Gradientes do Figma (01 · Login) -->
+        <LinearGradientBrush x:Key="GradLogo" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#38BDF8" Offset="0"/>
+            <GradientStop Color="#1E6FE0" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GradTitulo" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#FFFFFF" Offset="0"/>
+            <GradientStop Color="#A9B6C8" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GradBotao" StartPoint="0,0.5" EndPoint="1,0.5">
+            <GradientStop Color="#1E6FE0" Offset="0"/>
+            <GradientStop Color="#1656B8" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GradPainel" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#0B1424" Offset="0"/>
+            <GradientStop Color="#060A12" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GradDivisor" StartPoint="0,0.5" EndPoint="1,0.5">
+            <GradientStop Color="#0038BDF8" Offset="0"/>
+            <GradientStop Color="#FF38BDF8" Offset="0.5"/>
+            <GradientStop Color="#0038BDF8" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Campo (TextBox): 400×50, fundo #0B111C, borda #1A2536, rx10 -->
+        <Style x:Key="CampoLogin" TargetType="TextBox">
+            <Setter Property="Background" Value="#FF0B111C"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="#FF1A2536"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Brand500Brush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Campo (PasswordBox): mesmo visual -->
+        <Style x:Key="CampoLoginSenha" TargetType="PasswordBox">
+            <Setter Property="Background" Value="#FF0B111C"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="#FF1A2536"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Brand500Brush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Botão Entrar: 400×52, gradiente #1E6FE0→#1656B8, borda #5AA9FF, sombra -->
+        <Style x:Key="BotaoEntrar" TargetType="Button">
+            <Setter Property="Height" Value="52"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" CornerRadius="10" Background="{StaticResource GradBotao}"
+                                BorderBrush="#995AA9FF" BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#1E6FE0" BlurRadius="18" ShadowDepth="4" Opacity="0.45" Direction="270"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="b" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1.05*"/>
+            <ColumnDefinition Width="690"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
+
+        <!-- Brilho radial superior esquerdo (Figma paint0_radial) -->
+        <Ellipse Grid.ColumnSpan="2" Width="900" Height="900" Margin="-200,-200,0,0"
+                 HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                    <GradientStop Color="#241E6FE0" Offset="0"/>
+                    <GradientStop Color="#001E6FE0" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <!-- Linhas de "circuito" nos cantos (Figma, azul tênue) -->
+        <Canvas Grid.ColumnSpan="2" IsHitTestVisible="False">
+            <Path Data="M0 250V170L95 75H160" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.55"/>
+            <Path Data="M0 285V215L60 155" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.25"/>
+            <Path Data="M0 560L105 665H205L235 695" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.45"/>
+            <Path Data="M0 610L80 690H140" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.2"/>
+            <Path Data="M0 170V250L28 222V198L0 170Z" Fill="#2F8CFF" Opacity="0.35"/>
+        </Canvas>
+
+        <!-- Pontos decorativos (canto superior esquerdo) -->
+        <Canvas Grid.ColumnSpan="2" IsHitTestVisible="False">
+            <Ellipse Canvas.Left="22" Canvas.Top="20" Width="11" Height="11" Fill="#7B8AA0"/>
+            <Ellipse Canvas.Left="40" Canvas.Top="20" Width="11" Height="11" Fill="#26364F"/>
+        </Canvas>
 
         <!-- Controles da janela -->
         <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -29,39 +167,50 @@
             </Button>
         </StackPanel>
 
-        <!-- Formulário -->
-        <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="360" Margin="24">
-            <Viewbox Height="54" HorizontalAlignment="Center">
-                <Path Data="{StaticResource ic_logo}" Fill="{StaticResource Brand500Brush}"/>
+        <!-- Formulário (coluna esquerda, 400px centrado) -->
+        <StackPanel Grid.Column="0" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Viewbox Height="68" HorizontalAlignment="Center">
+                <Path Data="{StaticResource ic_logo}" Fill="{StaticResource GradLogo}"/>
             </Viewbox>
-            <TextBlock Text="SEVENZIN" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,14,0,0"/>
-            <TextBlock Text="PC OPTIMIZER" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
-            <TextBlock x:Name="Subtitulo" Text="Acesse sua conta" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,16,0,22"/>
+            <TextBlock Text="SEVENZIN" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,16,0,0"
+                       Foreground="{StaticResource GradTitulo}"/>
+            <TextBlock Text="PC OPTIMIZER" FontSize="12" Foreground="#A9B6C8" HorizontalAlignment="Center"
+                       Margin="0,4,0,0" TextOptions.TextFormattingMode="Ideal"/>
+            <Rectangle Width="220" Height="2" RadiusX="1" RadiusY="1" Margin="0,16,0,0" Fill="{StaticResource GradDivisor}"/>
+            <TextBlock x:Name="Subtitulo" Text="Acesse sua conta" Foreground="#A9B6C8" HorizontalAlignment="Center" Margin="0,16,0,26"/>
 
-            <TextBlock Text="E-mail" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,0,0,4"/>
-            <TextBox x:Name="Email" Style="{StaticResource DarkBox}" Height="40" Padding="10,0" VerticalContentAlignment="Center"/>
+            <TextBlock Text="E-mail" Foreground="#A9B6C8" FontSize="12" Margin="2,0,0,6"/>
+            <TextBox x:Name="Email" Style="{StaticResource CampoLogin}" KeyDown="Campo_KeyDown"/>
 
-            <TextBlock Text="Senha" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,14,0,4"/>
+            <TextBlock Text="Senha" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
             <Grid>
-                <PasswordBox x:Name="Senha" Height="40" Padding="10,0,40,0" VerticalContentAlignment="Center"
-                             Background="{StaticResource Surface2Brush}" Foreground="{StaticResource TextPrimaryBrush}"
-                             BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1" FontFamily="{StaticResource UiFont}"
-                             CaretBrush="{StaticResource TextPrimaryBrush}" KeyDown="Campo_KeyDown"/>
-                <TextBox x:Name="SenhaVisivel" Height="40" Padding="10,0,40,0" VerticalContentAlignment="Center" Visibility="Collapsed"
-                         Background="{StaticResource Surface2Brush}" Foreground="{StaticResource TextPrimaryBrush}"
-                         BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1" FontFamily="{StaticResource UiFont}"
-                         CaretBrush="{StaticResource TextPrimaryBrush}" KeyDown="Campo_KeyDown"/>
-                <ToggleButton x:Name="OlhoBtn" Width="34" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0"
-                              Cursor="Hand" Click="Olho_Click" ToolTip="Mostrar/ocultar senha" Foreground="{StaticResource TextMutedBrush}">
+                <PasswordBox x:Name="Senha" Style="{StaticResource CampoLoginSenha}" Padding="14,0,44,0" KeyDown="Campo_KeyDown"/>
+                <TextBox x:Name="SenhaVisivel" Style="{StaticResource CampoLogin}" Padding="14,0,44,0" Visibility="Collapsed" KeyDown="Campo_KeyDown"/>
+                <ToggleButton x:Name="OlhoBtn" Width="44" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0"
+                              Cursor="Hand" Click="Olho_Click" ToolTip="Mostrar/ocultar senha" Foreground="#A9B6C8">
                     <ToggleButton.Template>
                         <ControlTemplate TargetType="ToggleButton">
                             <Border Background="Transparent">
-                                <TextBlock x:Name="glifo" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                           Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Viewbox Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Grid Width="24" Height="24">
+                                        <!-- olho aberto: senha oculta → clicar revela -->
+                                        <Path x:Name="olho" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6" Fill="{x:Null}"
+                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"/>
+                                        <!-- olho cortado: senha visível → clicar esconde -->
+                                        <Path x:Name="olhoOff" Visibility="Collapsed" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6" Fill="{x:Null}"
+                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M10.73 5.08C11.15 5.03 11.57 5 12 5C18.5 5 22 12 22 12C21.55 12.84 21.03 13.62 20.43 14.34 M6.52 6.52C4.48 7.9 2.83 9.8 2 12C2 12 5.5 19 12 19C13.84 19 15.5 18.44 16.92 17.6 M9.9 9.9C9.34 10.46 9 11.19 9 12C9 13.66 10.34 15 12 15C12.81 15 13.54 14.66 14.1 14.1 M2 2L22 22"/>
+                                    </Grid>
+                                </Viewbox>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="glifo" Property="Text" Value="&#xE7B2;"/>
+                                    <Setter TargetName="olho" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="olhoOff" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -69,52 +218,48 @@
                 </ToggleButton>
             </Grid>
             <TextBlock x:Name="SenhaAjuda" Text="mínimo 12 · maiúsc/minúsc, número e símbolo" Foreground="{StaticResource TextMutedBrush}"
-                       FontSize="11" Margin="0,4,0,0" Visibility="Collapsed"/>
+                       FontSize="11" Margin="2,6,0,0" Visibility="Collapsed"/>
 
             <!-- Código do autenticador (aparece só quando a conta tem 2FA) -->
             <StackPanel x:Name="TotpBloco" Visibility="Collapsed">
-                <TextBlock Text="Código do autenticador" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,14,0,4"/>
-                <TextBox x:Name="Totp" Height="40" Padding="10,0" VerticalContentAlignment="Center" MaxLength="6"
-                         Background="{StaticResource Surface2Brush}" Foreground="{StaticResource TextPrimaryBrush}"
-                         BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1" FontFamily="{StaticResource UiFont}"
-                         CaretBrush="{StaticResource TextPrimaryBrush}" KeyDown="Campo_KeyDown" Tag="000000"/>
+                <TextBlock Text="Código do autenticador" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
+                <TextBox x:Name="Totp" Style="{StaticResource CampoLogin}" MaxLength="6" KeyDown="Campo_KeyDown" Tag="000000"/>
                 <TextBlock Text="Abra seu aplicativo autenticador e digite o código de 6 dígitos." Foreground="{StaticResource TextMutedBrush}"
-                           FontSize="11" Margin="0,4,0,0"/>
+                           FontSize="11" Margin="2,6,0,0"/>
             </StackPanel>
 
             <!-- Confirmar senha (apenas no primeiro administrador) -->
             <StackPanel x:Name="ConfirmarBloco" Visibility="Collapsed">
-                <TextBlock Text="Confirmar senha" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,14,0,4"/>
-                <PasswordBox x:Name="Confirmar" Height="40" Padding="10,0" VerticalContentAlignment="Center"
-                             Background="{StaticResource Surface2Brush}" Foreground="{StaticResource TextPrimaryBrush}"
-                             BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1" FontFamily="{StaticResource UiFont}"
-                             CaretBrush="{StaticResource TextPrimaryBrush}" KeyDown="Campo_KeyDown"/>
+                <TextBlock Text="Confirmar senha" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
+                <PasswordBox x:Name="Confirmar" Style="{StaticResource CampoLoginSenha}" KeyDown="Campo_KeyDown"/>
             </StackPanel>
 
-            <Grid x:Name="LinhaOpcoes" Margin="0,14,0,0">
-                <CheckBox x:Name="Lembrar" Content="Lembrar de mim" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+            <Grid x:Name="LinhaOpcoes" Margin="0,18,0,0">
+                <CheckBox x:Name="Lembrar" Content="Lembrar de mim" Foreground="#A9B6C8" VerticalAlignment="Center"/>
                 <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Hyperlink x:Name="EsqueciLink" Click="Esqueci_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Esqueci minha senha</Hyperlink>
                 </TextBlock>
             </Grid>
 
-            <Button x:Name="EntrarBtn" Style="{StaticResource PrimaryButton}" Content="Entrar" Height="44" Margin="0,20,0,0" Click="Entrar_Click"/>
-            <TextBlock x:Name="Mensagem" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" Margin="0,12,0,0"
+            <Button x:Name="EntrarBtn" Style="{StaticResource BotaoEntrar}" Content="Entrar" Margin="0,24,0,0" Click="Entrar_Click"/>
+            <TextBlock x:Name="Mensagem" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" Margin="0,14,0,0"
                        HorizontalAlignment="Center" TextAlignment="Center" Visibility="Collapsed"/>
         </StackPanel>
 
-        <!-- Painel decorativo (inspirado no Figma; arte de circuito simplificada) -->
-        <Border Grid.Column="1" Margin="0,54,28,28" CornerRadius="16" BorderBrush="{StaticResource BorderDefaultBrush}" BorderThickness="1"
-                ClipToBounds="True">
+        <!-- Painel decorativo (Figma: x690 y60 560×640, gradiente + glow + "S") -->
+        <Border Grid.Column="1" Margin="0,60,30,40" CornerRadius="18" Background="{StaticResource GradPainel}"
+                BorderBrush="#CC26364F" BorderThickness="1" ClipToBounds="True">
             <Grid>
-                <Grid.Background>
-                    <RadialGradientBrush GradientOrigin="0.5,0.45" Center="0.5,0.45" RadiusX="0.75" RadiusY="0.75">
-                        <GradientStop Color="#FF0E2340" Offset="0"/>
-                        <GradientStop Color="#FF070B13" Offset="1"/>
-                    </RadialGradientBrush>
-                </Grid.Background>
-                <Viewbox Height="120" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.9">
-                    <Path Data="{StaticResource ic_logo}" Fill="{StaticResource Brand500Brush}"/>
+                <Ellipse Width="340" Height="220" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                            <GradientStop Color="#592F8CFF" Offset="0"/>
+                            <GradientStop Color="#002F8CFF" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Viewbox Height="120" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Path Data="{StaticResource ic_logo}" Fill="{StaticResource GradLogo}"/>
                 </Viewbox>
             </Grid>
         </Border>
