@@ -42,9 +42,13 @@
                         </Button.Template>
                     </Button>
                 </StackPanel>
-                <Ellipse DockPanel.Dock="Bottom" Width="8" Height="8" Margin="0,0,0,18" HorizontalAlignment="Center"
-                         Fill="{StaticResource SuccessBrush}" ToolTip="Monitorando · local"/>
-                <ListBox x:Name="Nav" Style="{StaticResource NavLista}" Margin="0,8,0,0"
+                <!-- Status: área própria, separada da navegação por uma divisória; o DockPanel reserva este
+                     bloco, então a lista nunca o sobrepõe nem é sobreposta por ele (com ou sem rolagem). -->
+                <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource BorderDefaultBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,14">
+                    <Ellipse Width="8" Height="8" HorizontalAlignment="Center"
+                             Fill="{StaticResource SuccessBrush}" ToolTip="Monitorando · local"/>
+                </Border>
+                <ListBox x:Name="Nav" Style="{StaticResource NavLista}" Margin="0,8,0,4"
                          ItemContainerStyle="{StaticResource NavItem}" SelectionChanged="Nav_SelectionChanged"/>
             </DockPanel>
         </Border>
@@ -72,6 +76,19 @@
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"
                             WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button x:Name="AvisoAtualizaBtn" Visibility="Collapsed" Click="IrParaAtualizacao_Click" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0" Margin="0,0,12,0" VerticalAlignment="Center"
+                            ToolTip="Atualização Disponível" AutomationProperties.Name="Atualização disponível">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <StackPanel Orientation="Horizontal" Background="Transparent">
+                                    <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Atualização disponível" Margin="6,0,0,0" FontSize="12"
+                                               Foreground="{StaticResource SuccessBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                     <TextBlock x:Name="UsuarioLabel" Foreground="{StaticResource TextMutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <Button x:Name="SairBtn" Content="Sair" Click="Sair_Click" Cursor="Hand"
                             Foreground="{StaticResource TextSecondaryBrush}" Background="Transparent" FontFamily="{StaticResource UiFont}" FontSize="12">
@@ -92,18 +109,7 @@
                 <TextBlock x:Name="TituloBarra" Text="Início" Margin="24,0,0,0" FontSize="13"
                            Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
             </DockPanel>
-            <DockPanel Grid.Row="1">
-                <Border x:Name="AvisoAtualiza" DockPanel.Dock="Top" Visibility="Collapsed"
-                        Background="{StaticResource BrandTintBrush}" BorderBrush="{StaticResource Brand500Brush}" BorderThickness="0,0,0,1" Padding="24,10">
-                    <DockPanel>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButton}" Content="Dispensar" Click="DispensarAviso_Click" Margin="8,0,0,0"/>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Content="Baixar" Click="BaixarAviso_Click"/>
-                        <TextBlock x:Name="AvisoAtualizaTxt" VerticalAlignment="Center" TextWrapping="Wrap"
-                                   Foreground="{StaticResource TextPrimaryBrush}"/>
-                    </DockPanel>
-                </Border>
-                <ContentControl x:Name="Host"/>
-            </DockPanel>
+            <ContentControl x:Name="Host" Grid.Row="1"/>
         </Grid>
     </Grid>
 </Window>

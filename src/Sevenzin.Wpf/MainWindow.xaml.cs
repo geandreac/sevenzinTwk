@@ -62,28 +62,17 @@ public partial class MainWindow : Window
         if (!App.ModoRender) _ = VerificarAtualizacaoAsync(); // aviso silencioso na partida; nada é baixado sozinho
     }
 
-    string? _urlAtualizacao;
-
-    // Checa a release mais recente do GitHub em segundo plano. Se houver versão maior, mostra o banner
-    // (dispensável). Falha/offline não aparece — o usuário pode checar manualmente em Configurações.
+    // Checa a release mais recente do GitHub em segundo plano. Só se houver versão maior, acende o
+    // indicador ao lado do e-mail (que leva a Configurações > Sobre). Falha/offline = nada aparece.
     async Task VerificarAtualizacaoAsync()
     {
         var versao = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
         var r = await Sevenzin.Diagnostics.VerificadorAtualizacoes.VerificarAsync(versao);
-        if (r is null || !r.HaNova || r.Url.Length == 0) return;
-        _urlAtualizacao = r.Url;
-        AvisoAtualizaTxt.Text = $"Sevenzin {r.VersaoRemota} disponível (você tem {r.VersaoAtual}).";
-        AvisoAtualiza.Visibility = Visibility.Visible;
+        if (r is not null && r.HaNova)
+            AvisoAtualizaBtn.Visibility = Visibility.Visible;
     }
 
-    void BaixarAviso_Click(object sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrEmpty(_urlAtualizacao)) return;
-        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_urlAtualizacao) { UseShellExecute = true }); }
-        catch (Exception ex) { MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning); }
-    }
-
-    void DispensarAviso_Click(object sender, RoutedEventArgs e) => AvisoAtualiza.Visibility = Visibility.Collapsed;
+    void IrParaAtualizacao_Click(object sender, RoutedEventArgs e) => SelecionarAba("config");
 
     // Logout / expiração de sessão: encerra e volta ao login; se o login for cancelado, o app fecha.
     void Sair_Click(object sender, RoutedEventArgs e) => ForcarRelogin();

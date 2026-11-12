@@ -166,55 +166,47 @@ public partial class JogosView : UserControl
         StatusLbl.Text = $"'{d.Nome}' adicionado ao catálogo (perfil padrão). Abra o jogo e clique em Aplicar — nada foi aplicado automaticamente.";
     }
 
+    // Card empilhado na vertical: cabeçalho (nome/caminho/status) → ações → opt-ins. As duas faixas de
+    // botões são WrapPanel, então envolvem conforme a largura (nada se sobrepõe nem é cortado em janela
+    // pequena/não maximizada). O caminho usa elipse + tooltip para não quebrar o layout.
     Border Cartao(PerfilJogo j)
     {
-        var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
         bool aplicado = _gestor.EstaAplicado(j.Executavel);
-        var info = new StackPanel { Margin = new Thickness(0, 0, 16, 0), VerticalAlignment = VerticalAlignment.Center };
-        info.Children.Add(new TextBlock { Text = j.Nome, FontSize = 15, FontWeight = FontWeights.SemiBold });
-        info.Children.Add(new TextBlock { Text = j.Executavel, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis });
-        info.Children.Add(new TextBlock
+        var raiz = new StackPanel();
+        raiz.Children.Add(new TextBlock { Text = j.Nome, FontSize = 15, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+        raiz.Children.Add(new TextBlock { Text = j.Executavel, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = j.Executavel });
+        raiz.Children.Add(new TextBlock
         {
             Text = aplicado ? "● Aplicado agora (reversível)" : $"Perfil salvo · prioridade {NomePrio(j.Prioridade)} · afinidade {NomeAfinidade(j)}",
             Foreground = aplicado ? Success : Muted,
             FontSize = 12,
             Margin = new Thickness(0, 4, 0, 0),
         });
-        Grid.SetColumn(info, 0);
-        grid.Children.Add(info);
 
-        var acoes = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        var acoes = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         acoes.Children.Add(Botao(Secundario, $"Prioridade: {NomePrio(j.Prioridade)}", () => CiclarPrioridade(j)));
         if (Hibrido) acoes.Children.Add(Botao(Secundario, $"Afinidade: {NomeAfinidade(j)}", () => CiclarAfinidade(j)));
         acoes.Children.Add(Botao(Primario, "Aplicar", () => Aplicar(j)));
         acoes.Children.Add(Botao(Secundario, "Reverter", () => Reverter(j)));
         acoes.Children.Add(Botao(Secundario, "Remover", () => Remover(j)));
-        Grid.SetColumn(acoes, 1);
-        grid.Children.Add(acoes);
+        raiz.Children.Add(acoes);
 
-        // 2ª linha: otimizações OPT-IN com aviso (working set, timer, GPU alta, boost).
-        var optins = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        // Otimizações OPT-IN com aviso (working set, timer, GPU alta, boost, CPU Sets).
+        var optins = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
         optins.Children.Add(Botao(Secundario, $"Working set: {(j.TrimWorkingSet ? "trim" : "não")}", () => AlternarWorkingSet(j)));
         optins.Children.Add(Botao(Secundario, $"Timer 1 ms: {(j.TimerAltaResolucao ? "sim" : "não")}", () => AlternarTimer(j)));
         optins.Children.Add(Botao(Secundario, $"GPU: {(j.PrefereGpuAlta ? "alto desempenho" : "automática")}", () => AlternarGpu(j)));
         optins.Children.Add(Botao(Secundario, $"Boost: {(j.PriorityBoost ? "sim" : "não")}", () => AlternarBoost(j)));
         if (Hibrido) optins.Children.Add(Botao(Secundario, $"Núcleos P (CPU Sets): {(j.CpuSetsPCores ? "sim" : "não")}", () => AlternarCpuSets(j)));
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        Grid.SetRow(info, 0);
-        Grid.SetRow(acoes, 0);
-        Grid.SetRow(optins, 1);
-        Grid.SetColumnSpan(optins, 2);
-        grid.Children.Add(optins);
+        raiz.Children.Add(optins);
 
-        return new Border { Style = (Style)Application.Current.Resources["Card"], Margin = new Thickness(0, 0, 0, 12), Child = grid };
+        return new Border { Style = (Style)Application.Current.Resources["Card"], Margin = new Thickness(0, 0, 0, 12), Child = raiz };
     }
 
     static Button Botao(Style estilo, string texto, Action aoClicar)
     {
-        var b = new Button { Style = estilo, Content = texto, Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 7, 12, 7) };
+        // margem inferior 8 dá respiro entre faixas quando os botões envolvem (WrapPanel).
+        var b = new Button { Style = estilo, Content = texto, Margin = new Thickness(0, 0, 8, 8), Padding = new Thickness(12, 7, 12, 7) };
         b.Click += (_, _) => aoClicar();
         return b;
     }

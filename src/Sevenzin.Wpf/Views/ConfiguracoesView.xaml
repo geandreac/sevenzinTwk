@@ -148,7 +148,7 @@
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button x:Name="AbrirReleaseBtn" Style="{StaticResource PrimaryButton}" Content="Baixar atualização"
                                             Visibility="Collapsed" Margin="0,0,8,0" Click="AbrirRelease_Click"/>
-                                    <Button x:Name="VerificarBtn" Style="{StaticResource SecondaryButton}" Content="Verificar atualizações" Click="Verificar_Click"/>
+                                    <Button x:Name="VerificarBtn" Style="{StaticResource SecondaryButton}" Content="Buscar atualizações" Click="Verificar_Click"/>
                                 </StackPanel>
                             </Grid>
                         </StackPanel>

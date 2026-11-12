@@ -326,6 +326,52 @@ altura e não desloca o conteúdo.
 validação manual do dono. A barra sobreposta pode cobrir ~8px da borda direita do item mais à direita
 durante a rolagem, mas os ícones ficam à esquerda desse ponto (centralizados na coluna), sem colisão.
 
+## §15. Layout de Jogos, status da sidebar e verificação/aviso de atualização (12/11/2026)
+
+### 15.1 Tela "Jogos" — controles sobrepostos
+**Causa:** o `Cartao(PerfilJogo)` montava um `Grid` com `info`/`acoes` em `SetRow(0)` e os chips opt-in em
+`SetRow(1)`, mas adicionava **uma só** `RowDefinition`. Sem a 2ª linha definida, o WPF fixa o conteúdo da
+linha 1 na linha 0 — os chips (Working set/Timer/GPU/Boost) renderizavam **por cima** do nome e do caminho.
+Em janela estreita, as faixas horizontais (`StackPanel`) ainda cortavam botões.
+
+**Solução:** card reescrito como `StackPanel` vertical — cabeçalho (nome, caminho com elipse + tooltip,
+status) → faixa de ações → faixa de opt-ins. As duas faixas de botões são `WrapPanel`, então **envolvem**
+conforme a largura (nada se sobrepõe nem é cortado em janela não maximizada); cada botão ganhou margem
+inferior para respiro entre linhas envolvidas. Funcionalidade e valores de cada perfil preservados (só o
+layout mudou). `src/Sevenzin.Wpf/Views/JogosView.xaml.cs`.
+
+### 15.2 Status online da sidebar encoberto
+**Causa:** a `Ellipse` de status ficava `DockPanel.Dock="Bottom"` colada ao último ícone da navegação, sem
+área própria — visualmente encostava/era encoberta pelo item final da lista.
+
+**Solução:** a elipse passou para um `Border` com divisória no topo (`BorderThickness="0,1,0,0"`) e
+`Padding` próprio; o `DockPanel` reserva esse bloco, então a lista nunca o sobrepõe (com ou sem rolagem,
+expandida ou recolhida). A `Nav` ganhou margem inferior. Significado preservado ("Monitorando · local");
+não inventa estado "online" de servidor. `src/Sevenzin.Wpf/MainWindow.xaml`.
+
+### 15.3 "Sobre" com versão e busca de atualizações
+A fonte oficial de versão é `<Version>` do `Sevenzin.Wpf.csproj` (lida em runtime via
+`Assembly.GetName().Version`); a fonte de releases é o próprio GitHub do projeto
+(`releases/latest`, já usada pelo `VerificadorAtualizacoes`). Em **Configurações > Sobre**: versão instalada,
+botão **"Buscar atualizações"** e os quatro estados — *buscando* ("Verificando no GitHub…"), *atualizado*
+("Você está na versão mais recente (X)"), *disponível* ("Nova versão disponível: Y…" + botão "Baixar
+atualização" que abre a página da release) e *falha* ("Não foi possível verificar agora…"). Nada é baixado
+ou instalado automaticamente.
+
+### 15.4 Aviso de atualização na barra superior
+Ao abrir, a `MainWindow` consulta `releases/latest` em segundo plano; **só** quando há versão maior, acende
+um indicador verde com o texto "Atualização disponível" ao lado do e-mail (tooltip "Atualização Disponível",
+foco por teclado), que ao clicar leva a **Configurações > Sobre**. Sem release mais recente, o indicador fica
+oculto; offline/erro não aparece. Não baixa nem instala sozinho. `src/Sevenzin.Wpf/MainWindow.xaml(.cs)`.
+
+### 15.5 Testes e limitações
+- `dotnet build` 0/0 (User e Admin); `dotnet test` 190/190; renders headless de `jogos` e `config` com
+  código 0. 6 testes cobrem o parse de tag e a comparação de versões (`AtualizacoesTests`).
+- **Limitação:** o modelo da sessão não processa imagens — a conferência visual fina (antes/depois, janela
+  mínima, sidebar com rolagem) é validação manual do dono sobre os PNGs renderizados. O indicador da barra
+  superior só aparece com uma release de tag maior que a versão instalada; com app e release em `1.0.0` ele
+  fica oculto (comportamento correto).
+
 ## Resumo por item
 | # | Item | Status |
 |---|---|---|
