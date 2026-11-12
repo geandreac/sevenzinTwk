@@ -64,7 +64,22 @@ dotnet run --project src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug   # abrir o a
 
 No 1º uso o app pede para criar o administrador (e-mail + senha forte ≥12, maiúsc/minúsc, número e símbolo).
 Para semear sem UI: variáveis `SEVENZIN_ADMIN_EMAIL` e `SEVENZIN_ADMIN_SENHA`. Dados em runtime ficam em
-`%LOCALAPPDATA%\Sevenzin\` (conta, backup/auditoria de tweaks, perfis de jogo) — fora do repositório.
+`%LOCALAPPDATA%\Sevenzin\` (conta, backup/auditoria de tweaks, perfis de jogo, log de acessos) — fora do repositório.
+
+## Banco de contas (JSON local ou MongoDB)
+
+Por padrão as contas ficam num JSON local (`%LOCALAPPDATA%\Sevenzin\usuarios.json`), compartilhado pelos dois apps.
+Para usar **MongoDB** (servidor), defina a string de conexão em variável de ambiente — **nunca no código**:
+
+```powershell
+setx SEVENZIN_DB "mongodb+srv://usuario:senha@cluster/...?tls=true"
+setx SEVENZIN_DB_NOME "sevenzin"   # opcional; senão usa o banco da URI ou "sevenzin"
+```
+
+Se `SEVENZIN_DB` estiver definida e o servidor responder, o app usa Mongo (coleção `usuarios`) e **migra o JSON local
+na 1ª vez**; se não estiver, ou o banco não responder, cai no JSON automaticamente (o app nunca trava). Senhas
+continuam em **bcrypt** (só o hash vai ao banco). Use conexão **TLS** e credenciais só na env var. Código:
+`src/Sevenzin.Diagnostics/RepositorioUsuariosMongo.cs` e a escolha em `src/Sevenzin.Wpf/Servicos.cs`.
 
 ## Como trabalhar aqui
 

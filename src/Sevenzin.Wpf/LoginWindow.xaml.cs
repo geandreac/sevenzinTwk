@@ -19,6 +19,9 @@ public partial class LoginWindow : Window
     static readonly string ArqSenha = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "senha_lembrada.bin");
 
+    /// <summary>Ligado pelo app Admin antes de abrir o login, para diferenciar a tela (selo "Painel administrativo").</summary>
+    public static bool ModoAdmin;
+
     readonly bool _bootstrap;
     string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA
 
@@ -27,6 +30,12 @@ public partial class LoginWindow : Window
         InitializeComponent();
         JanelaArredondada.Arredondar(this);
         _bootstrap = Servicos.Contas.Todos.Count == 0;
+
+        if (ModoAdmin)
+        {
+            AdminBadge.Visibility = Visibility.Visible;
+            Title = "Sevenzin Admin — Acesso";
+        }
 
         if (_bootstrap)
         {
@@ -45,6 +54,8 @@ public partial class LoginWindow : Window
             }
             catch { }
         }
+
+        if (ModoAdmin && !_bootstrap) Subtitulo.Text = "Acesso de administrador";
 
         // Com e-mail e senha já preenchidos (lembrados), o foco vai direto no botão Entrar.
         Loaded += (_, _) => (Senha.Password.Length > 0 ? (Control)EntrarBtn : Email.Text.Length > 0 ? Senha : Email).Focus();
@@ -75,11 +86,13 @@ public partial class LoginWindow : Window
             var r2 = Servicos.Auth.Autenticar(_email2fa, _senha2fa, Totp.Text);
             if (r2.Ok)
             {
+                RegistroAcessos.Registrar(_email2fa, "Sucesso (2FA)", true);
                 Servicos.Sessao.Abrir(r2.Usuario!);
                 LembrarCredenciais(_email2fa, _senha2fa!);
                 DialogResult = true;
                 return;
             }
+            RegistroAcessos.Registrar(_email2fa, "Código 2FA inválido", false);
             Erro(r2.Mensagem);
             Totp.Clear();
             Totp.Focus();
@@ -89,6 +102,7 @@ public partial class LoginWindow : Window
         var r = Servicos.Auth.Autenticar(email, senha);
         if (r.Ok)
         {
+            RegistroAcessos.Registrar(email, "Sucesso", true);
             Servicos.Sessao.Abrir(r.Usuario!);
             LembrarCredenciais(email, senha);
             DialogResult = true;
@@ -105,6 +119,7 @@ public partial class LoginWindow : Window
             Totp.Focus();
             return;
         }
+        RegistroAcessos.Registrar(email, r.Status == StatusAuth.Bloqueado ? "Bloqueado (força bruta)" : "Falha de login", false);
         Erro(r.Status == StatusAuth.Bloqueado && r.Espere is { } t
             ? $"Muitas tentativas. Aguarde ~{Math.Ceiling(t.TotalMinutes)} min e tente de novo."
             : r.Mensagem);

@@ -137,27 +137,46 @@ public sealed class RepositorioUsuariosArquivo : IRepositorioUsuarios
 
     readonly string _arquivo;
     readonly List<Usuario> _usuarios;
+    DateTime _carregadoEm = DateTime.MinValue;
 
     public RepositorioUsuariosArquivo(string? caminho = null)
     {
         _arquivo = caminho ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "usuarios.json");
         Directory.CreateDirectory(Path.GetDirectoryName(_arquivo)!);
         _usuarios = Carregar();
+        _carregadoEm = Mtime();
     }
 
-    public IReadOnlyList<Usuario> Todos => _usuarios;
-    public Usuario? PorEmail(string email) => _usuarios.FirstOrDefault(u => u.Email.Equals(email?.Trim(), StringComparison.OrdinalIgnoreCase));
-    public void Adicionar(Usuario u) { _usuarios.Add(u); Salvar(); }
+    public IReadOnlyList<Usuario> Todos { get { Sincronizar(); return _usuarios; } }
+
+    public Usuario? PorEmail(string email)
+    {
+        Sincronizar();
+        return _usuarios.FirstOrDefault(u => u.Email.Equals(email?.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+    public void Adicionar(Usuario u) { Sincronizar(); _usuarios.Add(u); Salvar(); }
     public void Atualizar(Usuario u)
     {
+        Sincronizar();
         int i = _usuarios.FindIndex(x => x.Email.Equals(u.Email, StringComparison.OrdinalIgnoreCase));
         if (i >= 0) { _usuarios[i] = u; Salvar(); }
     }
     public bool Remover(string email)
     {
+        Sincronizar();
         bool algum = _usuarios.RemoveAll(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)) > 0;
         if (algum) Salvar();
         return algum;
+    }
+
+    DateTime Mtime() { try { return File.Exists(_arquivo) ? File.GetLastWriteTimeUtc(_arquivo) : DateTime.MinValue; } catch { return DateTime.MinValue; } }
+
+    /// <summary>Recarrega do disco se o arquivo mudou — assim contas criadas no outro app (Admin ↔ usuário) aparecem
+    /// sem reiniciar, e uma escrita não sobrescreve o que o outro processo gravou.</summary>
+    void Sincronizar()
+    {
+        var m = Mtime();
+        if (m > _carregadoEm) { _usuarios.Clear(); _usuarios.AddRange(Carregar()); _carregadoEm = m; }
     }
 
     List<Usuario> Carregar()
@@ -165,7 +184,7 @@ public sealed class RepositorioUsuariosArquivo : IRepositorioUsuarios
         try { return File.Exists(_arquivo) ? JsonSerializer.Deserialize<List<Usuario>>(File.ReadAllText(_arquivo), Opts) ?? new() : new(); }
         catch { return new(); }
     }
-    void Salvar() => File.WriteAllText(_arquivo, JsonSerializer.Serialize(_usuarios, Opts));
+    void Salvar() { File.WriteAllText(_arquivo, JsonSerializer.Serialize(_usuarios, Opts)); _carregadoEm = Mtime(); }
 }
 
 /// <summary>Repositório em memória (para testes).</summary>

@@ -29,7 +29,6 @@ public partial class MainWindow : Window
         ("inventario", "", "Inventário"),
         ("telemetria", "", "Telemetria"),
         ("benchmark", "", "Benchmark"),
-        ("admin", "", "Admin"),
     };
 
     readonly List<TextBlock> _rotulos = new(); // rótulos ocultos na sidebar estreita; aparecem ao expandir
@@ -39,10 +38,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         JanelaArredondada.Arredondar(this);
-        bool podeAdmin = Servicos.Sessao.PodeAcessarAdmin;
         foreach (var (tag, glifo, rotulo) in Itens)
         {
-            if (tag == "admin" && !podeAdmin) continue; // proteção de rota por papel: só admin vê a tela Admin
             var item = new ListBoxItem { Content = ConteudoNav(tag, glifo, rotulo), Tag = tag, ToolTip = rotulo };
             // Nome ao lado do ícone (sidebar recolhida): tooltip à direita, aparecendo rápido. Desligado quando expandida.
             ToolTipService.SetPlacement(item, System.Windows.Controls.Primitives.PlacementMode.Right);
@@ -156,7 +153,6 @@ public partial class MainWindow : Window
             "inventario" => new InventarioView(),
             "telemetria" => new TelemetriaView(),
             "benchmark" => new BenchmarkView(),
-            "admin" => new AdminView(),
             _ => EmBreve(Itens.First(i => i.Tag == tag).Rotulo),
         };
         AnimarEntrada(Host);
