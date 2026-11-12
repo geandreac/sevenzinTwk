@@ -153,6 +153,32 @@ persistem/ordenam/limpam).
 **Pendências / validação manual:** render das telas novas (F8); efeito real do `lfsvc Start=4` exige
 reinício; conferir no Painel de Controle que o mouse ficou 1:1.
 
+## §9. Fase 5 — Perfil, licença local e 2FA (12/11/2026)
+
+- **TOTP local** (`Totp.cs`, novo): RFC 6238 (HMAC-SHA1, 30 s, 6 dígitos) com Base32 RFC 4648 próprio,
+  tolerância de ±1 janela e comparação em tempo constante. **Validado contra os vetores oficiais do RFC 6238.**
+  Substitui o `KeyAuth_Enable2FA/GetTwoFactorSecret` do original por verificação 100% offline.
+- **Contas** (`Usuarios.cs`): `Usuario.TotpSegredo/TotpAtivo` (padrão desligado — `usuarios.json` antigo segue
+  abrindo); `IRepositorioUsuarios.Atualizar`; `ServicoContas.GerarSegredo2FA/Confirmar2FA/Desativar2FA`
+  (o fator só ativa depois de confirmado com um código válido).
+- **Autenticação** (`Autenticacao.cs`): novo status `Exige2FA`; `Autenticar(email, senha, codigo2fa?)` — senha
+  correta + 2FA ativo sem código devolve `Exige2FA`; código errado conta como falha (força bruta).
+- **Login** (`LoginWindow`): etapa do código do autenticador (bloco TOTP, botão vira "Verificar código").
+- **Licença local** (`Licenca.cs`, novo): chave `A1B2-C3D4-E5F6-G7H8` guardada em JSON local; validação de
+  formato pura. **Registro formal, não bloqueio** — sem servidor/HWID, e nada é escondido com ou sem chave.
+- **Tela Perfil** (`PerfilView`, nova + item na navegação): conta (e-mail/papel/criada), ativação de 2FA com
+  segredo + confirmação, licença (salvar/remover) e resumo local (jogos, capturas, notificações).
+
+**Arquivos alterados:** `Totp.cs`, `Licenca.cs` (novos); `Usuarios.cs`, `Autenticacao.cs`, `LoginWindow.xaml/.cs`,
+`PerfilView.xaml/.cs` (novos), `MainWindow.xaml.cs`, `Icons.xaml`, `TotpELicencaTests.cs` (novo).
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **133/133** (vetores RFC 6238, conferência ±1 janela, formato e
+persistência da licença, fluxo Exige2FA → código errado rejeitado → código certo autentica, 2FA nunca ativa sem
+confirmação).
+
+**Pendências / validação manual:** testar o login com 2FA num autenticador real (Google Authenticator/Authy);
+render da tela Perfil (F8).
+
 
 ## Resumo por item
 | # | Item | Status |

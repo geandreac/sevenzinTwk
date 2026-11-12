@@ -65,6 +65,17 @@
             <TextBlock x:Name="SenhaAjuda" Text="mínimo 12 · maiúsc/minúsc, número e símbolo" Foreground="{StaticResource TextMutedBrush}"
                        FontSize="11" Margin="0,4,0,0" Visibility="Collapsed"/>
 
+            <!-- Código do autenticador (aparece só quando a conta tem 2FA) -->
+            <StackPanel x:Name="TotpBloco" Visibility="Collapsed">
+                <TextBlock Text="Código do autenticador" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,14,0,4"/>
+                <TextBox x:Name="Totp" Height="40" Padding="10,0" VerticalContentAlignment="Center" MaxLength="6"
+                         Background="{StaticResource Surface2Brush}" Foreground="{StaticResource TextPrimaryBrush}"
+                         BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1" FontFamily="{StaticResource UiFont}"
+                         CaretBrush="{StaticResource TextPrimaryBrush}" KeyDown="Campo_KeyDown" Tag="000000"/>
+                <TextBlock Text="Abra seu aplicativo autenticador e digite o código de 6 dígitos." Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11" Margin="0,4,0,0"/>
+            </StackPanel>
+
             <!-- Confirmar senha (apenas no primeiro administrador) -->
             <StackPanel x:Name="ConfirmarBloco" Visibility="Collapsed">
                 <TextBlock Text="Confirmar senha" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,14,0,4"/>

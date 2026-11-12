@@ -14,6 +14,7 @@ public partial class LoginWindow : Window
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "ultimo_email.txt");
 
     readonly bool _bootstrap;
+    string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA
 
     public LoginWindow()
     {
@@ -55,12 +56,40 @@ public partial class LoginWindow : Window
         var senha = SenhaAtual();
         if (_bootstrap) { CriarPrimeiroAdmin(email, senha); return; }
 
+        // 2ª etapa do 2FA: senha já validada, falta o código do autenticador.
+        if (_email2fa is not null)
+        {
+            var r2 = Servicos.Auth.Autenticar(_email2fa, _senha2fa, Totp.Text);
+            if (r2.Ok)
+            {
+                Servicos.Sessao.Abrir(r2.Usuario!);
+                LembrarEmail(_email2fa);
+                DialogResult = true;
+                return;
+            }
+            Erro(r2.Mensagem);
+            Totp.Clear();
+            Totp.Focus();
+            return;
+        }
+
         var r = Servicos.Auth.Autenticar(email, senha);
         if (r.Ok)
         {
             Servicos.Sessao.Abrir(r.Usuario!);
             LembrarEmail(email);
             DialogResult = true;
+            return;
+        }
+        if (r.Status == StatusAuth.Exige2FA)
+        {
+            _email2fa = email;
+            _senha2fa = senha;
+            TotpBloco.Visibility = Visibility.Visible;
+            EntrarBtn.Content = "Verificar código";
+            Subtitulo.Text = "Verificação em dois fatores";
+            Mensagem.Visibility = Visibility.Collapsed;
+            Totp.Focus();
             return;
         }
         Erro(r.Status == StatusAuth.Bloqueado && r.Espere is { } t

@@ -7,8 +7,10 @@ namespace Sevenzin.Diagnostics;
 
 public enum PapelUsuario { Administrador, Usuario }
 
-/// <summary>Conta local. A senha NUNCA é guardada em texto — só o hash bcrypt (salt embutido no próprio hash).</summary>
-public sealed record Usuario(string Email, string Nome, PapelUsuario Papel, string HashSenha, DateTime CriadoUtc);
+/// <summary>Conta local. A senha NUNCA é guardada em texto — só o hash bcrypt (salt embutido no próprio hash).
+/// 2FA opcional: <paramref name="TotpSegredo"/> (Base32) + <paramref name="TotpAtivo"/> — verificação local (TOTP).</summary>
+public sealed record Usuario(string Email, string Nome, PapelUsuario Papel, string HashSenha, DateTime CriadoUtc,
+    string? TotpSegredo = null, bool TotpAtivo = false);
 
 /// <summary>Força da senha por requisito (medidor do Figma ADM-02). Nível 0..4; Ok quando todos atendidos.</summary>
 public sealed record ForcaSenha(bool Tamanho, bool Caixa, bool Numero, bool Simbolo, bool SemDadosPessoais)
@@ -124,6 +126,7 @@ public interface IRepositorioUsuarios
     IReadOnlyList<Usuario> Todos { get; }
     Usuario? PorEmail(string email);
     void Adicionar(Usuario u);
+    void Atualizar(Usuario u);
     bool Remover(string email);
 }
 
@@ -145,6 +148,11 @@ public sealed class RepositorioUsuariosArquivo : IRepositorioUsuarios
     public IReadOnlyList<Usuario> Todos => _usuarios;
     public Usuario? PorEmail(string email) => _usuarios.FirstOrDefault(u => u.Email.Equals(email?.Trim(), StringComparison.OrdinalIgnoreCase));
     public void Adicionar(Usuario u) { _usuarios.Add(u); Salvar(); }
+    public void Atualizar(Usuario u)
+    {
+        int i = _usuarios.FindIndex(x => x.Email.Equals(u.Email, StringComparison.OrdinalIgnoreCase));
+        if (i >= 0) { _usuarios[i] = u; Salvar(); }
+    }
     public bool Remover(string email)
     {
         bool algum = _usuarios.RemoveAll(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)) > 0;
@@ -167,6 +175,11 @@ public sealed class RepositorioUsuariosMemoria : IRepositorioUsuarios
     public IReadOnlyList<Usuario> Todos => _usuarios;
     public Usuario? PorEmail(string email) => _usuarios.FirstOrDefault(u => u.Email.Equals(email?.Trim(), StringComparison.OrdinalIgnoreCase));
     public void Adicionar(Usuario u) => _usuarios.Add(u);
+    public void Atualizar(Usuario u)
+    {
+        int i = _usuarios.FindIndex(x => x.Email.Equals(u.Email, StringComparison.OrdinalIgnoreCase));
+        if (i >= 0) _usuarios[i] = u;
+    }
     public bool Remover(string email) => _usuarios.RemoveAll(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)) > 0;
 }
 
@@ -195,4 +208,34 @@ public sealed class ServicoContas
     }
 
     public bool Remover(string email) => _repo.Remover(ValidacaoCredenciais.NormalizarEmail(email));
+
+    /// <summary>Inicia a ativação do 2FA: grava um segredo novo (ainda INATIVO) e devolve o Base32
+    /// para o usuário cadastrar no app autenticador. null se a conta não existe.</summary>
+    public string? GerarSegredo2FA(string email)
+    {
+        var e = ValidacaoCredenciais.NormalizarEmail(email);
+        var u = _repo.PorEmail(e);
+        if (u is null) return null;
+        var segredo = Totp.GerarSegredo();
+        _repo.Atualizar(u with { TotpSegredo = segredo, TotpAtivo = false });
+        return segredo;
+    }
+
+    /// <summary>Confirma o 2FA com um código TOTP válido — só então o fator fica ATIVO.</summary>
+    public bool Confirmar2FA(string email, string? codigo, DateTime? agora = null)
+    {
+        var u = _repo.PorEmail(ValidacaoCredenciais.NormalizarEmail(email));
+        if (u?.TotpSegredo is not { } segredo) return false;
+        if (!Totp.Confere(segredo, codigo, agora ?? DateTime.UtcNow)) return false;
+        _repo.Atualizar(u with { TotpAtivo = true });
+        return true;
+    }
+
+    /// <summary>Desativa o 2FA da conta (remove o segredo).</summary>
+    public void Desativar2FA(string email)
+    {
+        var e = ValidacaoCredenciais.NormalizarEmail(email);
+        var u = _repo.PorEmail(e);
+        if (u is not null) _repo.Atualizar(u with { TotpSegredo = null, TotpAtivo = false });
+    }
 }

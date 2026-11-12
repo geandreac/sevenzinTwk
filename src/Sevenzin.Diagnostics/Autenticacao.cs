@@ -9,7 +9,7 @@ public sealed record PoliticaForcaBruta(int MaxTentativas = 5, TimeSpan? Janela 
     public TimeSpan BloqueioEf => Bloqueio ?? TimeSpan.FromMinutes(5);
 }
 
-public enum StatusAuth { Sucesso, CredenciaisInvalidas, Bloqueado, DadosInvalidos }
+public enum StatusAuth { Sucesso, CredenciaisInvalidas, Bloqueado, DadosInvalidos, Exige2FA }
 
 /// <summary>Resultado da autenticação. Mensagens são genéricas — não revelam se o e-mail existe.</summary>
 public sealed record ResultadoAuth(StatusAuth Status, Usuario? Usuario = null, TimeSpan? Espere = null, string Mensagem = "")
@@ -38,7 +38,7 @@ public sealed class ServicoAutenticacao
         _pol = pol ?? new PoliticaForcaBruta();
     }
 
-    public ResultadoAuth Autenticar(string? email, string? senha)
+    public ResultadoAuth Autenticar(string? email, string? senha, string? codigo2fa = null)
     {
         var e = ValidacaoCredenciais.NormalizarEmail(email);
         var agora = _agora();
@@ -56,17 +56,28 @@ public sealed class ServicoAutenticacao
         bool ok = u is not null && SegurancaSenha.Confere(senha, u.HashSenha);
         if (u is null) SegurancaSenha.Confere(senha, SegurancaSenha.HashFalso); // equaliza o tempo quando não há conta
 
-        if (ok)
+        if (!ok)
         {
-            _tentativas.Remove(e);
-            return new ResultadoAuth(StatusAuth.Sucesso, u);
+            RegistrarFalha(e, agora);
+            if (_tentativas.TryGetValue(e, out var r) && r.BloqueadoAteUtc is { } bloqAte && agora < bloqAte)
+                return new ResultadoAuth(StatusAuth.Bloqueado, Espere: bloqAte - agora, Mensagem: MsgBloqueio);
+            return new ResultadoAuth(StatusAuth.CredenciaisInvalidas, Mensagem: ErroGenerico);
         }
 
-        RegistrarFalha(e, agora);
-        if (_tentativas.TryGetValue(e, out var r) && r.BloqueadoAteUtc is { } bloqAte && agora < bloqAte)
-            return new ResultadoAuth(StatusAuth.Bloqueado, Espere: bloqAte - agora, Mensagem: MsgBloqueio);
+        // Senha correta; 2FA local opcional (TOTP).
+        if (u!.TotpAtivo && u.TotpSegredo is { } segredo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo2fa))
+                return new ResultadoAuth(StatusAuth.Exige2FA, u, Mensagem: "Informe o código do autenticador.");
+            if (!Totp.Confere(segredo, codigo2fa, agora))
+            {
+                RegistrarFalha(e, agora);
+                return new ResultadoAuth(StatusAuth.CredenciaisInvalidas, Mensagem: "Código de verificação inválido.");
+            }
+        }
 
-        return new ResultadoAuth(StatusAuth.CredenciaisInvalidas, Mensagem: ErroGenerico);
+        _tentativas.Remove(e);
+        return new ResultadoAuth(StatusAuth.Sucesso, u);
     }
 
     public bool EstaBloqueado(string? email)
