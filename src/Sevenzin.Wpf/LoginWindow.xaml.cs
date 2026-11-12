@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,6 +14,10 @@ public partial class LoginWindow : Window
 {
     static readonly string ArqEmail = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "ultimo_email.txt");
+    // Senha "lembrada" é guardada CIFRADA por DPAPI (escopo do usuário do Windows): só este usuário, nesta máquina,
+    // consegue decifrar. Nunca em texto puro. Serve apenas para preencher o login do próprio app.
+    static readonly string ArqSenha = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "senha_lembrada.bin");
 
     readonly bool _bootstrap;
     string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA
@@ -31,10 +37,16 @@ public partial class LoginWindow : Window
         }
         else
         {
-            try { if (File.Exists(ArqEmail)) { Email.Text = File.ReadAllText(ArqEmail).Trim(); Lembrar.IsChecked = Email.Text.Length > 0; } } catch { }
+            try
+            {
+                if (File.Exists(ArqEmail)) { Email.Text = File.ReadAllText(ArqEmail).Trim(); Lembrar.IsChecked = Email.Text.Length > 0; }
+                if (Lembrar.IsChecked == true && CarregarSenhaLembrada() is { } s) Senha.Password = s;
+            }
+            catch { }
         }
 
-        Loaded += (_, _) => (Email.Text.Length > 0 ? (Control)Senha : Email).Focus();
+        // Com e-mail e senha já preenchidos (lembrados), o foco vai direto no botão Entrar.
+        Loaded += (_, _) => (Senha.Password.Length > 0 ? (Control)EntrarBtn : Email.Text.Length > 0 ? Senha : Email).Focus();
     }
 
     string SenhaAtual() => SenhaVisivel.Visibility == Visibility.Visible ? SenhaVisivel.Text : Senha.Password;
@@ -63,7 +75,7 @@ public partial class LoginWindow : Window
             if (r2.Ok)
             {
                 Servicos.Sessao.Abrir(r2.Usuario!);
-                LembrarEmail(_email2fa);
+                LembrarCredenciais(_email2fa, _senha2fa!);
                 DialogResult = true;
                 return;
             }
@@ -77,7 +89,7 @@ public partial class LoginWindow : Window
         if (r.Ok)
         {
             Servicos.Sessao.Abrir(r.Usuario!);
-            LembrarEmail(email);
+            LembrarCredenciais(email, senha);
             DialogResult = true;
             return;
         }
@@ -121,7 +133,9 @@ public partial class LoginWindow : Window
             "Esqueci minha senha", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
-    void LembrarEmail(string email)
+    /// <summary>Com "Lembrar de mim" marcado, guarda o e-mail e a senha (cifrada por DPAPI) para preencher o próximo
+    /// login. Desmarcado, apaga os dois. A senha nunca é gravada em texto puro.</summary>
+    void LembrarCredenciais(string email, string senha)
     {
         try
         {
@@ -129,10 +143,28 @@ public partial class LoginWindow : Window
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(ArqEmail)!);
                 File.WriteAllText(ArqEmail, email.Trim());
+                var cifrado = ProtectedData.Protect(Encoding.UTF8.GetBytes(senha), null, DataProtectionScope.CurrentUser);
+                File.WriteAllBytes(ArqSenha, cifrado);
             }
-            else if (File.Exists(ArqEmail)) File.Delete(ArqEmail);
+            else
+            {
+                if (File.Exists(ArqEmail)) File.Delete(ArqEmail);
+                if (File.Exists(ArqSenha)) File.Delete(ArqSenha);
+            }
         }
         catch { }
+    }
+
+    /// <summary>Decifra a senha lembrada (DPAPI, escopo do usuário). null se não há, está corrompida ou é de outro usuário/máquina.</summary>
+    static string? CarregarSenhaLembrada()
+    {
+        try
+        {
+            if (!File.Exists(ArqSenha)) return null;
+            var claro = ProtectedData.Unprotect(File.ReadAllBytes(ArqSenha), null, DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(claro);
+        }
+        catch { return null; }
     }
 
     void Erro(string msg)

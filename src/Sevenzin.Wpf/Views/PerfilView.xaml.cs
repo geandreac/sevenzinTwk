@@ -89,7 +89,7 @@ public partial class PerfilView : UserControl
             Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 4, 0, 0), TextWrapping = TextWrapping.Wrap,
         });
         var linha = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
-        var chaveTxt = new TextBox { Style = (Style)Application.Current.Resources["DarkBox"], Width = 240, Tag = "A1B2-C3D4-E5F6-G7H8", Text = lic.Chave ?? "" };
+        var chaveTxt = new TextBox { Style = (Style)Application.Current.Resources["DarkBox"], Width = 240, Tag = "A1B2-C3D4-E5F6-G7H8", Text = lic.Chave ?? "", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
         linha.Children.Add(chaveTxt);
         var salvar = Botao(Primario, "Salvar chave", () =>
         {
@@ -142,7 +142,7 @@ public partial class PerfilView : UserControl
             Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap,
         });
         var linha = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
-        var codigo = new TextBox { Style = (Style)Application.Current.Resources["DarkBox"], Width = 140, Tag = "000000", MaxLength = 6 };
+        var codigo = new TextBox { Style = (Style)Application.Current.Resources["DarkBox"], Width = 140, Tag = "000000", MaxLength = 6, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
         linha.Children.Add(codigo);
         var confirmar = Botao(Primario, "Confirmar código", () =>
         {
@@ -173,7 +173,7 @@ public partial class PerfilView : UserControl
 
     static Button Botao(Style estilo, string texto, Action acao)
     {
-        var b = new Button { Style = estilo, Content = texto, Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 7, 12, 7) };
+        var b = new Button { Style = estilo, Content = texto, Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 7, 12, 7), VerticalAlignment = VerticalAlignment.Center };
         b.Click += (_, _) => acao();
         return b;
     }

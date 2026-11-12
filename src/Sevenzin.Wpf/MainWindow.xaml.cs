@@ -43,6 +43,11 @@ public partial class MainWindow : Window
         {
             if (tag == "admin" && !podeAdmin) continue; // proteção de rota por papel: só admin vê a tela Admin
             var item = new ListBoxItem { Content = ConteudoNav(tag, glifo, rotulo), Tag = tag, ToolTip = rotulo };
+            // Nome ao lado do ícone (sidebar recolhida): tooltip à direita, aparecendo rápido. Desligado quando expandida.
+            ToolTipService.SetPlacement(item, System.Windows.Controls.Primitives.PlacementMode.Right);
+            ToolTipService.SetHorizontalOffset(item, 10);
+            ToolTipService.SetInitialShowDelay(item, 250);
+            ToolTipService.SetIsEnabled(item, !_expandido);
             System.Windows.Automation.AutomationProperties.SetName(item, rotulo); // acessibilidade (nome do item)
             Nav.Items.Add(item);
         }
@@ -69,6 +74,7 @@ public partial class MainWindow : Window
         _expandido = !_expandido;
         double alvo = _expandido ? 210 : 66;
         foreach (var l in _rotulos) l.Visibility = _expandido ? Visibility.Visible : Visibility.Collapsed;
+        foreach (ListBoxItem it in Nav.Items) ToolTipService.SetIsEnabled(it, !_expandido); // expandida já mostra o rótulo; evita tooltip redundante
         if (SystemParameters.ClientAreaAnimation)
             Sidebar.BeginAnimation(WidthProperty, new DoubleAnimation(Sidebar.ActualWidth, alvo, TimeSpan.FromMilliseconds(180)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
         else { Sidebar.BeginAnimation(WidthProperty, null); Sidebar.Width = alvo; }
@@ -179,7 +185,7 @@ public partial class MainWindow : Window
     void Max_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        MaxBtn.Content = WindowState == WindowState.Maximized ? "" : "";
+        MaxBtn.ToolTip = WindowState == WindowState.Maximized ? "Restaurar" : "Maximizar";
     }
     void Close_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 }
