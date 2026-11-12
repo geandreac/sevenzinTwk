@@ -18,6 +18,8 @@ public partial class JogosView : UserControl
     readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(2) };
     readonly TopologiaCpu.Resultado? _topo = TopologiaCpu.Ler();
     string _filtro = "";
+    List<JogoDetectado>? _detectados; // null = ainda não pediu a detecção
+    bool _detectando;
 
     static Style Primario => (Style)Application.Current.Resources["PrimaryButton"];
     static Style Secundario => (Style)Application.Current.Resources["SecondaryButton"];
@@ -57,13 +59,111 @@ public partial class JogosView : UserControl
         {
             Lista.Children.Add(new TextBlock
             {
-                Text = _catalogo.Todos.Count == 0 ? "Nenhum jogo ainda. Clique em \"Adicionar jogo\" e escolha o .exe." : "Nenhum jogo corresponde à busca.",
+                Text = _catalogo.Todos.Count == 0 ? "Nenhum jogo ainda. Use \"Detectar jogos instalados\" abaixo ou \"Adicionar jogo\" para escolher um .exe." : "Nenhum jogo corresponde à busca.",
                 Foreground = Muted,
                 Margin = new Thickness(2, 8, 0, 0),
             });
-            return;
         }
         foreach (var j in jogos) Lista.Children.Add(Cartao(j));
+        Lista.Children.Add(CartaoDetectados());
+    }
+
+    /// <summary>Seção "Jogos detectados" (Steam/Epic, só leitura): lista o que está instalado e deixa o
+    /// usuário adicionar ao catálogo — NADA é aplicado automaticamente.</summary>
+    Border CartaoDetectados()
+    {
+        var sp = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
+        sp.Children.Add(new TextBlock { Text = "JOGOS DETECTADOS (STEAM/EPIC)", Style = (Style)Application.Current.Resources["SectionLabel"] });
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Só leitura: o Sevenzin procura instalações nos manifestos locais (nada é executado). Adicionar cria o perfil — aplicar continua sendo manual ou pelo \"Aplicar ao abrir\".",
+            Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 2, 0, 8), TextWrapping = TextWrapping.Wrap,
+        });
+
+        var botoes = new StackPanel { Orientation = Orientation.Horizontal };
+        var detectar = Botao(Secundario, _detectando ? "Detectando…" : "Detectar jogos instalados", () => DetectarAsync());
+        detectar.IsEnabled = !_detectando;
+        botoes.Children.Add(detectar);
+        sp.Children.Add(botoes);
+
+        if (_detectados is { } lista)
+        {
+            if (lista.Count == 0)
+                sp.Children.Add(new TextBlock { Text = "Nenhum jogo detectado (launchers ausentes ou sem instalações).", Foreground = Muted, FontSize = 13, Margin = new Thickness(0, 8, 0, 0) });
+            foreach (var d in lista) sp.Children.Add(LinhaDetectado(d));
+        }
+        return new Border { Style = (Style)Application.Current.Resources["Card"], Margin = new Thickness(0, 0, 0, 12), Child = sp };
+    }
+
+    async void DetectarAsync()
+    {
+        _detectando = true;
+        Montar();
+        _detectados = await System.Threading.Tasks.Task.Run(DescobridorJogos.DetectarTudo);
+        _detectando = false;
+        Montar();
+        StatusLbl.Text = _detectados is { Count: > 0 } d
+            ? $"{d.Count} jogo(s) detectado(s) — clique em Adicionar para criar o perfil (nada é aplicado automaticamente)."
+            : "Nenhum jogo detectado (launchers ausentes ou sem instalações).";
+    }
+
+    Grid LinhaDetectado(JogoDetectado d)
+    {
+        var grid = new Grid { Margin = new Thickness(0, 6, 0, 6) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        bool jaExiste = d.Executavel is { } exe && _catalogo.Todos.Any(j => j.Executavel.Equals(exe, StringComparison.OrdinalIgnoreCase));
+        var info = new StackPanel { Margin = new Thickness(0, 0, 16, 0), VerticalAlignment = VerticalAlignment.Center };
+        var titulo = new StackPanel { Orientation = Orientation.Horizontal };
+        var badge = new Border
+        {
+            Background = (Brush)Application.Current.Resources["BrandTintBrush"],
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(7, 2, 7, 2),
+            Margin = new Thickness(0, 0, 8, 0),
+            Child = new TextBlock { Text = d.Plataforma, FontSize = 10, FontWeight = FontWeights.SemiBold },
+        };
+        titulo.Children.Add(badge);
+        titulo.Children.Add(new TextBlock { Text = d.Nome, FontSize = 14, FontWeight = FontWeights.SemiBold });
+        info.Children.Add(titulo);
+        var detalhe = d.Executavel ?? (d.PastaInstalacao.Length > 0 ? $"pasta: {d.PastaInstalacao}" : "executável não resolvido");
+        info.Children.Add(new TextBlock { Text = detalhe, Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = detalhe });
+        Grid.SetColumn(info, 0);
+        grid.Children.Add(info);
+
+        var acoes = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        if (jaExiste)
+        {
+            var ok = new TextBlock { Text = "✓ no catálogo", Foreground = Success, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+            acoes.Children.Add(ok);
+        }
+        else
+        {
+            acoes.Children.Add(Botao(Primario, "Adicionar ao catálogo", () => AdicionarDetectado(d)));
+        }
+        Grid.SetColumn(acoes, 1);
+        grid.Children.Add(acoes);
+        return grid;
+    }
+
+    void AdicionarDetectado(JogoDetectado d)
+    {
+        string? exe = d.Executavel is { } e && File.Exists(e) ? e : null;
+        if (exe is null)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = $"Selecione o executável de {d.Nome}",
+                Filter = "Executável (*.exe)|*.exe",
+                InitialDirectory = d.PastaInstalacao.Length > 0 && Directory.Exists(d.PastaInstalacao) ? d.PastaInstalacao : null,
+            };
+            if (dlg.ShowDialog() != true) return;
+            exe = dlg.FileName;
+        }
+        _catalogo.Adicionar(new PerfilJogo(d.Nome, exe, 0, PrioridadeJogo.AcimaDoNormal));
+        Montar();
+        StatusLbl.Text = $"'{d.Nome}' adicionado ao catálogo (perfil padrão). Abra o jogo e clique em Aplicar — nada foi aplicado automaticamente.";
     }
 
     Border Cartao(PerfilJogo j)
