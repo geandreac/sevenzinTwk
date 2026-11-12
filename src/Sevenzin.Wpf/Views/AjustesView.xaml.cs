@@ -92,8 +92,13 @@ public partial class AjustesView : UserControl
         }
         try
         {
-            if (sw.IsChecked == true) _motor.Aplicar(t);
-            else if (!_motor.Desfazer(t)) sw.IsChecked = true; // sem backup: nada a desfazer
+            if (sw.IsChecked == true)
+            {
+                _motor.Aplicar(t);
+                NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' aplicado", $"Novo valor: {(t.Tipo == TipoValor.String ? t.ValorTexto : t.ValorOtimizado.ToString())}. Desfazer restaura o anterior.");
+            }
+            else if (!_motor.Desfazer(t)) sw.IsChecked = true;
+            else NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
         }
         catch (UnauthorizedAccessException)
         {

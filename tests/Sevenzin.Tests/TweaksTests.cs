@@ -8,10 +8,13 @@ public class TweaksTests
     sealed class RegistroFake : IRegistro
     {
         public readonly Dictionary<string, int> Store = new();
+        public readonly Dictionary<string, string> StoreStr = new();
         static string K(Colmeia h, string c, string n) => $"{h}|{c}|{n}";
         public int? LerDword(Colmeia h, string c, string n) => Store.TryGetValue(K(h, c, n), out var v) ? v : null;
         public void EscreverDword(Colmeia h, string c, string n, int v) => Store[K(h, c, n)] = v;
-        public void ApagarValor(Colmeia h, string c, string n) => Store.Remove(K(h, c, n));
+        public string? LerString(Colmeia h, string c, string n) => StoreStr.TryGetValue(K(h, c, n), out var s) ? s : null;
+        public void EscreverString(Colmeia h, string c, string n, string s) => StoreStr[K(h, c, n)] = s;
+        public void ApagarValor(Colmeia h, string c, string n) { Store.Remove(K(h, c, n)); StoreStr.Remove(K(h, c, n)); }
     }
 
     static string PastaTemp() => Path.Combine(Path.GetTempPath(), "sevenzin-test-" + Guid.NewGuid().ToString("N"));
@@ -117,6 +120,23 @@ public class TweaksTests
         Assert.Equal(0, reg.LerDword(uac.Colmeia, uac.Caminho, uac.NomeValor)); // aplicou
         Assert.True(motor.Desfazer(uac));
         Assert.Equal(1, reg.LerDword(uac.Colmeia, uac.Caminho, uac.NomeValor)); // restaurou o estado anterior
+    }
+
+    [Fact]
+    public void Tweak_de_string_mouse_aplica_e_desfaz_restaurando_o_texto_anterior()
+    {
+        var reg = new RegistroFake();
+        var motor = new MotorTweaks(reg, PastaTemp());
+        var mouse = CatalogoTweaks.Todos.First(t => t.Id == "mouse-aceleracao-off");
+        Assert.Equal(TipoValor.String, mouse.Tipo);
+
+        reg.EscreverString(mouse.Colmeia, mouse.Caminho, mouse.NomeValor, "1"); // aceleração estava ligada
+        motor.Aplicar(mouse);
+        Assert.Equal("0", reg.LerString(mouse.Colmeia, mouse.Caminho, mouse.NomeValor));
+        Assert.True(motor.Aplicado(mouse));
+
+        Assert.True(motor.Desfazer(mouse));
+        Assert.Equal("1", reg.LerString(mouse.Colmeia, mouse.Caminho, mouse.NomeValor)); // restaurou REG_SZ anterior
     }
 
     [Fact]

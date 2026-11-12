@@ -247,6 +247,7 @@ public partial class CapturasView : UserControl
         using var final = ComporFinal();
         _ultimoCaminho = CapturaTela.Salvar(final);
         StatusLbl.Text = $"Salvo em {_ultimoCaminho} · envio continua opcional.";
+        NotificacoesStore.Padrao.Adicionar("Capturas", "Captura salva", _ultimoCaminho);
     }
 
     void Copiar_Click(object sender, RoutedEventArgs e)

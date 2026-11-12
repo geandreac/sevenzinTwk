@@ -168,8 +168,13 @@ public partial class ProtecaoView : UserControl
         }
         try
         {
-            if (sw.IsChecked == true) _motor.Aplicar(t);
+            if (sw.IsChecked == true)
+            {
+                _motor.Aplicar(t);
+                NotificacoesStore.Padrao.Adicionar("Proteção", $"'{t.Nome}' aplicado", "Confirmação explícita feita. Desfazer restaura o valor anterior.");
+            }
             else if (!_motor.Desfazer(t)) sw.IsChecked = true;
+            else NotificacoesStore.Padrao.Adicionar("Proteção", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
             Montar();
         }
         catch (UnauthorizedAccessException)

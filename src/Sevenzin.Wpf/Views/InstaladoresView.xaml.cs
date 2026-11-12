@@ -86,12 +86,14 @@ public partial class InstaladoresView : UserControl
                 executar.Tag = destino;
                 executar.Visibility = Visibility.Visible;
                 _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Concluido, "assinatura verificada", null));
+                NotificacoesStore.Padrao.Adicionar("Instaladores", $"'{u.Nome}' verificado", "Assinatura confere — pronto para executar.");
             }
             else
             {
                 status.Text = $"✖ Verificação falhou: {Motivo(r)}. O arquivo NÃO será oferecido para execução.";
                 status.Foreground = Danger;
                 _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, Motivo(r), null));
+                NotificacoesStore.Padrao.Adicionar("Instaladores", $"'{u.Nome}' reprovado na verificação", Motivo(r));
                 try { File.Delete(destino); } catch { }
             }
         }
@@ -100,6 +102,7 @@ public partial class InstaladoresView : UserControl
             status.Text = "Falha no download: " + ex.Message;
             status.Foreground = Danger;
             _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, ex.Message, null));
+            NotificacoesStore.Padrao.Adicionar("Instaladores", $"Falha no download de '{u.Nome}'", ex.Message);
         }
         finally { baixar.IsEnabled = true; AtualizarFila(); }
     }
@@ -175,6 +178,7 @@ public partial class InstaladoresView : UserControl
                 status.Foreground = r.Ok ? Success : Danger;
                 status.Text = $"{id}: {(r.JaInstalado ? "já estava instalado" : r.Detalhe)}";
                 _fila.Marcar(new ItemFila(id, "winget:" + id, r.Ok ? EstadoFila.Concluido : EstadoFila.Falhou, r.Detalhe, null));
+                NotificacoesStore.Padrao.Adicionar("Instaladores", $"winget: {id}", r.JaInstalado ? "já estava instalado" : r.Detalhe);
             }
             botao.IsEnabled = true;
             AtualizarFila();

@@ -128,6 +128,31 @@ lista, cobertura dos nomes da RE, exclusão do KMS).
 **Pendências / validação manual:** instalação real via winget em máquina controlada (confirmação na UI);
 validação visual do cartão (F8).
 
+## §8. Fase 4 — Guias, Notificações e tweaks de mouse/localização (12/11/2026)
+
+- **Motor com suporte a REG_SZ** (`Tweaks.cs`): `TipoValor { Dword, String }` no `Tweak`, `IRegistro.LerString/
+  EscreverString`, backup variante (`ValorAnterior`) que desfaz restaurando o tipo exato. Motivo: o original
+  gravava strings em `Control Panel\Mouse` (confirmado em `otimizacoes-originais/01_registro_setvalues.txt`).
+- **Tweaks novos:** 3 de mouse (aceleração + 2 limiares, HKCU/string) e 2 de localização (`HideSCALocation=1`
+  e `lfsvc Start=4` com aviso de que jogos podem depender do serviço) — ambos confirmados no original.
+- **Guias** (`Guias.cs` + `GuiasView`): 6 guias reconstruídos do que o app realmente faz (textos exatos do
+  original são lacuna no `#US` — registrada). Só instrui sobre recursos implementados.
+- **Notificações** (`Notificacoes.cs` + `NotificacoesView`): histórico local (JSON atômico, máx. 200) + fila de
+  instaladores na mesma tela. Eventos reais registrados em Ajustes (aplicar/desfazer), Proteção, Instaladores
+  (verificação e winget) e Capturas (salvar). Nada sai da máquina.
+
+**Arquivos alterados:** `Tweaks.cs` (motor string), `RegistroWindows.cs`, `Guias.cs` (novo), `Notificacoes.cs`
+(novo), `GuiasView.xaml/.cs` (novos), `NotificacoesView.xaml/.cs` (novos), `MainWindow.xaml.cs`, `Icons.xaml`,
+`AjustesView.xaml.cs`, `ProtecaoView.xaml.cs`, `InstaladoresView.xaml.cs`, `CapturasView.xaml.cs`,
+`TweaksTests.cs`, `CacheEscritaTests.cs` (fake ampliado), `GuiasENotificacoesTests.cs` (novo).
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **127/127** (string-tweak aplica/desfaz restaurando REG_SZ,
+catálogo de mouse/localização conforme o original, guias únicos com passos não vazios, notificações
+persistem/ordenam/limpam).
+
+**Pendências / validação manual:** render das telas novas (F8); efeito real do `lfsvc Start=4` exige
+reinício; conferir no Painel de Controle que o mouse ficou 1:1.
+
 
 ## Resumo por item
 | # | Item | Status |

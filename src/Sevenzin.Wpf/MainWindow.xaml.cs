@@ -18,6 +18,8 @@ public partial class MainWindow : Window
         ("gpu", "", "GPU"),
         ("instaladores", "", "Instaladores"),
         ("jogos", "", "Jogos"),
+        ("guias", "", "Guias"),
+        ("notificacoes", "", "Notificações"),
         ("bios", "", "BIOS"),
         ("capturas", "", "Capturas"),
         ("windows", "", "Windows"),
@@ -77,7 +79,7 @@ public partial class MainWindow : Window
         ["inicio"] = "ic_inicio", ["ajustes"] = "ic_ajustes", ["gpu"] = "ic_gpu", ["instaladores"] = "ic_instaladores",
         ["jogos"] = "ic_jogos", ["bios"] = "ic_bios", ["capturas"] = "ic_capturas", ["windows"] = "ic_windows", ["config"] = "ic_config",
         ["inventario"] = "ic_inventario", ["telemetria"] = "ic_telemetria", ["benchmark"] = "ic_benchmark", ["admin"] = "ic_admin",
-        ["protecao"] = "ic_protecao",
+        ["protecao"] = "ic_protecao", ["guias"] = "ic_guias", ["notificacoes"] = "ic_notificacoes",
     };
 
     StackPanel ConteudoNav(string tag, string glifo, string rotulo)
@@ -135,6 +137,8 @@ public partial class MainWindow : Window
             "gpu" => new GpuView(),
             "instaladores" => new InstaladoresView(),
             "jogos" => new JogosView(),
+            "guias" => new GuiasView(),
+            "notificacoes" => new NotificacoesView(),
             "bios" => new BiosView(),
             "capturas" => new CapturasView(),
             "windows" => new WindowsView(),

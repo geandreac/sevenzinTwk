@@ -21,6 +21,18 @@ public sealed class RegistroWindows : IRegistro
         k.SetValue(nome, valor, RegistryValueKind.DWord);
     }
 
+    public string? LerString(Colmeia h, string caminho, string nome)
+    {
+        using var k = Raiz(h).OpenSubKey(caminho);
+        return k?.GetValue(nome) as string;
+    }
+
+    public void EscreverString(Colmeia h, string caminho, string nome, string valor)
+    {
+        using var k = Raiz(h).CreateSubKey(caminho, writable: true);
+        k.SetValue(nome, valor, RegistryValueKind.String);
+    }
+
     public void ApagarValor(Colmeia h, string caminho, string nome)
     {
         using var k = Raiz(h).OpenSubKey(caminho, writable: true);

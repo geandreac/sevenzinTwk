@@ -5,20 +5,28 @@ namespace Sevenzin.Diagnostics;
 /// <summary>Colmeia do registro usada por um tweak. HKCU não exige administrador; HKLM exige.</summary>
 public enum Colmeia { UsuarioAtual, MaquinaLocal }
 
+/// <summary>Tipo do valor escrito no registro. Dword é o padrão; String existe porque o original
+/// gravava REG_SZ em chaves como `Control Panel\Mouse` (fidelidade ao que foi confirmado).</summary>
+public enum TipoValor { Dword, String }
+
 /// <summary>Acesso ao registro atrás de interface, para o motor ser testável sem tocar no registro real.</summary>
 public interface IRegistro
 {
     int? LerDword(Colmeia h, string caminho, string nome);
     void EscreverDword(Colmeia h, string caminho, string nome, int valor);
+    string? LerString(Colmeia h, string caminho, string nome);
+    void EscreverString(Colmeia h, string caminho, string nome, string valor);
     void ApagarValor(Colmeia h, string caminho, string nome);
 }
 
-/// <summary>Um ajuste reversível: um valor DWORD de registro com o valor "otimizado" e metadados de risco.
-/// <paramref name="ExigeConfirmacao"/> = item de risco alto: a UI pede confirmação explícita antes de aplicar.</summary>
+/// <summary>Um ajuste reversível: um valor de registro com o valor "otimizado" e metadados de risco.
+/// <paramref name="ExigeConfirmacao"/> = item de risco alto: a UI pede confirmação explícita antes de aplicar.
+/// <paramref name="Tipo"/>/<paramref name="ValorTexto"/> definem o valor escrito (DWORD ou string).</summary>
 public sealed record Tweak(
     string Id, string Nome, string Descricao, string Categoria,
     Colmeia Colmeia, string Caminho, string NomeValor, int ValorOtimizado,
-    string Risco, bool ExigeAdmin, bool ExigeConfirmacao = false);
+    string Risco, bool ExigeAdmin, bool ExigeConfirmacao = false,
+    TipoValor Tipo = TipoValor.Dword, string ValorTexto = "");
 
 public sealed record ResultadoTweak(string Id, int? ValorAnterior, int ValorNovo);
 
@@ -27,10 +35,13 @@ public sealed record ResultadoTweak(string Id, int? ValorAnterior, int ValorNovo
 /// em 12/11/2026 — ver docs/revisao_ajustes.md. Toda alteração permanece reversível e auditada.</summary>
 public sealed class MotorTweaks
 {
+    /// <summary>Valor anterior de um tweak (DWORD ou string), para desfazer restaurar exatamente.</summary>
+    public sealed record ValorAnterior(bool EraString, int? Dword, string? Texto);
+
     readonly IRegistro _reg;
     readonly string _arqBackup;
     readonly string _arqAuditoria;
-    Dictionary<string, int?> _backup;
+    Dictionary<string, ValorAnterior> _backup;
 
     public MotorTweaks(IRegistro reg, string? pastaEstado = null)
     {
@@ -42,34 +53,55 @@ public sealed class MotorTweaks
         _backup = CarregarBackup();
     }
 
+    /// <summary>Valor atual do tweak, como texto (para prévia/auditoria), ou null quando a chave não existe.</summary>
+    string? ValorAtual(Tweak t) =>
+        t.Tipo == TipoValor.String ? _reg.LerString(t.Colmeia, t.Caminho, t.NomeValor) : _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor)?.ToString();
+
+    /// <summary>Valor "otimizado" do tweak, como texto.</summary>
+    static string ValorAlvo(Tweak t) => t.Tipo == TipoValor.String ? t.ValorTexto : t.ValorOtimizado.ToString();
+
     /// <summary>Estado atual: aplicado (valor igual ao otimizado) ou não.</summary>
-    public bool Aplicado(Tweak t) => _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor) == t.ValorOtimizado;
+    public bool Aplicado(Tweak t) =>
+        t.Tipo == TipoValor.String
+            ? _reg.LerString(t.Colmeia, t.Caminho, t.NomeValor) == t.ValorTexto
+            : _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor) == t.ValorOtimizado;
 
     /// <summary>Prévia textual do que a aplicação muda (§21.7 "o que será alterado").</summary>
     public string Previa(Tweak t)
     {
-        var atual = _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor);
+        var atual = ValorAtual(t);
         var hive = t.Colmeia == Colmeia.UsuarioAtual ? "HKCU" : "HKLM";
-        return $"{t.Nome}\n\n{hive}\\{t.Caminho}\\{t.NomeValor}\n  de: {(atual?.ToString() ?? "(não definido)")}\n  para: {t.ValorOtimizado}\n\nRisco: {t.Risco}. Reversível (o estado anterior é salvo).";
+        return $"{t.Nome}\n\n{hive}\\{t.Caminho}\\{t.NomeValor}\n  de: {(atual ?? "(não definido)")}\n  para: {ValorAlvo(t)}\n\nRisco: {t.Risco}. Reversível (o estado anterior é salvo).";
     }
 
     public ResultadoTweak Aplicar(Tweak t)
     {
-        int? anterior = _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor);
-        _backup[t.Id] = anterior;                         // null = o valor não existia antes
+        var anterior = t.Tipo == TipoValor.String
+            ? new ValorAnterior(true, null, _reg.LerString(t.Colmeia, t.Caminho, t.NomeValor))
+            : new ValorAnterior(false, _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor), null);
+        _backup[t.Id] = anterior;
         SalvarBackup();
-        _reg.EscreverDword(t.Colmeia, t.Caminho, t.NomeValor, t.ValorOtimizado);
-        Auditar("aplicar", t, anterior, t.ValorOtimizado);
-        return new(t.Id, anterior, t.ValorOtimizado);
+        if (t.Tipo == TipoValor.String) _reg.EscreverString(t.Colmeia, t.Caminho, t.NomeValor, t.ValorTexto);
+        else _reg.EscreverDword(t.Colmeia, t.Caminho, t.NomeValor, t.ValorOtimizado);
+        Auditar("aplicar", t, anterior);
+        return new(t.Id, anterior.Dword, t.ValorOtimizado);
     }
 
     /// <summary>Desfaz usando o estado salvo. False se não há backup (nunca aplicado por aqui).</summary>
     public bool Desfazer(Tweak t)
     {
-        if (!_backup.TryGetValue(t.Id, out int? anterior)) return false;
-        if (anterior is null) _reg.ApagarValor(t.Colmeia, t.Caminho, t.NomeValor); // não existia: remover
-        else _reg.EscreverDword(t.Colmeia, t.Caminho, t.NomeValor, anterior.Value);
-        Auditar("desfazer", t, t.ValorOtimizado, anterior);
+        if (!_backup.TryGetValue(t.Id, out var anterior)) return false;
+        if (anterior.EraString)
+        {
+            if (anterior.Texto is null) _reg.ApagarValor(t.Colmeia, t.Caminho, t.NomeValor);
+            else _reg.EscreverString(t.Colmeia, t.Caminho, t.NomeValor, anterior.Texto);
+        }
+        else
+        {
+            if (anterior.Dword is null) _reg.ApagarValor(t.Colmeia, t.Caminho, t.NomeValor);
+            else _reg.EscreverDword(t.Colmeia, t.Caminho, t.NomeValor, anterior.Dword.Value);
+        }
+        Auditar("desfazer", t, anterior);
         _backup.Remove(t.Id);
         SalvarBackup();
         return true;
@@ -77,14 +109,16 @@ public sealed class MotorTweaks
 
     public bool TemBackup(string id) => _backup.ContainsKey(id);
 
-    Dictionary<string, int?> CarregarBackup()
+    Dictionary<string, ValorAnterior> CarregarBackup()
     {
-        try { return File.Exists(_arqBackup) ? JsonSerializer.Deserialize<Dictionary<string, int?>>(File.ReadAllText(_arqBackup)) ?? new() : new(); }
+        try { return File.Exists(_arqBackup) ? JsonSerializer.Deserialize<Dictionary<string, ValorAnterior>>(File.ReadAllText(_arqBackup)) ?? new() : new(); }
         catch { return new(); }
     }
     void SalvarBackup() => File.WriteAllText(_arqBackup, JsonSerializer.Serialize(_backup));
-    void Auditar(string acao, Tweak t, int? de, int? para) =>
-        File.AppendAllText(_arqAuditoria, $"{DateTime.UtcNow:o}\t{acao}\t{t.Id}\t{de?.ToString() ?? "-"}->{para?.ToString() ?? "-"}\n");
+    void Auditar(string acao, Tweak t, ValorAnterior anterior) =>
+        File.AppendAllText(_arqAuditoria, $"{DateTime.UtcNow:o}\t{acao}\t{t.Id}\t{ValorAntigoTexto(anterior)}->{ValorAlvo(t)}\n");
+
+    static string ValorAntigoTexto(ValorAnterior a) => a.EraString ? a.Texto ?? "-" : a.Dword?.ToString() ?? "-";
 }
 
 /// <summary>Catálogo de tweaks reversíveis, derivado do original (04_funcionalidades.md §3 + catalogo-otimizacoes.md).
@@ -154,5 +188,22 @@ public static class CatalogoTweaks
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", 1, "ALTO — expõe a CPU às falhas Spectre/Meltdown; requer reinício", true, true),
         new Tweak("wu-pausar", "Pausar atualizações automáticas", "Política que impede o download/instalação automática de atualizações do Windows (NoAutoUpdate=1).", "Segurança",
             Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 1, "ALTO — deixa o sistema sem correções de segurança novas", true, true),
+
+        // ── Mouse (HKCU, REG_SZ — o original gravava strings em Control Panel\Mouse) ──
+        new Tweak("mouse-aceleracao-off", "Desligar aceleração do mouse", "Remove a aceleração do ponteiro (MouseSpeed=0) — movimento 1:1, previsível para jogos.", "Mouse",
+            Colmeia.UsuarioAtual, @"Control Panel\Mouse", "MouseSpeed", 0, "Baixo", false,
+            Tipo: TipoValor.String, ValorTexto: "0"),
+        new Tweak("mouse-limiar1-off", "Limiar de aceleração 1", "Zera o 1º limiar de aceleração do mouse (MouseThreshold1=0).", "Mouse",
+            Colmeia.UsuarioAtual, @"Control Panel\Mouse", "MouseThreshold1", 0, "Baixo", false,
+            Tipo: TipoValor.String, ValorTexto: "0"),
+        new Tweak("mouse-limiar2-off", "Limiar de aceleração 2", "Zera o 2º limiar de aceleração do mouse (MouseThreshold2=0).", "Mouse",
+            Colmeia.UsuarioAtual, @"Control Panel\Mouse", "MouseThreshold2", 0, "Baixo", false,
+            Tipo: TipoValor.String, ValorTexto: "0"),
+
+        // ── Localização (HKLM, admin; confirmado no original: HideSCALocation + serviço lfsvc) ──
+        new Tweak("localizacao-ocultar", "Ocultar o ícone de localização", "Política que esconde o indicador de localização na bandeja (HideSCALocation=1).", "Localização",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors", "HideSCALocation", 1, "Baixo — cosmético (política de máquina)", true),
+        new Tweak("localizacao-servico-off", "Desativar o serviço de localização", "Desliga o serviço lfsvc (Start=4). AVISO: alguns jogos usam localização e podem não abrir sem ele.", "Localização",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Services\lfsvc", "Start", 4, "Médio — alguns jogos dependem do serviço; requer reinício para valer", true),
     };
 }

@@ -10,10 +10,13 @@ public class CacheEscritaTests
     sealed class RegistroFake : IRegistro
     {
         public readonly Dictionary<string, int> Store = new();
+        public readonly Dictionary<string, string> StoreStr = new();
         static string K(Colmeia h, string c, string n) => $"{h}|{c}|{n}";
         public int? LerDword(Colmeia h, string c, string n) => Store.TryGetValue(K(h, c, n), out var v) ? v : null;
         public void EscreverDword(Colmeia h, string c, string n, int v) => Store[K(h, c, n)] = v;
-        public void ApagarValor(Colmeia h, string c, string n) => Store.Remove(K(h, c, n));
+        public string? LerString(Colmeia h, string c, string n) => StoreStr.TryGetValue(K(h, c, n), out var s) ? s : null;
+        public void EscreverString(Colmeia h, string c, string n, string s) => StoreStr[K(h, c, n)] = s;
+        public void ApagarValor(Colmeia h, string c, string n) { Store.Remove(K(h, c, n)); StoreStr.Remove(K(h, c, n)); }
     }
 
     static string PastaTemp() => Path.Combine(Path.GetTempPath(), "sevenzin-test-" + Guid.NewGuid().ToString("N"));
