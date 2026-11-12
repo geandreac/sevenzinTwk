@@ -53,7 +53,7 @@ public partial class MediaView : UserControl
         _origemLbl = new TextBlock { Text = _origemIso ?? "Nenhuma ISO de origem.", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0), TextWrapping = TextWrapping.Wrap };
         iso.Children.Add(_origemLbl);
 
-        _edicoesBox = new ComboBox { Style = DarkCombo, MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 10, 0, 0), Visibility = Visibility.Collapsed };
+        _edicoesBox = new ComboBox { Style = DarkCombo, Width = 460, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 10, 0, 0), Visibility = Visibility.Collapsed };
         foreach (var e in _edicoes) _edicoesBox.Items.Add(new ComboBoxItem { Content = $"{e.Indice} — {e.Nome} ({e.Arquitetura ?? "n/d"})", Tag = e.Indice });
         if (_edicoesBox.Items.Count > 0) { _edicoesBox.SelectedIndex = 0; _edicoesBox.Visibility = Visibility.Visible; }
         iso.Children.Add(_edicoesBox);
@@ -89,7 +89,7 @@ public partial class MediaView : UserControl
 
         var atualizarBtn = Botao(Secundario, "Atualizar pendrives", AtualizarUsbs);
         usb.Children.Add(atualizarBtn);
-        _usbBox = new ComboBox { Style = DarkCombo, MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 0, 0, 10) };
+        _usbBox = new ComboBox { Style = DarkCombo, Width = 460, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 10) };
         usb.Children.Add(_usbBox);
         _gravarBtn = Botao(Primario, "Gravar no pendrive selecionado", () => { });
         _gravarBtn.Visibility = Visibility.Collapsed;

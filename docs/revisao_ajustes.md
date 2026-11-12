@@ -396,9 +396,10 @@ visível) é manual do dono.
 **estica na largura toda** e o helper `Botao` só tinha margem à direita (nenhuma embaixo) — ficavam enormes
 e colados uns aos outros/aos rótulos.
 **Solução:** `Botao` agora é `HorizontalAlignment=Left` com margem inferior (respiro entre elementos). Os
-dois `ComboBox` passaram de largura fixa (320/420) para `MaxWidth` + `Stretch`, encolhendo em janela estreita
-sem estourar. Avisos de segurança (vermelho, "GRAVAR APAGA TODO O CONTEÚDO") preservados junto das ações.
-`src/Sevenzin.Wpf/Views/MediaView.xaml.cs`.
+dois `ComboBox` ficaram `HorizontalAlignment=Left` com largura 460 (alinhados aos botões; a janela mínima de
+980px garante espaço). Avisos de segurança (vermelho, "GRAVAR APAGA TODO O CONTEÚDO") preservados junto das
+ações. Conferido por render (build atual): botões compactos à esquerda, combos à esquerda, cards com
+espaçamento consistente. `src/Sevenzin.Wpf/Views/MediaView.xaml.cs`.
 
 ### 17.2 2FA por QR Code
 **Causa:** o fluxo TOTP (Supabase) existia e funcionava (ativar → segredo → confirmar código → ativa;
