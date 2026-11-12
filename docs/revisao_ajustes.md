@@ -234,6 +234,14 @@ SHA-256 atravessando blocos, validação do pedido de construção).
 **Pendências / validação manual:** construir uma ISO real e bootar numa VM; gravar num pendrive de teste;
 confirmar o hash de arquivos grandes na cópia.
 
+### Validação visual (smoke, 13/11/2026)
+- Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
+  `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`
+  (1280×760). Todas as telas **construíram e renderizaram sem exceção** (o modo `--render` fecha o app
+  com código 0; um view que lançasse não produziria o PNG).
+- **Limitação:** o modelo da sessão não processa imagens — a inspeção visual fina (fidelidade ao Figma,
+  espaçamentos, cores) fica como validação **manual do dono** sobre esses PNGs.
+
 
 ## Resumo por item
 | # | Item | Status |
