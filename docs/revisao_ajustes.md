@@ -372,6 +372,23 @@ oculto; offline/erro não aparece. Não baixa nem instala sozinho. `src/Sevenzin
   superior só aparece com uma release de tag maior que a versão instalada; com app e release em `1.0.0` ele
   fica oculto (comportamento correto).
 
+## §16. Campo do item "Início" (sidebar) encostando na scrollbar (12/11/2026)
+**Causa:** no `NavItem`, o fundo do item (hover) era a `Border "b"` que **envolvia** o conteúdo e preenchia
+toda a largura útil do item (≈x8→x58 nos 66px). Com a scrollbar sobreposta à direita (8px, x58→x66), a
+pílula de fundo encostava nela e parecia cortada; além disso era larga demais para um ícone de 18px.
+
+**Solução:** `b` virou um fundo **atrás** do conteúdo (irmão no `Grid`, não mais envolvendo-o), com
+`Margin="6,2"` — recuo de 6px nas laterais (pílula ≈x14→x52, ~6px de folga da scrollbar) e proporcional ao
+ícone. O `ContentPresenter` passou a ocupar a largura inteira (`Margin` = Padding do item), então o ícone
+**continua centralizado** (centro em x33 = centro do trilho) e a área de clique/foco segue sendo o item
+inteiro. Marcador lateral azul, estado selecionado e hover preservados. Largura da sidebar (66px) e tamanho
+do ícone inalterados. Vale para recolhida (pílula compacta) e expandida (a pílula acompanha a linha).
+`src/Sevenzin.Wpf/Theme.xaml` (estilo `NavItem`).
+
+**Testes:** build 0/0; render headless de `inicio` com código 0. **Limitação:** a pílula só aparece no
+hover — o render estático não a mostra; a conferência do antes/depois (hover sobre "Início" com a scrollbar
+visível) é manual do dono.
+
 ## Resumo por item
 | # | Item | Status |
 |---|---|---|

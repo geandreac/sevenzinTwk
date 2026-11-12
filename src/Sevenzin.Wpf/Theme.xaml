@@ -426,13 +426,15 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="b" Background="Transparent" CornerRadius="10" Padding="{TemplateBinding Padding}">
-                        <Grid>
-                            <Border x:Name="accent" Width="3" Height="22" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-8,0,0,0"
-                                    CornerRadius="0,2,2,0" Background="{StaticResource Brand400Brush}" Visibility="Collapsed"/>
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
+                    <!-- Fundo (hover) é a Border "b" ATRÁS do conteúdo, recuada 6px nas laterais: fica proporcional
+                         ao ícone e deixa folga da scrollbar sobreposta à direita. O ContentPresenter ocupa a largura
+                         toda, então o ícone continua centralizado; a área de clique/foco é o item inteiro. -->
+                    <Grid>
+                        <Border x:Name="b" Margin="6,2" CornerRadius="10" Background="Transparent"/>
+                        <Border x:Name="accent" Width="3" Height="22" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-8,0,0,0"
+                                CornerRadius="0,2,2,0" Background="{StaticResource Brand400Brush}" Visibility="Collapsed"/>
+                        <ContentPresenter VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="b" Property="Background" Value="{StaticResource Surface2Brush}"/>
