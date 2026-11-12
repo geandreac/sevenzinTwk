@@ -44,7 +44,7 @@ public partial class MediaView : UserControl
         var iso = new StackPanel();
         iso.Children.Add(new TextBlock
         {
-            Text = "Exporta SOMENTE a edição escolhida (DISM, compressão máxima) e cria uma ISO bootável por UEFI usando o efisys.bin da própria mídia de origem. A ISO de origem não é alterada.",
+            Text = "Exporta só a edição que você escolher e gera uma ISO bootável por UEFI. A ISO de origem não é alterada.",
             Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
         });
 
@@ -53,7 +53,7 @@ public partial class MediaView : UserControl
         _origemLbl = new TextBlock { Text = _origemIso ?? "Nenhuma ISO de origem.", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0), TextWrapping = TextWrapping.Wrap };
         iso.Children.Add(_origemLbl);
 
-        _edicoesBox = new ComboBox { Style = DarkCombo, Width = 320, Margin = new Thickness(0, 10, 0, 0), Visibility = Visibility.Collapsed };
+        _edicoesBox = new ComboBox { Style = DarkCombo, MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 10, 0, 0), Visibility = Visibility.Collapsed };
         foreach (var e in _edicoes) _edicoesBox.Items.Add(new ComboBoxItem { Content = $"{e.Indice} — {e.Nome} ({e.Arquitetura ?? "n/d"})", Tag = e.Indice });
         if (_edicoesBox.Items.Count > 0) { _edicoesBox.SelectedIndex = 0; _edicoesBox.Visibility = Visibility.Visible; }
         iso.Children.Add(_edicoesBox);
@@ -89,7 +89,7 @@ public partial class MediaView : UserControl
 
         var atualizarBtn = Botao(Secundario, "Atualizar pendrives", AtualizarUsbs);
         usb.Children.Add(atualizarBtn);
-        _usbBox = new ComboBox { Style = DarkCombo, Width = 420 };
+        _usbBox = new ComboBox { Style = DarkCombo, MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 0, 0, 10) };
         usb.Children.Add(_usbBox);
         _gravarBtn = Botao(Primario, "Gravar no pendrive selecionado", () => { });
         _gravarBtn.Visibility = Visibility.Collapsed;
@@ -267,7 +267,8 @@ public partial class MediaView : UserControl
 
     static Button Botao(Style estilo, string texto, Action acao)
     {
-        var b = new Button { Style = estilo, Content = texto, Margin = new Thickness(0, 0, 10, 0), Padding = new Thickness(12, 7, 12, 7), VerticalAlignment = VerticalAlignment.Center };
+        // Esquerda + margem inferior: no stack vertical os botões não esticam na largura toda nem ficam colados.
+        var b = new Button { Style = estilo, Content = texto, Margin = new Thickness(0, 0, 10, 10), Padding = new Thickness(12, 7, 12, 7), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
         b.Click += (_, _) => acao();
         return b;
     }

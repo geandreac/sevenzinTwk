@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -59,9 +60,32 @@ public static class Controle2FA
         if (insc is null) { MessageBox.Show("Não foi possível iniciar o 2FA agora.", "2FA", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
 
         var bloco = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
-        bloco.Children.Add(new TextBlock { Text = "1. Cadastre este segredo no seu aplicativo autenticador (Google Authenticator, Authy…):", Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap });
-        bloco.Children.Add(new TextBlock { Text = insc.Segredo, FontSize = 15, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 6, 0, 0), TextWrapping = TextWrapping.Wrap });
-        bloco.Children.Add(new TextBlock { Text = "2. Digite o código de 6 dígitos para confirmar:", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap });
+        bloco.Children.Add(new TextBlock { Text = "1. Escaneie o QR Code no seu aplicativo autenticador (Google Authenticator, Authy…):", Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap });
+
+        // QR do otpauth:// que o Supabase devolveu. Se por algum motivo não houver URI, cai só no segredo manual.
+        if (!string.IsNullOrEmpty(insc.Uri))
+        {
+            try
+            {
+                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                bmp.BeginInit();
+                bmp.StreamSource = new MemoryStream(GeradorQr.Png(insc.Uri));
+                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                bloco.Children.Add(new Border
+                {
+                    Background = System.Windows.Media.Brushes.White, Padding = new Thickness(8),
+                    CornerRadius = new CornerRadius(8), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+                    Child = new Image { Source = bmp, Width = 180, Height = 180 },
+                });
+            }
+            catch { /* sem QR: segue só com a chave manual abaixo */ }
+        }
+
+        bloco.Children.Add(new TextBlock { Text = "Não consegue escanear? Digite esta chave manualmente no app:", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 10, 0, 0), TextWrapping = TextWrapping.Wrap });
+        bloco.Children.Add(new TextBox { Text = insc.Segredo, IsReadOnly = true, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 0), BorderThickness = new Thickness(0), Background = System.Windows.Media.Brushes.Transparent, Foreground = (Brush)Application.Current.Resources["TextPrimaryBrush"], HorizontalAlignment = HorizontalAlignment.Left });
+        bloco.Children.Add(new TextBlock { Text = "2. Digite o código de 6 dígitos para confirmar:", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 10, 0, 0), TextWrapping = TextWrapping.Wrap });
         var linha = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
         var codigo = new TextBox { Style = (Style)Application.Current.Resources["DarkBox"], Width = 140, Tag = "000000", MaxLength = 6, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
         linha.Children.Add(codigo);

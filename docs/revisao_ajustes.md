@@ -389,6 +389,78 @@ do ícone inalterados. Vale para recolhida (pílula compacta) e expandida (a pí
 hover — o render estático não a mostra; a conferência do antes/depois (hover sobre "Início" com a scrollbar
 visível) é manual do dono.
 
+## §17. Mídia, 2FA por QR, privilégios, auditoria de instaladores, plano de energia e descrições (12/11/2026)
+
+### 17.1 Tela "Mídia" — botões esticados e colados
+**Causa:** os botões eram adicionados direto num `StackPanel` vertical; por padrão o `Button` do WPF
+**estica na largura toda** e o helper `Botao` só tinha margem à direita (nenhuma embaixo) — ficavam enormes
+e colados uns aos outros/aos rótulos.
+**Solução:** `Botao` agora é `HorizontalAlignment=Left` com margem inferior (respiro entre elementos). Os
+dois `ComboBox` passaram de largura fixa (320/420) para `MaxWidth` + `Stretch`, encolhendo em janela estreita
+sem estourar. Avisos de segurança (vermelho, "GRAVAR APAGA TODO O CONTEÚDO") preservados junto das ações.
+`src/Sevenzin.Wpf/Views/MediaView.xaml.cs`.
+
+### 17.2 2FA por QR Code
+**Causa:** o fluxo TOTP (Supabase) existia e funcionava (ativar → segredo → confirmar código → ativa;
+cancelar/desativar OK), mas mostrava **apenas o segredo em texto** — faltava o QR Code. O `otpauth://`
+já vinha do Supabase (`InscricaoTotp.Uri`), só não era renderizado.
+**Solução:** novo `GeradorQr.Png` (Diagnostics, pacote **QRCoder 1.6.0**, `PngByteQRCode` — sem System.Drawing)
+gera o PNG do QR a partir do `otpauth://`. O `Controle2FA` mostra o QR + a **chave manual** (fallback, em
+campo somente-leitura) + o campo do código de 6 dígitos. Ativa só após código válido; "Cancelar" desinscreve
+o fator sem ativar. O segredo/URI **não** é gravado em log nem exibido fora da tela de configuração.
+`src/Sevenzin.Diagnostics/GeradorQr.cs`, `src/Sevenzin.Wpf/Controle2FA.cs`. Teste: `GeradorQrTests`
+(valida assinatura PNG).
+
+### 17.3 Privilégios de administrador (menor privilégio) — auditoria
+**Estado atual (já correto, sem mudança de código):** **não há** `app.manifest` com `requireAdministrator`
+nem `ApplicationManifest` nos csproj — o app **roda sem elevação** por padrão. A elevação é **sob demanda,
+por operação**, via `Elevacao.ReabrirComoAdmin()` (verbo `runas` = UAC oficial do Windows), chamada só em
+ações que realmente exigem HKLM/serviços: Ajustes (tweaks `ExigeAdmin`), Proteção, Windows (energia,
+desinstalação), Mídia (ISO/USB). A interface e as funções comuns (relatórios, perfis, capturas locais) não
+elevam. Nenhum contorno de UAC, nada elevado de forma oculta. Conclusão: já segue o princípio do menor
+privilégio — nada a alterar.
+
+### 17.4 Auditoria dos instaladores
+Três fluxos na tela Instaladores (`InstaladoresView` + `Instaladores.cs`/`WingetRunner.cs`). **Nada foi
+baixado ou executado nesta máquina** (restrição do usuário) — a classificação é por inspeção de código:
+
+| Fluxo | Itens | Estado | Dependências / observações |
+|---|---|---|---|
+| "Abrir página oficial" | ~35 (todo o catálogo) | **Funcional** (abre o navegador na URL oficial) | Fluxo de localização; não instala por si. Não valida a URL em runtime. |
+| "Baixar e verificar" → "Executar" | 3 (Coreinfo, Process Explorer, Autoruns — Sysinternals) | **Funcional por projeto, não validado em runtime** | Baixa de `live.sysinternals.com`, exige **assinatura Authenticode "Microsoft"** antes de permitir executar (hash não fixado); execução pede confirmação. Precisa de internet. |
+| winget (allowlist) | 5 (steam, discord, 7zip, chrome, vlc) | **Parcial / depende do winget** | Usa IDs oficiais; cada instalação pede confirmação. Requer `winget.exe` (App Installer); se ausente, retorna erro tratado ("Não foi possível iniciar o winget"). Não validado em runtime. |
+
+Sem bug corrigível com segurança identificado. **Pendente (validação manual do dono):** baixar/executar de
+fato um item Sysinternals e instalar um item winget, para confirmar o estado "funcional e testado".
+
+### 17.5 Plano de energia "Sevenzin" vs engenharia reversa
+**Evidência da RE:** os docs (`05_metricas_instaladores_jogos.md`, `roadmap_implementacao.md`) **não
+documentam** um plano de energia (powercfg) no `geandre.exe` — só `timeBeginPeriod` (timer global) e
+`SetProcessWorkingSetSize` (trim), que são efeitos **por processo**, já implementados como opt-in em Jogos
+(timer 1 ms / working set), não como plano de energia. **Conclusão:** não há base na RE para um plano de
+energia atribuído ao original. A implementação atual (`GestorEnergia`) **duplica o plano ativo** e renomeia
+a cópia para "Sevenzin" (planos de fábrica intactos), **sem** afirmar que replica valores do `geandre.exe`
+— o código e a UI já dizem "baseado no seu plano ativo". **Correção aplicada:** antes de criar/ativar ou
+restaurar, agora há **confirmação explícita** (diálogo OK/Cancelar) explicando o que muda; a reversão
+("Restaurar padrão" → Equilibrado + remove as cópias) já existia. `src/Sevenzin.Wpf/Views/WindowsView.xaml.cs`.
+
+### 17.6 Revisão das descrições
+Revisão feita com critério conservador: **todos os avisos de segurança/consequência foram preservados**
+(gravar apaga o pendrive, ações exigem admin, tweaks reversíveis, etc.). Trim aplicado onde o texto era
+técnico demais sem ajudar a tarefa — ex.: descrição da ISO em Mídia perdeu o jargão ("DISM, efisys.bin")
+mantendo a ação e a garantia ("a ISO de origem não é alterada"). **Pendente (parcial):** uma varredura de
+copy em *todas* as ~18 telas não foi concluída nesta rodada; as descrições atuais já são majoritariamente
+orientadas à ação e carregam avisos — a revisão fina restante fica como item contínuo, sempre preservando
+avisos destrutivos/de Windows/privilégio.
+
+### 17.7 Testes e limitações
+- `dotnet build` 0/0 (User e Admin); `dotnet test` **191/191** (inclui `GeradorQrTests`); renders headless de
+  `midia` e `windows` com código 0.
+- **Dependência nova:** pacote **QRCoder 1.6.0** (MIT) em `Sevenzin.Diagnostics` — restaurado com sucesso.
+- **Limitações (validação manual do dono):** (a) sessão sem visão de imagem — conferência visual fina de
+  Mídia e do QR real é manual; (b) o QR só aparece no modo Supabase (precisa de sessão com Supabase ativo);
+  (c) instaladores não foram baixados/executados aqui (item 17.4); (d) copy-review completo pendente (17.6).
+
 ## Resumo por item
 | # | Item | Status |
 |---|---|---|

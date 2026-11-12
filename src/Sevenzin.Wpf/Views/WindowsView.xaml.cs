@@ -58,8 +58,10 @@ public partial class WindowsView : UserControl
             Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
         });
         var botoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
-        botoes.Children.Add(Botao(Primario, "Criar e ativar \"Sevenzin\"", () => ExecutarEnergia(GestorEnergia.AplicarSevenzin)));
-        botoes.Children.Add(Botao(Secundario, "Restaurar padrão", () => ExecutarEnergia(GestorEnergia.Restaurar)));
+        botoes.Children.Add(Botao(Primario, "Criar e ativar \"Sevenzin\"", () => ExecutarEnergia(GestorEnergia.AplicarSevenzin,
+            "Isto vai DUPLICAR o seu plano de energia ativo, nomear a cópia como \"Sevenzin\" e ativá-la. Os planos de fábrica do Windows continuam intactos e você pode voltar a qualquer momento em \"Restaurar padrão\".\n\nContinuar?")));
+        botoes.Children.Add(Botao(Secundario, "Restaurar padrão", () => ExecutarEnergia(GestorEnergia.Restaurar,
+            "Isto vai ativar o plano \"Equilibrado\" do Windows e remover os planos \"Sevenzin\" criados.\n\nContinuar?")));
         en.Children.Add(botoes);
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = en });
 
@@ -182,7 +184,7 @@ public partial class WindowsView : UserControl
               "Só leitura — nada foi alterado na ISO nem no sistema.";
     }
 
-    void ExecutarEnergia(Func<ResultadoEnergia> acao)
+    void ExecutarEnergia(Func<ResultadoEnergia> acao, string confirmar)
     {
         if (!Elevacao.EhAdmin())
         {
@@ -191,6 +193,7 @@ public partial class WindowsView : UserControl
                 Elevacao.ReabrirComoAdmin();
             return;
         }
+        if (MessageBox.Show(confirmar, "Plano de energia", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK) return;
         var r = acao();
         AtualizarEnergia();
         MessageBox.Show(r.Mensagem, "Plano de energia", MessageBoxButton.OK, r.Ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
