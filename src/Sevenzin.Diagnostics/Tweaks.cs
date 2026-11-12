@@ -13,11 +13,12 @@ public interface IRegistro
     void ApagarValor(Colmeia h, string caminho, string nome);
 }
 
-/// <summary>Um ajuste reversível: um valor DWORD de registro com o valor "otimizado" e metadados de risco.</summary>
+/// <summary>Um ajuste reversível: um valor DWORD de registro com o valor "otimizado" e metadados de risco.
+/// <paramref name="ExigeConfirmacao"/> = item de risco alto: a UI pede confirmação explícita antes de aplicar.</summary>
 public sealed record Tweak(
     string Id, string Nome, string Descricao, string Categoria,
     Colmeia Colmeia, string Caminho, string NomeValor, int ValorOtimizado,
-    string Risco, bool ExigeAdmin);
+    string Risco, bool ExigeAdmin, bool ExigeConfirmacao = false);
 
 public sealed record ResultadoTweak(string Id, int? ValorAnterior, int ValorNovo);
 
@@ -86,11 +87,10 @@ public sealed class MotorTweaks
         File.AppendAllText(_arqAuditoria, $"{DateTime.UtcNow:o}\t{acao}\t{t.Id}\t{de?.ToString() ?? "-"}->{para?.ToString() ?? "-"}\n");
 }
 
-/// <summary>Catálogo de tweaks reversíveis, derivado do subconjunto SEGURO do original
-/// (grupos de privacidade/telemetria/UX do <c>PostInstall.ps1</c> — ver docs/engenharia-reversa/04_funcionalidades.md §3
-/// e docs/catalogo-otimizacoes.md §8–9). Cada item é um valor DWORD único, reversível (prévia/backup/desfazer/auditoria).
-/// Os grupos <c>uac</c> (EnableLUA=0), remoção forçada de Edge/OneDrive e construtor de ISO ainda não entraram
-/// no catálogo; quando entrarem, o farão com aviso, confirmação e reversão (§6 do guia de trabalho).</summary>
+/// <summary>Catálogo de tweaks reversíveis, derivado do original (04_funcionalidades.md §3 + catalogo-otimizacoes.md).
+/// Cada item é um valor DWORD único, reversível (prévia/backup/desfazer/auditoria). O grupo "Segurança" (UAC, Defender,
+/// SmartScreen, HVCI, mitigações, Windows Update) entrou em 12/11/2026 por decisão do dono: risco ALTO/CRÍTICO,
+/// confirmação explícita na UI e desfazer pelo motor — sem comportamento silencioso.</summary>
 public static class CatalogoTweaks
 {
     public static readonly IReadOnlyList<Tweak> Todos = new[]
@@ -138,5 +138,21 @@ public static class CatalogoTweaks
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled", 0, "Baixo — geralmente recomendado", true),
         new Tweak("hags", "Agendamento de GPU por hardware (HAGS)", "Liga o HwSchMode. Depende de GPU e driver; meça antes/depois.", "Desempenho",
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode", 2, "Médio — depende de GPU/driver; meça A/B", true),
+
+        // ── Segurança (HKLM; risco ALTO/CRÍTICO — confirmação explícita obrigatória, desfazer pelo motor) ──
+        new Tweak("uac-off", "Desligar UAC (controle de conta de usuário)", "Remove o consentimento de elevação (EnableLUA=0): programas elevam sem perguntar. Requer reinício para valer.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA", 0, "ALTO — remove o consentimento de elevação; requer reinício", true, true),
+        new Tweak("defender-rt-off", "Desligar proteção em tempo real (Defender)", "Desliga o monitoramento em tempo real do Microsoft Defender (DisableRealtimeMonitoring=1).", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows Defender\Real-Time Protection", "DisableRealtimeMonitoring", 1, "ALTO — o Windows pode ignorar com Tamper Protection ativa", true, true),
+        new Tweak("defender-antispyware-off", "Desligar Defender (anti-spyware)", "Desativa o Microsoft Defender por registro (DisableAntiSpyware=1).", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows Defender", "DisableAntiSpyware", 1, "ALTO — sem efeito no Windows 10/11 com Tamper Protection ativa", true, true),
+        new Tweak("smartscreen-off", "Desligar SmartScreen", "Política que desativa a verificação SmartScreen em apps e navegação (EnableSmartScreen=0).", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\System", "EnableSmartScreen", 0, "ALTO — remove avisos de apps/arquivos não reconhecidos", true, true),
+        new Tweak("hvci-off", "Desligar Isolamento de Núcleo (HVCI)", "Desativa a integridade de memória por virtualização (HypervisorEnforcedCodeIntegrity=0). Requer reinício.", "Segurança",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled", 0, "CRÍTICO — reduz a proteção do kernel; requer reinício", true, true),
+        new Tweak("mitigacoes-off", "Desligar mitigações Spectre/Meltdown", "Desativa as mitigações de hardware contra Spectre/Meltdown (FeatureSettingsOverride=1). Requer reinício.", "Segurança",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", 1, "ALTO — expõe a CPU às falhas Spectre/Meltdown; requer reinício", true, true),
+        new Tweak("wu-pausar", "Pausar atualizações automáticas", "Política que impede o download/instalação automática de atualizações do Windows (NoAutoUpdate=1).", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 1, "ALTO — deixa o sistema sem correções de segurança novas", true, true),
     };
 }

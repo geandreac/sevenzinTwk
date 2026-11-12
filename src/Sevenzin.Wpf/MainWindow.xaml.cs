@@ -21,6 +21,7 @@ public partial class MainWindow : Window
         ("bios", "", "BIOS"),
         ("capturas", "", "Capturas"),
         ("windows", "", "Windows"),
+        ("protecao", "", "Proteção"),
         ("config", "", "Configurações"),
         ("inventario", "", "Inventário"),
         ("telemetria", "", "Telemetria"),
@@ -76,6 +77,7 @@ public partial class MainWindow : Window
         ["inicio"] = "ic_inicio", ["ajustes"] = "ic_ajustes", ["gpu"] = "ic_gpu", ["instaladores"] = "ic_instaladores",
         ["jogos"] = "ic_jogos", ["bios"] = "ic_bios", ["capturas"] = "ic_capturas", ["windows"] = "ic_windows", ["config"] = "ic_config",
         ["inventario"] = "ic_inventario", ["telemetria"] = "ic_telemetria", ["benchmark"] = "ic_benchmark", ["admin"] = "ic_admin",
+        ["protecao"] = "ic_protecao",
     };
 
     StackPanel ConteudoNav(string tag, string glifo, string rotulo)
@@ -136,6 +138,7 @@ public partial class MainWindow : Window
             "bios" => new BiosView(),
             "capturas" => new CapturasView(),
             "windows" => new WindowsView(),
+            "protecao" => new ProtecaoView(),
             "config" => new ConfiguracoesView(),
             "inventario" => new InventarioView(),
             "telemetria" => new TelemetriaView(),

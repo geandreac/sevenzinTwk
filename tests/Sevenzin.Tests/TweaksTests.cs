@@ -18,20 +18,25 @@ public class TweaksTests
     static Tweak Safe() => CatalogoTweaks.Todos[0]; // gamedvr-off, HKCU DWORD=0
 
     [Fact]
-    public void Catalogo_nao_tem_nenhum_tweak_de_seguranca()
+    public void Tweaks_de_seguranca_exigem_admin_confirmacao_e_risco_explicito()
     {
-        // A antiga trava (GuardaSeguranca) foi removida em 12/11/2026; enquanto os grupos
-        // avançados não entrarem no catálogo, este teste garante que nada de segurança entrou "sem querer".
-        var proibidos = new[]
+        var seguranca = CatalogoTweaks.Todos.Where(t => t.Categoria == "Segurança").ToList();
+        Assert.NotEmpty(seguranca);
+
+        // Regra de segurança nº 2 (AGENTS.md): item de segurança SEMPRE em HKLM, com admin, confirmação e risco alto.
+        Assert.All(seguranca, t =>
         {
-            "Windows Defender", "DisableAntiSpyware", "Real-Time Protection",
-            "EnableLUA", "ConsentPromptBehavior",
-            "SmartScreen", "WindowsUpdate",
-        };
-        Assert.All(CatalogoTweaks.Todos, t =>
+            Assert.Equal(Colmeia.MaquinaLocal, t.Colmeia);
+            Assert.True(t.ExigeAdmin);
+            Assert.True(t.ExigeConfirmacao);
+            Assert.True(t.Risco.Contains("ALTO", StringComparison.OrdinalIgnoreCase) || t.Risco.Contains("CRÍTICO", StringComparison.OrdinalIgnoreCase));
+            Assert.False(string.IsNullOrWhiteSpace(t.Descricao));
+        });
+        // Os mecanismos previstos na F1.1 do plano estão presentes.
+        var ids = seguranca.Select(t => t.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        Assert.Superset(ids, new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            var alvo = $"{t.Caminho}\\{t.NomeValor}";
-            Assert.DoesNotContain(proibidos, p => alvo.Contains(p, StringComparison.OrdinalIgnoreCase));
+            "uac-off", "defender-rt-off", "defender-antispyware-off", "smartscreen-off", "hvci-off", "mitigacoes-off", "wu-pausar",
         });
         // Admin exigido exatamente para os ajustes de máquina (HKLM); HKCU nunca pede admin.
         Assert.All(CatalogoTweaks.Todos, t => Assert.Equal(t.Colmeia == Colmeia.MaquinaLocal, t.ExigeAdmin));
@@ -40,15 +45,13 @@ public class TweaksTests
     }
 
     [Fact]
-    public void Catalogo_tem_ids_unicos_e_cobre_os_grupos_seguros()
+    public void Catalogo_tem_ids_unicos_e_cobre_os_grupos()
     {
         var ids = CatalogoTweaks.Todos.Select(t => t.Id).ToList();
         Assert.Equal(ids.Count, ids.Distinct(StringComparer.OrdinalIgnoreCase).Count()); // sem id duplicado
-        // Expansão do subconjunto seguro do original: privacidade/telemetria/visual/jogos/desempenho presentes.
+        // Grupos derivados do original: privacidade/telemetria/visual/jogos/desempenho/segurança presentes.
         var cats = CatalogoTweaks.Todos.Select(t => t.Categoria).ToHashSet();
-        Assert.Superset(new HashSet<string> { "Jogos", "Privacidade", "Visual", "Telemetria", "Desempenho" }, cats);
-        // Nenhum tweak toca no UAC (EnableLUA): os grupos avançados ainda não entraram no catálogo.
-        Assert.DoesNotContain(CatalogoTweaks.Todos, t => t.NomeValor.Equals("EnableLUA", StringComparison.OrdinalIgnoreCase));
+        Assert.Superset(new HashSet<string> { "Jogos", "Privacidade", "Visual", "Telemetria", "Desempenho", "Segurança" }, cats);
         Assert.All(CatalogoTweaks.Todos, t => Assert.False(string.IsNullOrWhiteSpace(t.Descricao)));
     }
 
@@ -101,6 +104,19 @@ public class TweaksTests
         Assert.True(motor2.TemBackup(t.Id));
         Assert.True(motor2.Desfazer(t));
         Assert.Null(reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor)); // valor removido
+    }
+
+    [Fact]
+    public void Aplicar_e_desfazer_tweak_de_seguranca_funciona_no_registro_fake()
+    {
+        var reg = new RegistroFake();
+        var motor = new MotorTweaks(reg, PastaTemp());
+        var uac = CatalogoTweaks.Todos.First(t => t.Id == "uac-off");
+        reg.EscreverDword(uac.Colmeia, uac.Caminho, uac.NomeValor, 1); // UAC estava ativo
+        motor.Aplicar(uac);
+        Assert.Equal(0, reg.LerDword(uac.Colmeia, uac.Caminho, uac.NomeValor)); // aplicou
+        Assert.True(motor.Desfazer(uac));
+        Assert.Equal(1, reg.LerDword(uac.Colmeia, uac.Caminho, uac.NomeValor)); // restaurou o estado anterior
     }
 
     [Fact]

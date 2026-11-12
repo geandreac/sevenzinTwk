@@ -39,9 +39,19 @@ Fonte: análise estática já produzida — [`catalogo-otimizacoes.md`](catalogo
 
 ### 🔴 Conjunto antes proibido do original (Defender/UAC/HVCI/Spectre/Exploit Protection/SmartScreen/Windows Update/write‑cache)
 Classe **e** até 12/11/2026 (a trava `GuardaSeguranca` recusava qualquer tweak nesses mecanismos). **Após a remoção
-da trava por decisão do dono, passam a ser implementados por fases** com aviso de risco, confirmação explícita e
-desfazer — o status por item vive no plano de fases (`roadmap-fases-telas.md`) e nesta matriz conforme cada fase
-conclui. Nenhum desses itens roda sem o usuário pedir.
+da trava por decisão do dono, foram implementados na F1.1** (com aviso de risco, confirmação explícita e desfazer):
+
+| Mecanismo | Sevenzin | Classe | Evidência |
+|---|---|---|---|
+| UAC (EnableLUA=0) | `uac-off` em Ajustes + tela Proteção | **b** | motor testado; efeito real exige admin + reinício (manual) |
+| Defender (tempo real / anti-spyware) | `defender-rt-off`, `defender-antispyware-off` | **b** | idem; Windows pode ignorar com Tamper Protection |
+| SmartScreen | `smartscreen-off` (política EnableSmartScreen=0) | **b** | idem |
+| HVCI (Isolamento de Núcleo) | `hvci-off` | **b** | risco CRÍTICO; requer reinício |
+| Mitigações Spectre/Meltdown | `mitigacoes-off` (FeatureSettingsOverride) | **b** | requer reinício |
+| Windows Update | `wu-pausar` (NoAutoUpdate=1) | **b** | política de máquina |
+| Write-cache forçado | — | **d** | F1.2 (per-disk via Enum) |
+
+Nenhum desses itens roda sem o usuário confirmar; todos mantêm prévia/backup/desfazer/auditoria do `MotorTweaks`.
 
 ## 2. Telas / fluxos
 
@@ -50,7 +60,8 @@ conclui. Nenhum desses itens roda sem o usuário pedir.
 | Login + Admin (contas, papéis, auditoria) | Implementado | **a** | 11 testes de autenticação; render `v3/v4` |
 | Início — monitores CPU/Memória/Latência | Implementado | **a** | leituras reais; render |
 | Início — monitor **GPU (%)** | Implementado | **b** | `LeitorGpuUso` (GPU Engine); lê valor real; sob carga = validação manual |
-| Ajustes (16 tweaks, motor reversível) | Implementado | **a**/**b** | motor testado; catálogo seguro ampliado (ver §3); efeito por tweak exige admin |
+| Ajustes (23 tweaks, motor reversível) | Implementado | **a**/**b** | motor testado; grupos seguros + segurança (7) com confirmação; efeito por tweak exige admin |
+| Proteção (estado real + toggles de segurança) | Implementado | **b** | `ProtecaoView` (UAC, Defender, SmartScreen, HVCI, mitigações, WU, Secure Boot, TPM) com confirmação; validação manual |
 | GPU (diagnóstico só leitura) | Implementado | **a** | WMI; render |
 | Instaladores (fontes oficiais, assinatura) | Implementado | **c** | fluxo seguro; catálogo reduzido |
 | Jogos (perfil por `.exe` temporário) | Implementado | **c** | escopo seguro |

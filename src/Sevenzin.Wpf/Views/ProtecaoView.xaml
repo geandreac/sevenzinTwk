@@ -1,0 +1,18 @@
+<UserControl x:Class="Sevenzin.Wpf.Views.ProtecaoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="44,24,40,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="0,8,0,12">
+            <TextBlock Text="SEGURANÇA" Style="{StaticResource Eyebrow}"/>
+            <TextBlock Text="Proteção" Style="{StaticResource TituloTela}"/>
+            <TextBlock Text="Estado real dos mecanismos de segurança do Windows (somente leitura) e os ajustes correspondentes, que exigem confirmação explícita e podem ser desfeitos. Itens marcados exigem reinício para valer." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,16">
+            <StackPanel x:Name="Lista"/>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

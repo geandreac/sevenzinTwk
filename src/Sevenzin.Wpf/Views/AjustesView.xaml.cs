@@ -45,6 +45,7 @@ public partial class AjustesView : UserControl
     UIElement LinhaTweak(Tweak t)
     {
         var desc = t.ExigeAdmin ? t.Descricao + "  ·  requer administrador" : t.Descricao;
+        if (t.ExigeConfirmacao) desc += $"  ·  risco: {t.Risco}";
         var g = LinhaBase(t.Nome, desc, out _);
         var sw = new ToggleButton { Style = Switch, VerticalAlignment = VerticalAlignment.Center, Tag = t, IsChecked = _motor.Aplicado(t) };
         sw.Click += Toggle_Click;
@@ -79,6 +80,15 @@ public partial class AjustesView : UserControl
                     "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
                 Elevacao.ReabrirComoAdmin();
             return;
+        }
+        // Itens de risco ALTO/CRÍTICO pedem confirmação explícita antes de aplicar (regra de segurança nº 2).
+        if (t.ExigeConfirmacao && sw.IsChecked == true)
+        {
+            sw.IsChecked = _motor.Aplicado(t);
+            if (MessageBox.Show($"{t.Nome}\n\nRisco: {t.Risco}.\n\nVocê pode desfazer depois (o valor anterior fica salvo).\nAplicar mesmo assim?",
+                    "Confirmação — ajuste de segurança", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+            sw.IsChecked = true;
         }
         try
         {
