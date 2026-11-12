@@ -35,7 +35,7 @@ Base: 22 telas do original (`docs/engenharia-reversa/03_telas.md`) + área ADM p
 | 10 | Guias | — | ⬜ | F4 |
 | 11 | BIOS | `BiosView` (Secure Boot/TPM só leitura + instruções por risco) | 🟡 | F8 |
 | 12 | Assistente (IA/humano) | — | ⬜ | F6 |
-| 13 | Capturas (região/janela/monitor + anotação) | `CapturasView` só tela cheia local; sem modos, editor nem envio | ◐ | F2 |
+| 13 | Capturas (região/janela/monitor + anotação) | `CapturasView` completa: 4 modos + editor (lápis/retângulo/seta/texto/desfazer) + envio explícito opcional | 🟡 | F2 ✅ |
 | 14 | Pendrive / Windows Media (ISO/USB) | `WindowsView` só informativa | ⬜ | F7 |
 | 15 | Perfil (conta + hardware) | Sem tela; dados do usuário em Configurações; inventário separado | ◐ | F5 |
 | 16 | Configurações | `ConfiguracoesView` (iniciar com Windows, pasta de dados, preferências) | 🟡 | F8 |
@@ -55,7 +55,7 @@ aprovados** — não será inventada; se o produto exigir, será decisão explí
 | **F0** ✅ | Remoção da trava + registro + branch de restauração | — |
 | **F1.1** ✅ | Tweaks avançados (UAC, Defender, SmartScreen, HVCI, mitigações, Windows Update) + confirmação explícita + **tela Proteção** | F0 |
 | **F1.2** ✅ | Write-cache forçado por disco (CacheIsPowerProtected via Enum) + seção na Proteção | F1.1 |
-| **F2** | Capturas completas: região/janela/monitor, editor de anotação, envio explícito (webhook configurado pelo usuário) | F1 |
+| **F2** ✅ | Capturas completas: região/janela/monitor, editor de anotação, envio explícito (webhook configurado pelo usuário) | F1 |
 | **F3** | Instaladores completos: catálogo ampliado da RE (35 logos confirmados + lista provável, fontes oficiais + hash) + winget allowlist | F1 |
 | **F4** | Guias + Notificações/Tarefas agendadas + tweaks extras (mouse, localização) | F3 |
 | **F5** | Perfil + licença local + 2FA (substitui KeyAuth; sem HWID/Discord) + completar ADM | F4 |

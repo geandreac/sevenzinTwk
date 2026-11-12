@@ -154,6 +154,18 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
 
+    <!-- ComboBox escuro (modos de captura e monitores) -->
+    <Style x:Key="DarkCombo" TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="MinHeight" Value="34"/>
+    </Style>
+
     <!-- Botão da barra de título (minimizar/maximizar/fechar) -->
     <Style x:Key="ChromeButton" TargetType="Button">
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>

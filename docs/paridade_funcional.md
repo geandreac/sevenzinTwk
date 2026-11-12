@@ -65,7 +65,7 @@ Nenhum desses itens roda sem o usuário confirmar; todos mantêm prévia/backup/
 | GPU (diagnóstico só leitura) | Implementado | **a** | WMI; render |
 | Instaladores (fontes oficiais, assinatura) | Implementado | **c** | fluxo seguro; catálogo reduzido |
 | Jogos (perfil por `.exe` temporário) | Implementado | **c** | escopo seguro |
-| Capturas (local, sem webhook) | Implementado | **b** | captura local; modos ricos ausentes |
+| Capturas (4 modos + editor + envio explícito) | Implementado | **b** | `CapturasView`: tela inteira/monitor/região/janela; anotações lápis/retângulo/seta/texto com desfazer; salvar local padrão; envio só com webhook configurado + confirmação por envio |
 | BIOS / Windows (informativas) | Implementado | **a** | estado só‑leitura real + instruções; render `v6` |
 | Configurações / Inventário / Telemetria / Benchmark | Implementado | **b** | funcionais; render |
 

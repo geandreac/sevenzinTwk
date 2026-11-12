@@ -28,7 +28,43 @@ public partial class ConfiguracoesView : UserControl
         SwInicio.IsChecked = StartupLigado();
         PastaTxt.Text = Pasta;
         VersaoTxt.Text = "Sevenzin Program · reconstrução segura (WPF)";
+        var cfg = new Sevenzin.Diagnostics.ConfigCapturasStore().Carregar();
+        WebhookTxt.Text = cfg.WebhookUrl ?? "";
+        AtualizarStatusWebhook();
         SelecionarAba(0);
+    }
+
+    void AtualizarStatusWebhook()
+    {
+        var url = WebhookTxt.Text.Trim();
+        WebhookStatus.Text = Sevenzin.Diagnostics.EnvioCaptura.UrlWebhookValida(url)
+            ? $"Webhook configurado — o botão Enviar fica disponível na tela Capturas (cada envio pede confirmação)."
+            : "Nenhum webhook configurado — capturas ficam só no seu PC.";
+    }
+
+    void WebhookSalvar_Click(object sender, RoutedEventArgs e)
+    {
+        var url = WebhookTxt.Text.Trim();
+        if (url.Length == 0)
+        {
+            new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(null));
+            AtualizarStatusWebhook();
+            return;
+        }
+        if (!Sevenzin.Diagnostics.EnvioCaptura.UrlWebhookValida(url))
+        {
+            MessageBox.Show("Use uma URL HTTPS absoluta (ex.: https://hooks.exemplo.com/...).", "URL inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(url));
+        AtualizarStatusWebhook();
+    }
+
+    void WebhookLimpar_Click(object sender, RoutedEventArgs e)
+    {
+        WebhookTxt.Text = "";
+        new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(null));
+        AtualizarStatusWebhook();
     }
 
     void Tab_Click(object sender, MouseButtonEventArgs e) => SelecionarAba(int.Parse((string)((Border)sender).Tag));

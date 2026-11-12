@@ -76,6 +76,33 @@ tela↔catálogo).
 - Defender com Tamper Protection ativa ignora os valores — a UI avisa, mas o efeito real depende do ambiente.
 - Plano por fases: `docs/plano-implementacao-completa.md` (F0 ✅ · F1.1 ✅ · F1.2 ✅ · F2 a F8 a seguir).
 
+## §6. Fase 2 — Capturas completas (12/11/2026)
+
+**F2.1 — modos de captura · F2.2 — editor de anotação · F2.3 — envio explícito** (um único ciclo; commit abaixo)
+- Motor (`Capturas.cs` ampliado): `CapturarArea` (região/monitor), `CapturarJanela` (GetWindowRect), `JanelasVisiveis`
+  (EnumWindows com título e tamanho mínimo), `Monitores` (EnumDisplayMonitors) e `AreaTelaInteira` (virtual screen)
+  — removido o fallback antigo que inventava 1920×1080.
+- `EditorCaptura.cs` (novo): `Anotacao` (lápis/retângulo/seta/texto), `Renderizar` puro (GDI+, nunca altera a base)
+  e `PilhaAnotacoes` com desfazer/limpar.
+- `EnvioCaptura.cs` (novo): `UrlWebhookValida` (só HTTPS absoluta), `ConfigCapturasStore` (JSON local atômico,
+  padrão **sem webhook**) e `EnviarAsync` (POST multipart, handler injetável).
+- UI: `CapturasView` reescrita (seletor de modo + ComboBox de monitores + toolbar de ferramentas + desenho com
+  mapeamento de escala + salvar/copiar/enviar); `RegiaoOverlay` (arrastar região, Esc cancela); `JanelaPicker`
+  (lista de janelas); `PromptTexto` (texto da anotação, tema escuro); aba Capturas das Configurações com campo de
+  webhook (salvar/limpar, validação HTTPS) — botão Enviar só existe com URL configurada e confirma cada envio.
+
+**Arquivos alterados:** `Capturas.cs`, `EditorCaptura.cs` (novo), `EnvioCaptura.cs` (novo), `CapturasView.xaml/.cs`
+(reescritos), `RegiaoOverlay.xaml/.cs` (novos), `JanelaPicker.xaml/.cs` (novos), `PromptTexto.cs` (novo),
+`ConfiguracoesView.xaml/.cs`, `Theme.xaml` (estilo `DarkCombo`), testes novos: `CapturasModosTests`,
+`EnvioCapturaTests`.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **118/118** (enumeração consistente de janelas/monitores/área,
+render de anotações por pixels, pilha de desfazer, validação de URL, persistência/config corrompida, POST com
+handler fake 2xx/5xx/rede).
+
+**Pendências / validação manual:** render visual e captura real nos 4 modos (F8); envio real contra um webhook de
+teste do usuário; suavidade do desenho a lápis em imagens grandes (re-render por ponto).
+
 
 ## Resumo por item
 | # | Item | Status |

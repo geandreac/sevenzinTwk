@@ -78,10 +78,25 @@
 
                 <!-- CAPTURAS -->
                 <StackPanel x:Name="CapturasPanel" Visibility="Collapsed">
+                    <TextBlock Text="ENVIO DE CAPTURAS (OPCIONAL)" Style="{StaticResource SectionLabel}"/>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="Webhook (opcional, HTTPS)" FontSize="14"/>
+                            <TextBlock Text="Por padrão a captura é 100% local. Se você configurar uma URL aqui, o botão Enviar fica disponível na tela Capturas — e cada envio pede confirmação explícita. Sem URL, nenhum envio é possível." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <TextBox x:Name="WebhookTxt" Style="{StaticResource DarkBox}" Width="420" Tag="https://seu-webhook..." VerticalContentAlignment="Center"/>
+                                <Button Style="{StaticResource PrimaryButton}" Content="Salvar" Margin="8,0,0,0" Click="WebhookSalvar_Click"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="Limpar" Margin="8,0,0,0" Click="WebhookLimpar_Click"/>
+                            </StackPanel>
+                            <TextBlock x:Name="WebhookStatus" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,10,0,0" TextWrapping="Wrap"
+                                       Text="Nenhum webhook configurado — capturas ficam só no seu PC."/>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="LOCAL" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <TextBlock Text="Capturas" FontSize="16" FontWeight="SemiBold"/>
-                            <TextBlock Text="A captura de tela não faz parte da reconstrução segura — o app original enviava screenshots a um webhook. Se entrar, será uma captura local, só sua, nunca enviada." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            <TextBlock Text="Pasta de capturas" FontSize="14"/>
+                            <TextBlock Text="Os PNGs são salvos em %LOCALAPPDATA%\Sevenzin\capturas, com data e hora no nome." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

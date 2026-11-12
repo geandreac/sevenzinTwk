@@ -4,23 +4,58 @@
     <Grid Margin="44,24,40,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+
         <StackPanel Grid.Row="0" Margin="0,8,0,12">
             <TextBlock Text="Capturas" Style="{StaticResource TituloTela}"/>
-            <TextBlock Text="Captura de tela LOCAL, só sua. Salva numa pasta no seu PC e nunca é enviada a lugar nenhum — sem rede, sem webhook (ao contrário do original)." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                <Button x:Name="BtnCapturar" Style="{StaticResource PrimaryButton}" Content="Capturar tela" Click="Capturar_Click" Margin="0,0,10,0"/>
+            <TextBlock Text="Capture a tela inteira, um monitor, uma região ou uma janela, anote por cima e salve LOCALMENTE. O envio para um webhook só acontece se você configurar a URL em Configurações e confirmar cada envio — nunca automático." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <ComboBox x:Name="ModoBox" Width="170" Style="{StaticResource DarkCombo}" SelectionChanged="Modo_Changed"/>
+                <ComboBox x:Name="MonitorBox" Width="230" Style="{StaticResource DarkCombo}" Margin="8,0,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <Button x:Name="BtnCapturar" Style="{StaticResource PrimaryButton}" Content="Capturar" Click="Capturar_Click" Margin="0,0,10,0"/>
+                <Button x:Name="BtnSalvar" Style="{StaticResource SecondaryButton}" Content="Salvar PNG" Click="Salvar_Click" Margin="0,0,10,0" IsEnabled="False"/>
+                <Button x:Name="BtnCopiar" Style="{StaticResource SecondaryButton}" Content="Copiar" Click="Copiar_Click" Margin="0,0,10,0" IsEnabled="False"/>
+                <Button x:Name="BtnEnviar" Style="{StaticResource SecondaryButton}" Content="Enviar (webhook)" Click="Enviar_Click" Margin="0,0,10,0" IsEnabled="False"/>
                 <Button Style="{StaticResource SecondaryButton}" Content="Abrir pasta" Click="AbrirPasta_Click"/>
             </StackPanel>
-            <TextBlock x:Name="StatusLbl" Foreground="{StaticResource TextMutedBrush}" Margin="2,12,0,0" TextWrapping="Wrap"
-                       Text="Clique em Capturar tela. A janela do Sevenzin é minimizada por um instante para não aparecer na imagem."/>
+            <TextBlock x:Name="StatusLbl" Foreground="{StaticResource TextMutedBrush}" Margin="2,10,0,0" TextWrapping="Wrap"
+                       Text="Escolha o modo e clique em Capturar. A janela do Sevenzin sai da frente por um instante."/>
         </StackPanel>
-        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,8,0,16">
-            <Grid>
-                <TextBlock x:Name="Placeholder" Text="A última captura aparece aqui." Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <Image x:Name="Thumb" Stretch="Uniform" Visibility="Collapsed"/>
-            </Grid>
-        </Border>
+
+        <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel x:Name="BarraFerramentas" Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+                <Button Style="{StaticResource SecondaryButton}" Content="✎ Lápis" Tag="Lapis" Click="Ferramenta_Click" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="▭ Retângulo" Tag="Retangulo" Click="Ferramenta_Click" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="↗ Seta" Tag="Seta" Click="Ferramenta_Click" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="T Texto" Tag="Texto" Click="Ferramenta_Click" Margin="0,0,6,0"/>
+                <Rectangle Width="1" Height="22" Fill="{StaticResource BorderDefaultBrush}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="Cor vermelha" Tag="Red" Click="Cor_Click" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="Cor amarela" Tag="Yellow" Click="Cor_Click" Margin="0,0,6,0"/>
+                <Rectangle Width="1" Height="22" Fill="{StaticResource BorderDefaultBrush}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="↩ Desfazer" Click="Desfazer_Click" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="Limpar" Click="Limpar_Click"/>
+            </StackPanel>
+
+            <Border Grid.Row="1" Style="{StaticResource Card}">
+                <Grid x:Name="AreaEditor">
+                    <TextBlock x:Name="Placeholder" Text="A última captura aparece aqui para anotar." Foreground="{StaticResource TextMutedBrush}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Image x:Name="Preview" Stretch="Uniform" Visibility="Collapsed"
+                           MouseLeftButtonDown="Preview_MouseLeftButtonDown" MouseMove="Preview_MouseMove" MouseLeftButtonUp="Preview_MouseLeftButtonUp"/>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>
