@@ -92,7 +92,18 @@
                 <TextBlock x:Name="TituloBarra" Text="Início" Margin="24,0,0,0" FontSize="13"
                            Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
             </DockPanel>
-            <ContentControl x:Name="Host" Grid.Row="1"/>
+            <DockPanel Grid.Row="1">
+                <Border x:Name="AvisoAtualiza" DockPanel.Dock="Top" Visibility="Collapsed"
+                        Background="{StaticResource BrandTintBrush}" BorderBrush="{StaticResource Brand500Brush}" BorderThickness="0,0,0,1" Padding="24,10">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButton}" Content="Dispensar" Click="DispensarAviso_Click" Margin="8,0,0,0"/>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Content="Baixar" Click="BaixarAviso_Click"/>
+                        <TextBlock x:Name="AvisoAtualizaTxt" VerticalAlignment="Center" TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                    </DockPanel>
+                </Border>
+                <ContentControl x:Name="Host"/>
+            </DockPanel>
         </Grid>
     </Grid>
 </Window>

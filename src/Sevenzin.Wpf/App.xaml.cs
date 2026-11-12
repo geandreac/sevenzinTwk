@@ -8,6 +8,8 @@ namespace Sevenzin.Wpf;
 
 public partial class App : Application
 {
+    public static bool ModoRender; // render headless / testes não devem bater na rede
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -26,6 +28,7 @@ public partial class App : Application
         int i = Array.IndexOf(e.Args, "--render");
         if (i >= 0)
         {
+            ModoRender = true;
             // Modo headless (screenshots): sessão admin sintética para todas as telas renderizarem.
             Servicos.Sessao.Abrir(new Usuario("render@local", "Render", PapelUsuario.Administrador, "-", DateTime.UtcNow));
             var saida = i + 1 < e.Args.Length ? e.Args[i + 1] : "render.png";

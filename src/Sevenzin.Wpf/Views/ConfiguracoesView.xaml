@@ -137,6 +137,20 @@
                         <StackPanel>
                             <TextBlock x:Name="VersaoTxt"/>
                             <TextBlock Text="Reconstrução segura, somente leitura por padrão, tudo reversível." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="AtualizaStatus" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,16,0"
+                                           Foreground="{StaticResource TextMutedBrush}" FontSize="12"
+                                           Text="Verifica a release mais recente no GitHub. Nada é baixado automaticamente."/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="AbrirReleaseBtn" Style="{StaticResource PrimaryButton}" Content="Baixar atualização"
+                                            Visibility="Collapsed" Margin="0,0,8,0" Click="AbrirRelease_Click"/>
+                                    <Button x:Name="VerificarBtn" Style="{StaticResource SecondaryButton}" Content="Verificar atualizações" Click="Verificar_Click"/>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
                 </StackPanel>

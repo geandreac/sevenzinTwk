@@ -27,7 +27,7 @@ public partial class ConfiguracoesView : UserControl
         _paineis = new[] { GeralPanel, CapturasPanel, PrefPanel };
         SwInicio.IsChecked = StartupLigado();
         PastaTxt.Text = Pasta;
-        VersaoTxt.Text = "Sevenzin Program · reconstrução segura (WPF)";
+        VersaoTxt.Text = $"Sevenzin {VersaoApp.ToString(3)} · reconstrução segura (WPF)";
         var cfg = new Sevenzin.Diagnostics.ConfigCapturasStore().Carregar();
         WebhookTxt.Text = cfg.WebhookUrl ?? "";
         AtualizarStatusWebhook();
@@ -148,6 +148,33 @@ public partial class ConfiguracoesView : UserControl
             Directory.CreateDirectory(Pasta);
             Process.Start(new ProcessStartInfo("explorer.exe", $"\"{Pasta}\"") { UseShellExecute = true });
         }
+        catch (Exception ex) { MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning); }
+    }
+
+    static Version VersaoApp => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
+    string? _urlRelease;
+
+    async void Verificar_Click(object sender, RoutedEventArgs e)
+    {
+        VerificarBtn.IsEnabled = false;
+        AbrirReleaseBtn.Visibility = Visibility.Collapsed;
+        AtualizaStatus.Text = "Verificando no GitHub…";
+        var r = await Sevenzin.Diagnostics.VerificadorAtualizacoes.VerificarAsync(VersaoApp);
+        VerificarBtn.IsEnabled = true;
+        if (r is null) { AtualizaStatus.Text = "Não foi possível verificar agora (sem internet ou ainda sem releases publicadas)."; return; }
+        if (r.HaNova)
+        {
+            _urlRelease = r.Url;
+            AbrirReleaseBtn.Visibility = r.Url.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            AtualizaStatus.Text = $"Nova versão disponível: {r.VersaoRemota} (você tem {r.VersaoAtual}). O download abre a página da release no navegador.";
+        }
+        else AtualizaStatus.Text = $"Você está na versão mais recente ({r.VersaoAtual}).";
+    }
+
+    void AbrirRelease_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_urlRelease)) return;
+        try { Process.Start(new ProcessStartInfo(_urlRelease) { UseShellExecute = true }); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning); }
     }
 }

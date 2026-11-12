@@ -9,6 +9,7 @@
     <AssemblyName>Sevenzin</AssemblyName>
     <RootNamespace>Sevenzin.Wpf</RootNamespace>
     <AssemblyTitle>Sevenzin Program</AssemblyTitle>
+    <Version>1.0.0</Version>
     <ApplicationIcon>Assets\sevenzin.ico</ApplicationIcon>
   </PropertyGroup>
 
