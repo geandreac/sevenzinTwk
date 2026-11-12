@@ -23,9 +23,11 @@ public partial class MediaView : UserControl
     List<EdicaoImagem> _edicoes = new();
     List<UsbRecord> _usbs = new();
     string? _destino;
-    TextBlock _origemLbl = null!, _destinoLbl = null!, _isoStatus = null!, _usbStatus = null!;
+    string? _pastaDrivers;
+    TextBlock _origemLbl = null!, _destinoLbl = null!, _isoStatus = null!, _usbStatus = null!, _driversLbl = null!;
     ComboBox _edicoesBox = null!, _usbBox = null!;
     Button _construirBtn = null!, _gravarBtn = null!;
+    StackPanel _appsPainel = null!;
 
     public MediaView()
     {
@@ -60,6 +62,16 @@ public partial class MediaView : UserControl
         iso.Children.Add(_destinoLbl);
         _isoStatus = new TextBlock { Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap };
         iso.Children.Add(_isoStatus);
+
+        // Serviço opcional (F12): apps provisionados para remover + pasta de drivers INF.
+        var appsBtn = Botao(Secundario, "Apps provisionados (opcional): carregar lista da edição", CarregarApps);
+        iso.Children.Add(appsBtn);
+        _appsPainel = new StackPanel { Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
+        iso.Children.Add(_appsPainel);
+        var driversBtn = Botao(Secundario, "Pasta de drivers INF (opcional)", EscolherDrivers);
+        iso.Children.Add(driversBtn);
+        _driversLbl = new TextBlock { Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 4, 0, 0), Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap };
+        iso.Children.Add(_driversLbl);
 
         _construirBtn = Botao(Primario, "Construir ISO", () => { });
         _construirBtn.Click += async (_, _) => await ConstruirAsync();
@@ -141,6 +153,43 @@ public partial class MediaView : UserControl
             : "Nenhuma edição encontrada na imagem.";
     }
 
+    async void CarregarApps()
+    {
+        if (_origemIso is null || _edicoesBox.SelectedItem is not ComboBoxItem item || item.Tag is not int indice) { _isoStatus.Text = "Escolha a ISO de origem e a edição antes de carregar os apps."; return; }
+        if (!Elevacao.EhAdmin())
+        {
+            if (MessageBox.Show("Ler os apps da imagem exige administrador.\n\nReabrir o Sevenzin como administrador?",
+                    "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                Elevacao.ReabrirComoAdmin();
+            return;
+        }
+        _isoStatus.Foreground = Muted;
+        _isoStatus.Text = $"Lendo os apps provisionados da edição {indice}…";
+        var resultado = await System.Threading.Tasks.Task.Run(() => ExecutorDism.AnalisarIsoAsync(_origemIso!, indice));
+        if (!resultado.Ok) { _isoStatus.Foreground = Danger; _isoStatus.Text = "Falha: " + resultado.Erro; return; }
+
+        _appsPainel.Children.Clear();
+        foreach (var app in resultado.Apps)
+        {
+            var cb = new CheckBox { Content = app.Pacote, FontSize = 11, Margin = new Thickness(0, 2, 0, 2), Tag = app.Pacote };
+            _appsPainel.Children.Add(cb);
+        }
+        _appsPainel.Visibility = resultado.Apps.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        _isoStatus.Foreground = Secondary;
+        _isoStatus.Text = resultado.Apps.Count > 0
+            ? $"{resultado.Apps.Count} app(s) listado(s) — marque os que devem ser removidos da imagem."
+            : "Nenhum app provisionado nesta edição.";
+    }
+
+    void EscolherDrivers()
+    {
+        var dlg = new Microsoft.Win32.OpenFolderDialog { Title = "Pasta com os drivers INF assinados" };
+        if (dlg.ShowDialog() != true) return;
+        _pastaDrivers = dlg.FolderName;
+        _driversLbl.Text = $"Drivers: {_pastaDrivers}";
+        _driversLbl.Visibility = Visibility.Visible;
+    }
+
     async System.Threading.Tasks.Task ConstruirAsync()
     {
         if (_origemIso is null || _edicoesBox.SelectedItem is not ComboBoxItem item || item.Tag is not int indice) { _isoStatus.Text = "Escolha a ISO de origem e uma edição."; return; }
@@ -160,10 +209,14 @@ public partial class MediaView : UserControl
             _destinoLbl.Visibility = Visibility.Visible;
         }
 
+        var appsRemover = _appsPainel.Children.OfType<CheckBox>().Where(c => c.IsChecked == true).Select(c => (string)c.Tag).ToList();
         _construirBtn.IsEnabled = false;
         _isoStatus.Foreground = Muted;
         var resultado = await System.Threading.Tasks.Task.Run(() =>
-            ConstrutorIso.BuildAsync(_origemIso!, _destino!, indice, t => Dispatcher.Invoke(() => _isoStatus.Text = t)));
+            ConstrutorIso.BuildAsync(_origemIso!, _destino!, indice,
+                t => Dispatcher.Invoke(() => _isoStatus.Text = t),
+                appsRemover: appsRemover.Count > 0 ? appsRemover : null,
+                pastaDrivers: _pastaDrivers));
         _construirBtn.IsEnabled = true;
         _isoStatus.Foreground = resultado.Ok ? Secondary : Danger;
         _isoStatus.Text = resultado.Ok

@@ -66,7 +66,8 @@ public static class ConstrutorIso
     }
 
     public static async Task<ResultadoConstrutorIso> BuildAsync(string origemIso, string destinoIso, int indiceEdicao,
-        Action<string>? etapa = null, CancellationToken ct = default)
+        Action<string>? etapa = null, CancellationToken ct = default,
+        IReadOnlyList<string>? appsRemover = null, IReadOnlyList<string>? featuresRemover = null, string? pastaDrivers = null)
     {
         void Etapa(string texto) => etapa?.Invoke(texto);
 
@@ -107,6 +108,47 @@ public static class ConstrutorIso
                 "/DestinationImageFile:" + destinoWim, "/Compress:max",
             }, ct);
             if (codigo != 0) return new(false, null, "DISM não exportou a edição: " + saida.Trim());
+
+            // Serviço da imagem (F12): montar o WIM exportado (índice 1 — exportação única) em RW,
+            // remover apps/features escolhidos, adicionar drivers INF assinados e gravar (/Commit).
+            bool precisaServico = (appsRemover?.Count ?? 0) + (featuresRemover?.Count ?? 0) > 0 || !string.IsNullOrEmpty(pastaDrivers);
+            if (precisaServico)
+            {
+                var mount = Path.Combine(Path.GetTempPath(), "sevenzin-mount-" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(mount);
+                Etapa("Montando a imagem para serviço (leitura/escrita)…");
+                var (cMont, sMont) = await ExecutorDism.MontarWimAsync(destinoWim, 1, mount, ct);
+                if (cMont != 0) return new(false, null, "DISM não montou a imagem: " + sMont.Trim());
+                try
+                {
+                    foreach (var app in appsRemover ?? Array.Empty<string>())
+                    {
+                        Etapa($"Removendo {app} da imagem…");
+                        var (cA, sA) = await ExecutorDism.RemoverAppxDaImagemAsync(mount, app, ct);
+                        if (cA != 0) { await ExecutorDism.DescartarWimAsync(mount, ct); return new(false, null, "Falha ao remover app: " + sA.Trim()); }
+                    }
+                    foreach (var feature in featuresRemover ?? Array.Empty<string>())
+                    {
+                        Etapa($"Removendo o recurso {feature} da imagem…");
+                        var (cF, sF) = await ExecutorDism.RemoverFeatureDaImagemAsync(mount, feature, ct);
+                        if (cF != 0) { await ExecutorDism.DescartarWimAsync(mount, ct); return new(false, null, "Falha ao remover recurso: " + sF.Trim()); }
+                    }
+                    if (!string.IsNullOrEmpty(pastaDrivers))
+                    {
+                        Etapa("Adicionando os drivers INF assinados à imagem…");
+                        var (cD, sD) = await ExecutorDism.AdicionarDriversAsync(mount, pastaDrivers!, ct);
+                        if (cD != 0) { await ExecutorDism.DescartarWimAsync(mount, ct); return new(false, null, "Falha ao adicionar drivers: " + sD.Trim()); }
+                    }
+                    Etapa("Gravando as alterações na imagem (/Commit)…");
+                    var (cS, sS) = await ExecutorDism.SalvarWimAsync(mount, ct);
+                    if (cS != 0) return new(false, null, "Falha ao gravar a imagem: " + sS.Trim());
+                }
+                catch
+                {
+                    try { await ExecutorDism.DescartarWimAsync(mount, ct); } catch { }
+                    throw;
+                }
+            }
 
             Etapa("Criando a ISO com boot UEFI…");
             var efisys = Path.Combine(staging, "efi", "microsoft", "boot", "efisys.bin");

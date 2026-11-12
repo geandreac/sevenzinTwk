@@ -20,7 +20,7 @@ public static class AnalisadorImagem
     public static List<EdicaoImagem> AnalisarSaidaWimInfo(string saida)
     {
         var edicoes = new List<EdicaoImagem>();
-        int? indice = null; string nome = "", descricao = "", versao = null, arquitetura = null; long tamanho = 0;
+        int? indice = null; string nome = "", descricao = ""; string? versao = null, arquitetura = null; long tamanho = 0;
         void Fechar()
         {
             if (indice is { } i && nome.Length > 0)
@@ -120,8 +120,8 @@ public static class ExecutorDism
     }
 
     /// <summary>Analisa uma ISO completa: monta (read-only), localiza o install.wim/esd, lê edições,
-    /// apps provisionados e features da 1ª edição, e desmonta. Devolve Erro em qualquer falha.</summary>
-    public static async Task<ResultadoAnaliseImagem> AnalisarIsoAsync(string caminhoIso, CancellationToken ct = default)
+    /// apps provisionados e features da edição indicada, e desmonta. Devolve Erro em qualquer falha.</summary>
+    public static async Task<ResultadoAnaliseImagem> AnalisarIsoAsync(string caminhoIso, int indiceLeitura = 1, CancellationToken ct = default)
     {
         var validacao = ValidarIso(caminhoIso);
         if (validacao is not null) return new(new List<EdicaoImagem>(), new List<AppImagem>(), new List<FeatureImagem>(), validacao);
@@ -141,8 +141,8 @@ public static class ExecutorDism
             if (codigoEdicoes != 0) return new(new List<EdicaoImagem>(), new List<AppImagem>(), new List<FeatureImagem>(), "DISM não leu a imagem: " + saidaWim.Trim());
 
             var edicoes = AnalisadorImagem.AnalisarSaidaWimInfo(saidaWim);
-            var (codigoApps, saidaApps) = await RodarDismAsync(new[] { "/Get-AppxProvisionedPackages", "/WimFile:" + wim, "/Index:1" }, ct);
-            var (codigoFeat, saidaFeat) = await RodarDismAsync(new[] { "/Get-WindowsOptionalFeature", "/WimFile:" + wim, "/Index:1" }, ct);
+            var (codigoApps, saidaApps) = await RodarDismAsync(new[] { "/Get-AppxProvisionedPackages", "/WimFile:" + wim, "/Index:" + indiceLeitura }, ct);
+            var (codigoFeat, saidaFeat) = await RodarDismAsync(new[] { "/Get-WindowsOptionalFeature", "/WimFile:" + wim, "/Index:" + indiceLeitura }, ct);
 
             return new ResultadoAnaliseImagem(
                 edicoes,
@@ -192,4 +192,30 @@ public static class ExecutorDism
         using var p = Process.Start(psi)!;
         await p.WaitForExitAsync(ct);
     }
+
+    // ── Serviço da imagem (F12: montar RW, remover apps/features, adicionar drivers) ──
+
+    /// <summary>Monta um WIM em modo LEITURA/ESCRITA para serviço. Devolve (código, saída).</summary>
+    public static async Task<(int Codigo, string Saida)> MontarWimAsync(string wim, int indice, string pastaMount, CancellationToken ct = default) =>
+        await RodarDismAsync(new[] { "/Mount-Image", "/ImageFile:" + wim, "/Index:" + indice, "/MountDir:" + pastaMount, "/CheckIntegrity" }, ct);
+
+    /// <summary>Desmonta gravando as alterações (/Commit).</summary>
+    public static async Task<(int Codigo, string Saida)> SalvarWimAsync(string pastaMount, CancellationToken ct = default) =>
+        await RodarDismAsync(new[] { "/Unmount-Image", "/MountDir:" + pastaMount, "/Commit" }, ct);
+
+    /// <summary>Desmonta DESCARTANDO as alterações (/Discard).</summary>
+    public static async Task<(int Codigo, string Saida)> DescartarWimAsync(string pastaMount, CancellationToken ct = default) =>
+        await RodarDismAsync(new[] { "/Unmount-Image", "/MountDir:" + pastaMount, "/Discard" }, ct);
+
+    /// <summary>Remove um app provisionado da imagem montada.</summary>
+    public static async Task<(int Codigo, string Saida)> RemoverAppxDaImagemAsync(string pastaMount, string pacote, CancellationToken ct = default) =>
+        await RodarDismAsync(new[] { "/Image:" + pastaMount, "/Remove-AppxProvisionedPackage", "/PackageName:" + pacote }, ct);
+
+    /// <summary>Adiciona drivers INF assinados de uma pasta (recursivo) à imagem montada.</summary>
+    public static async Task<(int Codigo, string Saida)> AdicionarDriversAsync(string pastaMount, string pastaDrivers, CancellationToken ct = default) =>
+        await RodarDismAsync(new[] { "/Image:" + pastaMount, "/Add-Driver", "/Driver:" + pastaDrivers, "/Recurse" }, ct);
+
+    /// <summary>Remove um recurso opcional da imagem montada.</summary>
+    public static async Task<(int Codigo, string Saida)> RemoverFeatureDaImagemAsync(string pastaMount, string feature, CancellationToken ct = default) =>
+        await RodarDismAsync(new[] { "/Image:" + pastaMount, "/Remove-WindowsOptionalFeature", "/FeatureName:" + feature, "/NoRestart" }, ct);
 }
