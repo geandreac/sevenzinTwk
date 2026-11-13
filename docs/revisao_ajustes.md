@@ -485,20 +485,25 @@ o PNG — confirma que abre self-contained. **Limitações:** só **x64**; não 
 atalho no Menu Iniciar/desinstalar, dá para adicionar um `.iss` do Inno Setup embrulhando este `dist\` — fica
 como opção, não feito agora.
 
-### 18.1 Instalador Inno Setup (User) — 12/11/2026
-Autorado `scripts\Sevenzin.iss` (Inno Setup 6) que embrulha o portátil `dist\Sevenzin\Sevenzin.exe` num
-instalador: atalho no Menu Iniciar e opcional na Área de Trabalho, desinstalador, ícone do app, idioma
-pt-BR, **instalação por usuário sem UAC** por padrão (o usuário pode escolher "para todos" = admin no
-diálogo), x64. **O Admin não entra** — é local-only (AGENTS.md), não se distribui a usuário final.
-`scripts\build-installer.ps1` publica o portátil (se faltar) e compila o `.iss`, gerando
-`dist\installer\Sevenzin-1.0.0-setup.exe`.
+### 18.1 Instalador Inno Setup (User + Admin) — 12/11/2026
+`scripts\Sevenzin.iss` (Inno Setup 6) embrulha **os dois portáteis** (`dist\Sevenzin\Sevenzin.exe` e
+`dist\SevenzinAdmin\SevenzinAdmin.exe`) num único instalador — por decisão explícita do dono (instalação
+completa dos dois programas, sem adicionar funcionalidade). Entrega: atalhos no Menu Iniciar ("Sevenzin" e
+"Sevenzin Admin"), atalho opcional na Área de Trabalho (do User), desinstalador, ícone do app, assistente em
+pt-BR, **instalação por usuário sem UAC** por padrão (o usuário pode escolher "para todos" = admin no diálogo),
+x64. `scripts\build-installer.ps1` publica os portáteis (se faltarem) e compila o `.iss`.
 
-**Limitação (não concluído aqui):** o compilador do Inno Setup (`ISCC.exe`) **não está instalado** nesta
-máquina e não há `winget` para instalá-lo sem intervenção — então o `setup.exe` **não foi gerado**. Para
-produzi-lo: instalar o Inno Setup 6 (https://jrsoftware.org/isdl.php) e rodar `scripts\build-installer.ps1`
-(ou abrir o `.iss` no Inno Setup e Build). O `.iss` foi conferido quanto aos caminhos (ícone e portátil
-existem); a compilação em si depende do Inno Setup. O `setup.exe` também não é assinado (mesmo aviso de
-SmartScreen do portátil).
+**Feito (12/11/2026):** Inno Setup 6.7.4 baixado do GitHub oficial do jrsoftware (assinatura Authenticode
+**Válida** — Pyrsys B.V.), instalado em modo silencioso **por usuário** (`/VERYSILENT /CURRENTUSER`, sem UAC),
+e o instalador compilado: **`dist\installer\Sevenzin-1.0.0-setup.exe`** (~135 MB, "Verification successful",
+ambos os apps embutidos). `dist/` é gitignored — o `setup.exe` não vai ao repositório.
+
+**Nota de encoding:** o `build-installer.ps1` foi reescrito só em ASCII — o Windows PowerShell 5.1 lê `.ps1`
+sem BOM como ANSI e o traço longo/reticências quebravam o parser.
+
+**Limitações:** o `setup.exe` **não é assinado** (SmartScreen pode avisar "editor desconhecido" no 1º run);
+só **x64**. Não executei o instalador na máquina de desenvolvimento (só compilei) — a instalação de verdade
+é por sua conta.
 
 ## Resumo por item
 | # | Item | Status |
