@@ -485,6 +485,21 @@ o PNG — confirma que abre self-contained. **Limitações:** só **x64**; não 
 atalho no Menu Iniciar/desinstalar, dá para adicionar um `.iss` do Inno Setup embrulhando este `dist\` — fica
 como opção, não feito agora.
 
+### 18.1 Instalador Inno Setup (User) — 12/11/2026
+Autorado `scripts\Sevenzin.iss` (Inno Setup 6) que embrulha o portátil `dist\Sevenzin\Sevenzin.exe` num
+instalador: atalho no Menu Iniciar e opcional na Área de Trabalho, desinstalador, ícone do app, idioma
+pt-BR, **instalação por usuário sem UAC** por padrão (o usuário pode escolher "para todos" = admin no
+diálogo), x64. **O Admin não entra** — é local-only (AGENTS.md), não se distribui a usuário final.
+`scripts\build-installer.ps1` publica o portátil (se faltar) e compila o `.iss`, gerando
+`dist\installer\Sevenzin-1.0.0-setup.exe`.
+
+**Limitação (não concluído aqui):** o compilador do Inno Setup (`ISCC.exe`) **não está instalado** nesta
+máquina e não há `winget` para instalá-lo sem intervenção — então o `setup.exe` **não foi gerado**. Para
+produzi-lo: instalar o Inno Setup 6 (https://jrsoftware.org/isdl.php) e rodar `scripts\build-installer.ps1`
+(ou abrir o `.iss` no Inno Setup e Build). O `.iss` foi conferido quanto aos caminhos (ícone e portátil
+existem); a compilação em si depende do Inno Setup. O `setup.exe` também não é assinado (mesmo aviso de
+SmartScreen do portátil).
+
 ## Resumo por item
 | # | Item | Status |
 |---|---|---|
