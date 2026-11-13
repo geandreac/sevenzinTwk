@@ -462,6 +462,29 @@ avisos destrutivos/de Windows/privilégio.
   Mídia e do QR real é manual; (b) o QR só aparece no modo Supabase (precisa de sessão com Supabase ativo);
   (c) instaladores não foram baixados/executados aqui (item 17.4); (d) copy-review completo pendente (17.6).
 
+## §18. Distribuição: instalável vs portátil (12/11/2026)
+**Pedido:** avaliar tornar os dois apps instaláveis; se inviável, entregar portátil.
+
+**Análise.** Instalável é tecnicamente viável (Inno Setup/NSIS ou MSIX), mas: (a) nenhuma ferramenta de
+instalador está presente na máquina; (b) MSIX exige certificado de assinatura para distribuir; (c) o app
+**Admin é local-only** (não deve virar instalador de usuário final); (d) instalar em `Program Files` não
+agrega aqui — os dados de runtime já vão para `%LOCALAPPDATA%` e a elevação já é sob demanda. Ou seja: possível,
+porém com dependência externa e sem ganho prático imediato.
+
+**Decisão:** entregar **portátil** (self-contained single-file) — zero dependência nova, roda em qualquer
+Windows x64 **sem instalar .NET** e sem instalação. É o caminho mais simples para "facilitar o uso".
+
+**Implementação.** `scripts/publish-portable.ps1` publica cada app como **um .exe único** em `dist\`:
+`dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`
+`-p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true` (WPF não suporta
+trimming, então não se usa `PublishTrimmed`). Resultado: `dist\Sevenzin\Sevenzin.exe` e
+`dist\SevenzinAdmin\SevenzinAdmin.exe`, ~74 MB cada (runtime .NET embutido). `dist/` fica no `.gitignore`
+(binário grande, não versionado). **Teste:** o portátil do User rodou em modo `--render` com código 0 e gerou
+o PNG — confirma que abre self-contained. **Limitações:** só **x64**; não assinado (o SmartScreen pode avisar
+"editor desconhecido" no 1º run — resolvível no futuro com assinatura de código). Se quiser instalador com
+atalho no Menu Iniciar/desinstalar, dá para adicionar um `.iss` do Inno Setup embrulhando este `dist\` — fica
+como opção, não feito agora.
+
 ## Resumo por item
 | # | Item | Status |
 |---|---|---|

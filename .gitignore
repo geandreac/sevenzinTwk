@@ -6,3 +6,6 @@ relatorio-pc.json
 
 # App Admin fica apenas local (nao publicar no GitHub)
 /src/Sevenzin.Admin/
+
+# Portáteis publicados (self-contained, grandes) — não versionar
+/dist/
