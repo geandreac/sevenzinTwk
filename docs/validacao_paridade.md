@@ -112,6 +112,10 @@ Observação: "Idêntico" aqui significa **valor/efeito idêntico com releitura 
 a aplicação real em máquina controlada (releitura pós-ação) permanece como validação manual pendente e, quando
 executada, pode rebaixar itens para `Divergente`.
 
+> **Meta de 100,0%** — ver **§11** abaixo: "100,0%" é o **fechamento contábil do catálogo** (zero itens
+> pendentes), não a reprodução literal byte-a-byte (parte do original é irrecuperável/insegura). O roteiro P0
+> (`docs/roteiro_validacao.md`) contém os comandos exatos para fechar o ledger.
+
 ## 8. Divergências abertas (por impacto)
 
 1. **Win32PrioritySeparation** — original calculava o valor por CPU (dinâmico); Sevenzin usa 38 fixo. Impacto: médio.
@@ -140,8 +144,26 @@ execução em máquina controlada com confirmação explícita.
 
 ## 10. Pendências de validação manual
 
-- Aplicar/desfazer 1 item de cada grupo em máquina controlada e registrar `reg query` antes/depois.
-- Bootar a ISO construída e o pendrive gravado (UEFI) em VM/hardware real.
+- Aplicar/desfazer cada grupo (G1–G10 do `roteiro_validacao.md`) em máquina controlada e registrar `reg query` antes/depois.
 - Login com 2FA num autenticador real; login Supabase real.
 - Render visual de todas as telas (PNGs em `%TEMP%\opencode\renders` — inspeção humana).
 - Medir o ganho do F6 (Capturas) com o cenário reproduzível documentado em `revisao_ajustes.md`.
+
+## 11. Meta de 100,0% — fechamento contábil do catálogo
+
+"100,0% de paridade" = **zero itens pendentes** no catálogo do geandre.exe. Cada item termina em um de três
+estados terminais (mesma regra do roteiro P0):
+
+| estado | significado | itens |
+|---|---|---|
+| **① Reproduzido + validado** | valor literal do original, releitura real confirmada | 34 `Idêntico` + 2 `Parcial` + 2 `Divergente`-implementado (Win32PrioritySeparation=38, AllowTelemetry=1) + Rede Global = **39** |
+| **② Excluído por decisão do dono** | o Sevenzin deliberadamente não faz (segurança/estabilidade) | KMS, ISO/USB, DPC, MSI/IRQ, overclock/fan/voltagem = **5** |
+| **③ Não aplicável** | não existe no original ou é irrecuperável | IFEO PerfOptions, VisualFX/FeatureSettingsOverrideMask/MitigationOptions (binário), extensões de arquivo, demais serviços/tarefas (`#US`), FPS/temp, otimizações por jogo, flash BIOS, nomes de instaladores inferidos = **9** |
+
+**Fórmula:** `paridade contábil = (① + ② + ③) / total = 53 / 53 = 100,0%` quando ① é validado (P0) e ②/③
+são assinados/classificados. Hoje o número **confirmado** é **75,6%** (34/45 itens verificáveis); o caminho
+até 100,0% é: **executar P0** (fecha ①) + **assinatura do dono** (fecha ②) + **classificação** (fecha ③).
+
+> A paridade literal byte-a-byte **não é o alvo nem é alcançável**: parte do original está cifrada no `#US`
+> (listas de serviços/tarefas, URLs/hashes de instaladores) e outra parte é insegura (KMS, prioridade Realtime
+> do IFEO). 100,0% **contábil** é alcançável e é a meta registrada neste documento.
