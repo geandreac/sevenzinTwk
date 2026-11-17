@@ -29,7 +29,50 @@ public partial class AjustesView : UserControl
         // Rede por adaptador (dinâmica): 5 tweaks por interface, valores do original, reversíveis.
         Lista.Children.Add(new TextBlock { Text = "REDE (POR ADAPTADOR)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
         Lista.Children.Add(CartaoRede());
+        // Rede global (TCP): autotuning normal + CTCP, valores do original (netsh), reversível.
+        Lista.Children.Add(new TextBlock { Text = "REDE GLOBAL (TCP)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(CartaoRedeGlobal());
         AtualizarContador();
+    }
+
+    Border CartaoRedeGlobal()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Ajustes GLOBAIS de TCP do original (netsh): autotuninglevel=normal e congestionprovider=ctcp. Exige administrador; reversível. Observação: CTCP é legado — o CUBIC (padrão atual do Windows) pode ser melhor em redes modernas.",
+            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+        });
+        var status = new TextBlock { Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap };
+        void Atualizar()
+        {
+            var (at, cong) = RedeGlobal.EstadoAtual();
+            status.Text = $"Estado atual: autotuning {(at ?? "?")} · congestionamento {(cong ?? "?")}.";
+        }
+        Atualizar();
+        sp.Children.Add(status);
+
+        var botoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
+        var aplicar = new Button { Style = (Style)Application.Current.Resources["PrimaryButton"], Content = "Aplicar (normal + CTCP)", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 0) };
+        aplicar.Click += (_, _) =>
+        {
+            if (MessageBox.Show("Aplicar os ajustes globais de TCP do original (autotuning normal + congestion provider ctcp)?\n\nExige administrador e é reversível.",
+                    "Confirmação — TCP global", MessageBoxButton.OKCancel, MessageBoxImage.Information) != MessageBoxResult.OK) return;
+            var r = RedeGlobal.Aplicar();
+            Atualizar();
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "TCP global aplicado" : "Falha no TCP global", r.Mensagem);
+        };
+        var restaurar = new Button { Style = (Style)Application.Current.Resources["SecondaryButton"], Content = "Restaurar padrão", Padding = new Thickness(12, 7, 12, 7) };
+        restaurar.Click += (_, _) =>
+        {
+            var r = RedeGlobal.Restaurar();
+            Atualizar();
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "TCP restaurado" : "Falha ao restaurar", r.Mensagem);
+        };
+        botoes.Children.Add(aplicar);
+        botoes.Children.Add(restaurar);
+        sp.Children.Add(botoes);
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 20), Child = sp };
     }
 
     Border CartaoRede()

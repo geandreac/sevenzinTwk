@@ -341,6 +341,19 @@ próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem 
 
 **Testes:** `dotnet build` 0/0 · `dotnet test` **201/201** (9 testes de ISO removidos).
 
+## §17. P1 (recuperáveis) + roteiro P0 (17/11/2026)
+
+- **Rede global (TCP)**: `RedeGlobal.cs` aplica `autotuninglevel=normal` + `congestionprovider=ctcp` (valores
+  literais de `03_comandos_sistema.txt`) via netsh, com releitura do estado real (`show global`, parser EN/PT
+  testado) e reversão ao padrão. Seção "REDE GLOBAL (TCP)" na `AjustesView` com confirmação.
+- **IFEO PerfOptions (Discord)**: **não implementado** — valores ambíguos no original (`CpuPriorityClass` 2/4
+  dinâmico, sendo 4 = Realtime, perigoso). Registrado como `Não verificável` em `validacao_paridade.md`.
+- **Win32PrioritySeparation**: mantido 38 (fórmula dinâmica do original não recuperada — divergência documentada).
+- **Roteiro P0**: `docs/roteiro_validacao.md` — checklist reproduzível (ler → aplicar → reler → desfazer → reler)
+  para os 12 grupos, com formato de evidência E-###.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **204/204**.
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`
