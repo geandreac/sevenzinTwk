@@ -16,6 +16,9 @@ public partial class GpuView : UserControl
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Secondary => (Brush)Application.Current.Resources["TextSecondaryBrush"];
     static Brush Warning => (Brush)Application.Current.Resources["WarningBrush"];
+    static Style EyebrowStyle => (Style)Application.Current.Resources["Eyebrow"];
+    static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
+    static Brush SuccessBg => new SolidColorBrush((Color)Application.Current.Resources["SuccessBg"]);
 
     public GpuView()
     {
@@ -46,7 +49,16 @@ public partial class GpuView : UserControl
     Border CartaoGpu(InfoGpu g)
     {
         var sp = new StackPanel();
-        sp.Children.Add(new TextBlock { Text = g.Adaptador, FontSize = 16, FontWeight = FontWeights.SemiBold });
+        // Cabeçalho "GPU detectada" (adaptado do original): eyebrow + nome + selo de detecção à direita.
+        var topo = new Grid();
+        var esq = new StackPanel();
+        esq.Children.Add(new TextBlock { Text = "PLACA DE VÍDEO", Style = EyebrowStyle });
+        esq.Children.Add(new TextBlock { Text = g.Adaptador, FontSize = 16, FontWeight = FontWeights.SemiBold });
+        topo.Children.Add(esq);
+        var selo = new Border { Background = SuccessBg, CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 3, 8, 3), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
+        selo.Child = new TextBlock { Text = $"Detectada · {NomeFab(g.Fabricante)}", Foreground = Success, FontSize = 11, FontWeight = FontWeights.SemiBold };
+        topo.Children.Add(selo);
+        sp.Children.Add(topo);
 
         var campos = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
         campos.Children.Add(Campo("Fabricante", NomeFab(g.Fabricante)));
