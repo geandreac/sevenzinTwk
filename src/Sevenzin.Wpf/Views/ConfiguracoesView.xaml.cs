@@ -28,7 +28,7 @@ public partial class ConfiguracoesView : UserControl
         _paineis = new[] { GeralPanel, CapturasPanel, PrefPanel };
         SwInicio.IsChecked = StartupLigado();
         PastaTxt.Text = Pasta;
-        VersaoTxt.Text = $"Sevenzin {VersaoApp.ToString(3)} · reconstrução segura (WPF)";
+        VersaoTxt.Text = $"SevenzinTwks {VersaoApp.ToString(3)} · reconstrução segura (WPF)";
         var cfg = new Sevenzin.Diagnostics.ConfigCapturasStore().Carregar();
         WebhookTxt.Text = cfg.WebhookUrl ?? "";
         AtualizarStatusWebhook();

@@ -47,21 +47,21 @@ public partial class WindowsView : UserControl
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = rec });
 
         // Plano de energia "Sevenzin" (duplica o plano ativo + aplica os índices do original; fábrica intacta). Admin + reversível.
-        Raiz.Children.Add(new TextBlock { Text = "PLANO DE ENERGIA SEVENZIN", Style = SectionStyle });
+        Raiz.Children.Add(new TextBlock { Text = "PLANO DE ENERGIA SEVENZINTWKS", Style = SectionStyle });
         var en = new StackPanel();
         _energiaLbl.Foreground = Secondary;
         AtualizarEnergia();
         en.Children.Add(_energiaLbl);
         en.Children.Add(new TextBlock
         {
-            Text = "Cria um plano chamado \"Sevenzin\" duplicando o seu plano atual — os planos de fábrica do Windows (Equilibrado, Alto desempenho) permanecem intactos. Exige administrador e é totalmente reversível.",
+            Text = "Cria um plano chamado \"SevenzinTwks\" duplicando o seu plano atual — os planos de fábrica do Windows (Equilibrado, Alto desempenho) permanecem intactos. Exige administrador e é totalmente reversível.",
             Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
         });
         var botoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
-        botoes.Children.Add(Botao(Primario, "Criar e ativar \"Sevenzin\"", () => ExecutarEnergia(GestorEnergia.AplicarSevenzin,
-            "Isto vai DUPLICAR o seu plano de energia ativo, nomear a cópia como \"Sevenzin\" e ativá-la. Os planos de fábrica do Windows continuam intactos e você pode voltar a qualquer momento em \"Restaurar padrão\".\n\nContinuar?")));
+        botoes.Children.Add(Botao(Primario, "Criar e ativar \"SevenzinTwks\"", () => ExecutarEnergia(GestorEnergia.AplicarSevenzin,
+            "Isto vai DUPLICAR o seu plano de energia ativo, nomear a cópia como \"SevenzinTwks\" e ativá-la. Os planos de fábrica do Windows continuam intactos e você pode voltar a qualquer momento em \"Restaurar padrão\".\n\nContinuar?")));
         botoes.Children.Add(Botao(Secundario, "Restaurar padrão", () => ExecutarEnergia(GestorEnergia.Restaurar,
-            "Isto vai ativar o plano \"Equilibrado\" do Windows e remover os planos \"Sevenzin\" criados.\n\nContinuar?")));
+            "Isto vai ativar o plano \"Equilibrado\" do Windows e remover os planos \"SevenzinTwks\" criados.\n\nContinuar?")));
         en.Children.Add(botoes);
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = en });
 

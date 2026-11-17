@@ -10,7 +10,7 @@ public sealed record ResultadoEnergia(bool Ok, string Mensagem);
 /// (restaura o "Equilibrado" e apaga a cópia). Usa powercfg e exige administrador. Não toca em segurança.</summary>
 public static class GestorEnergia
 {
-    public const string Nome = "Sevenzin";
+    public const string Nome = "SevenzinTwks";
     const string Equilibrado = "381b4222-f694-41f0-9685-ff5bb260df2e"; // GUID fixo do plano "Equilibrado" do Windows
 
     static readonly Regex RxGuid = new(@"[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}", RegexOptions.Compiled);
@@ -94,7 +94,7 @@ public static class GestorEnergia
             {
                 alvo = ExtrairGuid(Rodar($"-duplicatescheme {ativo}"));
                 if (alvo is null) return new(false, "Falha ao duplicar o plano ativo. Reabra como administrador e tente de novo.");
-                Rodar($"-changename {alvo} \"{Nome}\" \"Plano de energia do Sevenzin, baseado no seu plano ativo. Reversível.\"");
+                Rodar($"-changename {alvo} \"{Nome}\" \"Plano de energia do SevenzinTwks, baseado no seu plano ativo. Reversível.\"");
             }
 
             // Aplica os índices do ORIGINAL à cópia (paridade total; só o plano "Sevenzin" é tocado).
@@ -122,7 +122,7 @@ public static class GestorEnergia
         {
             Rodar($"-setactive {Equilibrado}"); // precisa estar inativo para poder apagar
             foreach (var g in GuidsPorNome(Rodar("/list"), Nome)) Rodar($"-delete {g}");
-            return new(true, "Plano restaurado para 'Equilibrado' e o plano 'Sevenzin' removido.");
+            return new(true, "Plano restaurado para 'Equilibrado' e o plano 'SevenzinTwks' removido.");
         }
         catch (Exception e) { return new(false, e.Message); }
     }

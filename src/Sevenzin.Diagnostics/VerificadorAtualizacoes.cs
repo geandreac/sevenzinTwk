@@ -36,7 +36,7 @@ public static class VerificadorAtualizacoes
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, UrlReleaseMaisRecente);
-            req.Headers.UserAgent.Add(new ProductInfoHeaderValue("Sevenzin-Updater", "1.0")); // GitHub exige User-Agent
+            req.Headers.UserAgent.Add(new ProductInfoHeaderValue("SevenzinTwks-Updater", "1.0")); // GitHub exige User-Agent
             req.Headers.Accept.ParseAdd("application/vnd.github+json");
             using var resp = await Http.SendAsync(req, ct);
             if (!resp.IsSuccessStatusCode) return null; // 404 = ainda sem releases; 403/offline = silencioso

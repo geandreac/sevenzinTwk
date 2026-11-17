@@ -38,7 +38,7 @@ public partial class LoginWindow : Window
         if (ModoAdmin)
         {
             AdminBadge.Visibility = Visibility.Visible;
-            Title = "Sevenzin Admin — Acesso";
+            Title = "SevenzinTwks Admin — Acesso";
         }
 
         if (_bootstrap)

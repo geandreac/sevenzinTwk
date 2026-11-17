@@ -184,7 +184,7 @@ public sealed class ClienteSupabase
         try
         {
             var resp = await Http.SendAsync(Req(HttpMethod.Post, "/auth/v1/factors",
-                new { factor_type = "totp", friendly_name = "Sevenzin " + DateTime.UtcNow.Ticks }, token: Sessao.AccessToken));
+                new { factor_type = "totp", friendly_name = "SevenzinTwks " + DateTime.UtcNow.Ticks }, token: Sessao.AccessToken));
             if (!resp.IsSuccessStatusCode) return null;
             using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
             var root = doc.RootElement;

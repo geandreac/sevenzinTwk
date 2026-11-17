@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <AssemblyTitle>Sevenzin Diagnostics</AssemblyTitle>
+    <AssemblyTitle>SevenzinTwks Diagnostics</AssemblyTitle>
   </PropertyGroup>
 
   <ItemGroup>
