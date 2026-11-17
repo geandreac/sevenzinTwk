@@ -74,7 +74,8 @@ public partial class InstaladoresView : UserControl
         {
             Directory.CreateDirectory(Pasta);
             var destino = Path.Combine(Pasta, Path.GetFileName(new Uri(u.UrlDownload!).LocalPath));
-            var prog = new Progress<double>(p => status.Text = $"Baixando… {p:P0}");
+            var prog = new Progress<ProgressoDownload>(p => status.Text =
+                p.Percentual is { } pct ? $"Baixando… {pct:P0} · {p.BytesPorSegundo / 1024:0} KB/s" + (p.TempoRestante is { } eta ? $" · falta ~{eta.TotalSeconds:0}s" : "") : $"Baixando… {p.BytesRecebidos / 1024} KB");
             await DownloaderInstalador.BaixarAsync(u.UrlDownload!, destino, prog);
 
             _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Verificando, null, null));

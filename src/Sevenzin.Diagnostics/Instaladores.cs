@@ -43,24 +43,67 @@ public static class VerificadorDownload
     }
 }
 
-/// <summary>Baixa um instalador da URL oficial para um arquivo local, reportando progresso. Não executa nada.</summary>
+/// <summary>Progresso detalhado de um download (bytes, total, velocidade e ETA), para a UI.</summary>
+public sealed record ProgressoDownload(long BytesRecebidos, long TotalBytes, double BytesPorSegundo, TimeSpan? TempoRestante)
+{
+    public double? Percentual => TotalBytes > 0 ? (double)BytesRecebidos / TotalBytes : null;
+}
+
+/// <summary>Baixa um instalador da URL oficial para um arquivo local com STAGING: grava em
+/// <c>destino.part</c> e move atomicamente só após o fim. Em falha, o arquivo de destino nunca é
+/// corrompido (o .part fica descartável). Verifica espaço livre antes. Não executa nada.</summary>
 public static class DownloaderInstalador
 {
-    public static async Task BaixarAsync(string url, string destino, IProgress<double>? progresso = null, CancellationToken ct = default)
+    /// <summary>Verifica se há espaço livre para o download. Função pura (testável).</summary>
+    public static bool EspacoSuficiente(string pasta, long bytesNecessarios)
     {
-        using var http = new HttpClient();
-        using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
-        resp.EnsureSuccessStatusCode();
-        long total = resp.Content.Headers.ContentLength ?? -1;
-        await using var origem = await resp.Content.ReadAsStreamAsync(ct);
-        await using var arquivo = File.Create(destino);
-        var buffer = new byte[81920];
-        long lido = 0; int n;
-        while ((n = await origem.ReadAsync(buffer, ct)) > 0)
+        try
         {
-            await arquivo.WriteAsync(buffer.AsMemory(0, n), ct);
-            lido += n;
-            if (total > 0) progresso?.Report((double)lido / total);
+            var raiz = Path.GetPathRoot(Path.GetFullPath(pasta));
+            return string.IsNullOrEmpty(raiz) || new DriveInfo(raiz).AvailableFreeSpace >= bytesNecessarios;
+        }
+        catch { return true; } // não foi possível medir: deixa o download tentar e falhar com erro claro
+    }
+
+    /// <param name="handler">injetável para teste; por padrão usa HttpClient real.</param>
+    public static async Task BaixarAsync(string url, string destino, IProgress<ProgressoDownload>? progresso = null,
+        CancellationToken ct = default, HttpMessageHandler? handler = null)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destino))!);
+        var part = destino + ".part";
+        try
+        {
+            using var http = handler is null ? new HttpClient() : new HttpClient(handler);
+            using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            resp.EnsureSuccessStatusCode();
+            long total = resp.Content.Headers.ContentLength ?? -1;
+            if (total > 0 && !EspacoSuficiente(Path.GetDirectoryName(Path.GetFullPath(destino))!, total))
+                throw new IOException("Espaço em disco insuficiente para este download.");
+
+            await using var origem = await resp.Content.ReadAsStreamAsync(ct);
+            await using var arquivo = File.Create(part);
+            var buffer = new byte[81920];
+            long lido = 0; int n;
+            var crono = System.Diagnostics.Stopwatch.StartNew();
+            while ((n = await origem.ReadAsync(buffer, ct)) > 0)
+            {
+                await arquivo.WriteAsync(buffer.AsMemory(0, n), ct);
+                lido += n;
+                if (progresso is not null)
+                {
+                    double v = crono.Elapsed.TotalSeconds > 0 ? lido / crono.Elapsed.TotalSeconds : 0;
+                    TimeSpan? eta = v > 0 && total > 0 ? TimeSpan.FromSeconds((total - lido) / v) : null;
+                    progresso.Report(new ProgressoDownload(lido, total, v, eta));
+                }
+            }
+            await arquivo.FlushAsync(ct);
+            arquivo.Dispose(); // fecha antes do move atômico (Windows exige)
+            File.Move(part, destino, overwrite: true); // move atômico só no sucesso
+        }
+        catch
+        {
+            try { if (File.Exists(part) && !File.Exists(destino)) File.Delete(part); } catch { }
+            throw;
         }
     }
 }
@@ -91,9 +134,11 @@ public static class CatalogoUtilitarios
         new Utilitario("7-Zip", "Compactador de arquivos leve e aberto (Igor Pavlov).",
             "https://www.7-zip.org/", null, null, null),
         new Utilitario("Brave Browser", "Navegador com bloqueio de anúncios e rastreadores embutido.",
-            "https://brave.com/", null, null, null),
+            "https://brave.com/", "https://laptop-updates.brave.com/latest/winx64", null, null),
         new Utilitario("Google Chrome", "Navegador do Google.",
-            "https://www.google.com/chrome/", null, null, null),
+            "https://www.google.com/chrome/", "https://dl.google.com/chrome/install/latest/chrome_installer.exe", null, null),
+        new Utilitario("Visual Studio Code", "Editor de código da Microsoft.",
+            "https://code.visualstudio.com/", "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user", null, null),
         new Utilitario("Microsoft Edge", "Navegador da Microsoft.",
             "https://www.microsoft.com/edge", null, null, null),
         new Utilitario("DirectX End-User Runtime", "Bibliotecas DirectX legadas para jogos antigos (Microsoft).",
@@ -126,8 +171,6 @@ public static class CatalogoUtilitarios
             "https://open-shell.github.io/Open-Shell-Menu/", null, null, null),
         new Utilitario("StartAllBack", "Restaura a barra de tarefas/Explorer clássicos (pago).",
             "https://www.startallback.com/", null, null, null),
-        new Utilitario("Visual Studio Code", "Editor de código da Microsoft.",
-            "https://code.visualstudio.com/", null, null, null),
         new Utilitario("Visual Studio", "IDE da Microsoft.",
             "https://visualstudio.microsoft.com/", null, null, null),
         new Utilitario("DDU (Display Driver Uninstaller)", "Remove drivers de vídeo de forma limpa (Wagnardsoft).",

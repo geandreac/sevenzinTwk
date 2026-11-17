@@ -22,13 +22,14 @@ public partial class CapturasView : UserControl
     readonly ConfigCapturasStore _cfg = new();
     readonly PilhaAnotacoes _pilha = new();
     Bitmap? _base;                    // captura original em resolução cheia (nunca alterada)
-    BitmapImage? _previewAtual;       // prévia composta para a UI
+    BitmapSource? _previewAtual;       // prévia composta para a UI
     string? _ultimoCaminho;           // último PNG salvo
     TipoAnotacao _ferramenta = TipoAnotacao.Lapis;
     System.Drawing.Color _cor = System.Drawing.Color.FromArgb(255, 255, 77, 79); // vermelho do tema
     List<PointD>? _traco;
     PointD _pontoInicial;
     bool _desenhando;
+    readonly System.Diagnostics.Stopwatch _relogioDesenho = System.Diagnostics.Stopwatch.StartNew();
 
     static System.Windows.Media.Brush Muted => (System.Windows.Media.Brush)Application.Current.Resources["TextMutedBrush"];
 
@@ -131,11 +132,37 @@ public partial class CapturasView : UserControl
     void AtualizarPreview()
     {
         if (_base is null) return;
-        var composto = EditorCaptura.Renderizar(_base, _pilha.Itens);
-        _previewAtual = ParaImagem(composto);
-        composto.Dispose();
+        // Preview em resolução reduzida (máx. 1600 px): o redesenho por ponto fica leve;
+        // o arquivo salvo continua em resolução cheia.
+        using var composto = EditorCaptura.Renderizar(_base, _pilha.Itens);
+        using var reduzido = Escalar(composto, 1600);
+        _previewAtual = ParaImagemRapida(reduzido);
         Preview.Source = _previewAtual;
     }
+
+    /// <summary>Reduz proporcionalmente até a maior dimensão caber em <paramref name="max"/>.</summary>
+    static Bitmap Escalar(Bitmap origem, int max)
+    {
+        if (origem.Width <= max && origem.Height <= max) return new Bitmap(origem);
+        double fator = (double)max / Math.Max(origem.Width, origem.Height);
+        return new Bitmap(origem, (int)(origem.Width * fator), (int)(origem.Height * fator));
+    }
+
+    /// <summary>Converte para exibição sem re-encodar PNG (HBitmap direto) — bem mais rápido por frame.</summary>
+    static BitmapSource ParaImagemRapida(Bitmap bmp)
+    {
+        var hbmp = bmp.GetHbitmap();
+        try
+        {
+            var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(hbmp, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            src.Freeze();
+            return src;
+        }
+        finally { DeleteObject(hbmp); }
+    }
+
+    [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+    static extern bool DeleteObject(IntPtr objeto);
 
     static BitmapImage ParaImagem(Bitmap bmp)
     {
@@ -204,7 +231,12 @@ public partial class CapturasView : UserControl
         if (_ferramenta == TipoAnotacao.Lapis)
         {
             _traco.Add(ParaImagem(e.GetPosition(Preview)));
-            AtualizarPreview();
+            // Throttle: redesenha no máximo ~30 fps enquanto arrasta (o resto é atualizado no soltar).
+            if (_relogioDesenho.ElapsedMilliseconds > 33)
+            {
+                AtualizarPreview();
+                _relogioDesenho.Restart();
+            }
         }
     }
 

@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Http;
 using Sevenzin.Diagnostics;
 using Xunit;
 
@@ -89,5 +91,101 @@ public class InstaladoresTests
             if (u.UrlDownload is { } d) Assert.StartsWith("https://", d);
             Assert.False(string.IsNullOrEmpty(u.Nome));
         });
+    }
+
+    [Fact]
+    public void Catalogo_tem_downloads_estaveis_apenas_onde_a_url_oficial_e_documentada()
+    {
+        // URLs "latest" documentadas pelos fornecedores; os demais itens ficam sem download direto.
+        var chrome = CatalogoUtilitarios.Todos.Single(u => u.Nome == "Google Chrome");
+        Assert.Equal("https://dl.google.com/chrome/install/latest/chrome_installer.exe", chrome.UrlDownload);
+        var brave = CatalogoUtilitarios.Todos.Single(u => u.Nome == "Brave Browser");
+        Assert.Equal("https://laptop-updates.brave.com/latest/winx64", brave.UrlDownload);
+        var vscode = CatalogoUtilitarios.Todos.Single(u => u.Nome == "Visual Studio Code");
+        Assert.StartsWith("https://code.visualstudio.com/sha/download?", vscode.UrlDownload);
+        // Nomes únicos (sem duplicatas no catálogo).
+        var nomes = CatalogoUtilitarios.Todos.Select(u => u.Nome).ToList();
+        Assert.Equal(nomes.Count, nomes.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+
+    sealed class FakeDownloadHandler : HttpMessageHandler
+    {
+        readonly byte[] _conteudo;
+        public FakeDownloadHandler(byte[] conteudo) => _conteudo = conteudo;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            var resp = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(_conteudo),
+            };
+            resp.Content.Headers.ContentLength = _conteudo.Length;
+            return Task.FromResult(resp);
+        }
+    }
+
+    [Fact]
+    public async Task BaixarAsync_usa_staging_e_move_atomicamente_no_sucesso()
+    {
+        var pasta = Path.Combine(Path.GetTempPath(), "sevenzin-dl-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(pasta);
+        var destino = Path.Combine(pasta, "arquivo.bin");
+        try
+        {
+            var bytes = new byte[200_000];
+            new Random(7).NextBytes(bytes);
+            await DownloaderInstalador.BaixarAsync("https://exemplo.com/x", destino, handler: new FakeDownloadHandler(bytes));
+
+            Assert.True(File.Exists(destino));
+            Assert.False(File.Exists(destino + ".part")); // staging removido após o move atômico
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(destino));
+        }
+        finally { try { Directory.Delete(pasta, recursive: true); } catch { } }
+    }
+
+    [Fact]
+    public async Task BaixarAsync_em_falha_nao_corrompe_o_destino_existente()
+    {
+        var pasta = Path.Combine(Path.GetTempPath(), "sevenzin-dl-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(pasta);
+        var destino = Path.Combine(pasta, "arquivo.bin");
+        await File.WriteAllTextAsync(destino, "original intacto");
+        try
+        {
+            var handler = new FakeDownloadHandler(new byte[] { 1, 2, 3 })
+            {
+                // falha no meio: um handler que lança ao ler o corpo
+            };
+            await Assert.ThrowsAnyAsync<Exception>(() =>
+                DownloaderInstalador.BaixarAsync("https://exemplo.com/x", destino, handler: new FailingDownloadHandler()));
+
+            Assert.Equal("original intacto", await File.ReadAllTextAsync(destino)); // destino preservado
+        }
+        finally { try { Directory.Delete(pasta, recursive: true); } catch { } }
+    }
+
+    sealed class FailingDownloadHandler : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            var resp = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new FailingContent(),
+            };
+            resp.Content.Headers.ContentLength = 1000;
+            return await Task.FromResult(resp);
+        }
+
+        sealed class FailingContent : HttpContent
+        {
+            protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context) => throw new IOException("conexão caiu");
+            protected override bool TryComputeLength(out long length) { length = 1000; return true; }
+        }
+    }
+
+    [Fact]
+    public void EspacoSuficiente_respeita_o_drive_informado()
+    {
+        Assert.True(DownloaderInstalador.EspacoSuficiente(Path.GetTempPath(), 1024));          // pouco espaço: cabe
+        Assert.False(DownloaderInstalador.EspacoSuficiente(Path.GetTempPath(), long.MaxValue)); // impossível: não cabe
     }
 }
