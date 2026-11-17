@@ -54,7 +54,34 @@ public static class GestorEnergia
     public static string? GuidAtivo() => ExtrairGuid(Rodar("/getactivescheme"));
     public static string? NomeAtivo() => ExtrairNome(Rodar("/getactivescheme"));
 
-    /// <summary>Duplica o plano ativo, renomeia a cópia para "Sevenzin" e a ativa. Se já existe um "Sevenzin", só ativa.</summary>
+    /// <summary>true = hibernação habilitada (HibernateEnabled=1); null = chave ausente/indeterminado. Só leitura.</summary>
+    public static bool? HibernacaoAtiva()
+    {
+        try
+        {
+            using var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Power");
+            return k?.GetValue("HibernateEnabled") is int v ? v == 1 : (bool?)null;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Liga/desliga a hibernação via powercfg e relê o estado real. Exige administrador.</summary>
+    public static ResultadoEnergia DefinirHibernacao(bool ativa)
+    {
+        try
+        {
+            Rodar(ativa ? "/hibernate on" : "/hibernate off");
+            bool? real = HibernacaoAtiva();
+            bool ok = real == ativa;
+            return ok
+                ? new(true, ativa ? "Hibernação reativada." : "Hibernação desativada (valor literal do original).")
+                : new(false, "O comando foi enviado, mas o estado lido não confirmou a mudança — execute como administrador.");
+        }
+        catch (Exception e) { return new(false, e.Message); }
+    }
+
+    /// <summary>Duplica o plano ativo, renomeia a cópia para "Sevenzin", aplica os 134 índices de energia
+    /// LITERAIS do original (geandre.exe) à cópia e a ativa. Reversível: restaurar volta ao "Equilibrado".</summary>
     public static ResultadoEnergia AplicarSevenzin()
     {
         try
@@ -69,10 +96,21 @@ public static class GestorEnergia
                 if (alvo is null) return new(false, "Falha ao duplicar o plano ativo. Reabra como administrador e tente de novo.");
                 Rodar($"-changename {alvo} \"{Nome}\" \"Plano de energia do Sevenzin, baseado no seu plano ativo. Reversível.\"");
             }
+
+            // Aplica os índices do ORIGINAL à cópia (paridade total; só o plano "Sevenzin" é tocado).
+            int falhas = 0;
+            foreach (var (sub, conf, valor) in IndicesEnergiaOriginal.Todos)
+            {
+                var saida = Rodar($"-setacvalueindex {alvo} {sub} {conf} {valor}");
+                if (saida.Trim().Length > 0) falhas++;
+            }
+
             Rodar($"-setactive {alvo}");
-            return GuidAtivo() == alvo
-                ? new(true, $"Plano \"{Nome}\" criado e ativado. Os planos originais do Windows continuam intactos.")
-                : new(false, "O plano foi criado, mas não ficou ativo. É preciso executar como administrador.");
+            bool ativoOk = GuidAtivo() == alvo;
+            if (!ativoOk) return new(false, "O plano foi criado, mas não ficou ativo. É preciso executar como administrador.");
+            return falhas == 0
+                ? new(true, $"Plano \"{Nome}\" criado e ativado com os {IndicesEnergiaOriginal.Todos.Count} índices do original. Os planos de fábrica continuam intactos.")
+                : new(true, $"Plano \"{Nome}\" ativado, mas {falhas} de {IndicesEnergiaOriginal.Todos.Count} índices falharam (verifique administrador).");
         }
         catch (Exception e) { return new(false, e.Message); }
     }

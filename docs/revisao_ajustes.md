@@ -297,6 +297,29 @@ próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem 
 **Pendências:** aplicação real em máquina controlada com `reg query` antes/depois; boot da ISO/pendrive;
 2FA/Supabase reais; renders visuais humanos; medição do F6; hibernação (HibernateEnabled=0) como próxima ação.
 
+## §15. Nova versão do geandre.exe + energia/hibernação + admin único (17/11/2026)
+
+- **Triagem da "última versão"** (`Z:\Computador\Downloads\honest\geandre.exe`): SHA-256
+  `D5FDDC8D280FB934BF1D63777BADA560DF26283EEE4A03518B376230AE9A0491` (57.389.568 bytes) — **diferente** do
+  binário analisado antes (`70DC5163…AFCB72`, 68 MB). PE32+ x64, CLR v4.0.30319, Eazfuscator (stream `#-`),
+  mesmas seções (.text 57 MB / .rsrc 125 KB). `[CONFIRMADO]` (triagem estática `C:\re\geandre_v4\triagem.py`):
+  **mesmo conjunto de telas e funcionalidades** — mesmos ícones `Honest.UI.Icons.*`, mesmos recursos/fontes,
+  mesmos métodos `KeyAuth_*` (acréscimos menores: `ChangeUsername`, `Upgrade`, `Configure`, `GetAppDataJson`),
+  mesma tabela de GPU (RGB = sRGB de imagem; MSI = nomes de placa). **Nenhuma tela/funcionalidade nova a
+  implementar** — o inventário completo segue em `docs/engenharia-reversa/03_telas.md` + `04_funcionalidades.md`.
+- **Plano de energia (paridade real):** os 134 `powercfg /setacvalueindex` do original foram extraídos para
+  `IndicesEnergiaOriginal.cs` (comando literal a comando) e `AplicarSevenzin` agora os aplica à cópia duplicada
+  (paridade total; fábrica intacta). Teste valida contagem (134) + GUIDs + valores.
+- **Hibernação:** `GestorEnergia.HibernacaoAtiva` (leitura) + `DefinirHibernacao` (powercfg on/off com releitura)
+  + botões na tela Windows com confirmação.
+- **Administrador único (Geandre):** `AdminUnico.cs` (identidade provisionada via `SEVENZIN_ADMIN_EMAIL/SENHA`,
+  gate no DOMÍNIO em `ServicoContas.Criar`, convites de uso único com hash SHA-256, `RegistrarComConvite` sempre
+  cria Usuario, `GarantirAdminUnico` rebaixa impostores na inicialização); `ServicoSessao.PodeAcessarAdmin` e
+  `Autorizacao.PodeAcessarAdmin` exigem o e-mail provisionado; login com "Criar conta" (nome + convite) e
+  bootstrap restrito à identidade; "Gerar código de convite" no Perfil (só admin). 7 testes novos.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **210/210**.
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`

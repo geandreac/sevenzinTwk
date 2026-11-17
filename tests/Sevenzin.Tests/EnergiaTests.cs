@@ -31,4 +31,18 @@ public class EnergiaTests
         Assert.Single(achados);
         Assert.Equal("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", achados[0]);
     }
+
+    [Fact]
+    public void Indices_de_energia_do_original_estao_completos_e_com_valores_literais()
+    {
+        Assert.Equal(134, IndicesEnergiaOriginal.Todos.Count); // todos os setacvalueindex do original
+        Assert.Contains(("0012ee47-9041-4b5d-9b77-535fba8b1442", "51dea550-bb38-4bc4-991b-eacf37be5ec8", "100"), IndicesEnergiaOriginal.Todos);
+        Assert.Contains(("0012ee47-9041-4b5d-9b77-535fba8b1442", "6738e2c4-e8a5-4a42-b16a-e040e769756e", "0"), IndicesEnergiaOriginal.Todos);
+        Assert.All(IndicesEnergiaOriginal.Todos, t =>
+        {
+            Assert.Matches(@"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", t.Subgrupo);
+            Assert.Matches(@"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", t.Configuracao);
+            Assert.False(string.IsNullOrWhiteSpace(t.Valor));
+        });
+    }
 }

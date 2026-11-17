@@ -46,7 +46,7 @@ public partial class WindowsView : UserControl
         rec.Children.Add(new TextBlock { Text = "Cada uma é aplicada em Ajustes, com prévia, uma mudança por vez e opção de desfazer; tudo fica na auditoria do Admin.", Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0) });
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = rec });
 
-        // Plano de energia "Sevenzin" (duplica o plano ativo; os planos de fábrica continuam intactos). Admin + reversível.
+        // Plano de energia "Sevenzin" (duplica o plano ativo + aplica os índices do original; fábrica intacta). Admin + reversível.
         Raiz.Children.Add(new TextBlock { Text = "PLANO DE ENERGIA SEVENZIN", Style = SectionStyle });
         var en = new StackPanel();
         _energiaLbl.Foreground = Secondary;
@@ -64,6 +64,23 @@ public partial class WindowsView : UserControl
             "Isto vai ativar o plano \"Equilibrado\" do Windows e remover os planos \"Sevenzin\" criados.\n\nContinuar?")));
         en.Children.Add(botoes);
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = en });
+
+        // Hibernação (valor literal do original: HibernateEnabled=0).
+        Raiz.Children.Add(new TextBlock { Text = "HIBERNAÇÃO", Style = SectionStyle });
+        var hib = new StackPanel();
+        var hibStatus = new TextBlock { Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap };
+        AtualizarHibernacao(hibStatus);
+        hib.Children.Add(hibStatus);
+        hib.Children.Add(new TextBlock
+        {
+            Text = "O original desliga a hibernação (HibernateEnabled=0). Desligar libera o hiberfil.sys e evita gravar a RAM em disco; exige administrador e é reversível.",
+            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
+        });
+        var botoesHib = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
+        botoesHib.Children.Add(Botao(Primario, "Desativar hibernação", () => ExecutarHibernacao(false, hibStatus)));
+        botoesHib.Children.Add(Botao(Secundario, "Reativar hibernação", () => ExecutarHibernacao(true, hibStatus)));
+        hib.Children.Add(botoesHib);
+        Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = hib });
 
         // Desinstalação assistida (Edge/OneDrive): instaladores OFICIAIS, confirmação explícita.
         Raiz.Children.Add(new TextBlock { Text = "DESINSTALAÇÃO ASSISTIDA (EDGE / ONEDRIVE)", Style = SectionStyle });
@@ -199,5 +216,26 @@ public partial class WindowsView : UserControl
         AtualizarEnergia();
         Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Plano de energia aplicado" : "Falha no plano de energia", r.Mensagem);
         MessageBox.Show(r.Mensagem, "Plano de energia", MessageBoxButton.OK, r.Ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
+    }
+
+    void AtualizarHibernacao(TextBlock status) =>
+        status.Text = $"Hibernação: {(GestorEnergia.HibernacaoAtiva() is { } h ? (h ? "ativada" : "desativada") : "indeterminada")}.";
+
+    void ExecutarHibernacao(bool ativa, TextBlock status)
+    {
+        if (!Elevacao.EhAdmin())
+        {
+            if (MessageBox.Show("Alterar a hibernação exige administrador.\n\nReabrir o Sevenzin como administrador?",
+                    "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                Elevacao.ReabrirComoAdmin();
+            return;
+        }
+        if (MessageBox.Show($"{(ativa ? "Reativar" : "Desativar")} a hibernação?\n\n" +
+                "Desativar libera o arquivo hiberfil.sys e desabilita a inicialização rápida. É reversível.",
+                "Hibernação", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK) return;
+        var r = GestorEnergia.DefinirHibernacao(ativa);
+        AtualizarHibernacao(status);
+        Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Hibernação alterada" : "Falha na hibernação", r.Mensagem);
+        MessageBox.Show(r.Mensagem, "Hibernação", MessageBoxButton.OK, r.Ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
     }
 }
