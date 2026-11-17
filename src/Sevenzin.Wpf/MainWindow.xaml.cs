@@ -27,7 +27,6 @@ public partial class MainWindow : Window
         ("instaladores", "", "Instaladores"),
         ("protecao", "", "Proteção"),
         ("bios", "", "BIOS"),
-        ("midia", "", "Mídia"),
         // Ferramentas (uso pontual)
         ("capturas", "", "Capturas"),
         ("guias", "", "Guias"),
@@ -106,7 +105,6 @@ public partial class MainWindow : Window
     {
         ["inicio"] = "ic_inicio", ["ajustes"] = "ic_ajustes", ["gpu"] = "ic_gpu", ["instaladores"] = "ic_instaladores",
         ["jogos"] = "ic_jogos", ["bios"] = "ic_bios", ["capturas"] = "ic_capturas", ["windows"] = "ic_windows", ["config"] = "ic_config",
-        ["midia"] = "ic_midia",
         ["inventario"] = "ic_inventario", ["telemetria"] = "ic_telemetria", ["benchmark"] = "ic_benchmark", ["admin"] = "ic_admin",
         ["protecao"] = "ic_protecao", ["guias"] = "ic_guias", ["notificacoes"] = "ic_notificacoes", ["perfil"] = "ic_perfil",
     };
@@ -171,7 +169,6 @@ public partial class MainWindow : Window
             "bios" => new BiosView(),
             "capturas" => new CapturasView(),
             "windows" => new WindowsView(),
-            "midia" => new MediaView(),
             "protecao" => new ProtecaoView(),
             "config" => new ConfiguracoesView(),
             "perfil" => new PerfilView(),

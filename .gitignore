@@ -9,3 +9,6 @@ relatorio-pc.json
 
 # Portáteis publicados (self-contained, grandes) — não versionar
 /dist/
+
+# frames temporarios do video (nao versionar)
+/.frames/

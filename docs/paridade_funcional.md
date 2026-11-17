@@ -63,7 +63,7 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | Jogos (perfil temporário + **detecção Steam/Epic só leitura**) | `JogosView` | **b** | F8; `DescobridorJogosTests` (parsers puros) |
 | Capturas (4 modos + editor + envio explícito) | `CapturasView` | **b** | F2 |
 | BIOS (informativa: Secure Boot/TPM) | `BiosView` | **a/b** | leitura real |
-| **Windows / Media** | `WindowsView` (estado + energia + análise de ISO) + **`MediaView`** (construir ISO personalizada UEFI + gravar pendrive SafeUsb/FAT32/split) | **b** | F7.1/F7.2; `ConstrutorMediaTests`, `WindowsMediaTests`; hardware real = manual |
+| **Windows / Media** | `WindowsView` (estado + plano de energia com os 134 índices literais + hibernação) — **parte de ISO/USB REMOVIDA por decisão do dono (17/11/2026)** | **b** | `EnergiaTests`; construção/análise de ISO excluída do escopo |
 | **Assistente** (endpoint HTTPS do usuário, envio explícito, contexto com consentimento) | `AssistenteView` | **b** | F6; `AssistenteTests`; HumanMode = lacuna (comportamento de servidor) |
 | Guias (6) | `GuiasView` | **b** | F4 |
 | Notificações/Tarefas (histórico local + fila) | `NotificacoesView` | **b** | F4 |
@@ -81,7 +81,7 @@ Implementados na F1 com aviso ALTO/CRÍTICO, confirmação explícita e desfazer
 | 04 §2 / 05 §1 | Perfil de hardware + WMI + PCI IDs | **a/b** | `Coletores`, `Inventario`, `TopologiaCpu` |
 | 04 §3 | 12 grupos de tweaks | **a/b** | `CatalogoTweaks` (28, inclui Segurança/Mouse/Localização) |
 | 04 §4-5 | Debloat Appx + remover Edge/OneDrive | **e** | não implementado (alto impacto sem opt-in) — registrado |
-| 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **b** | **análise (F7.1) + construção (F7.2) + serviço de imagem (F12)**: ISO personalizada com remoção de apps provisionados/features e injeção de drivers INF assinados (DISM /Commit); pendrive SafeUsb/FAT32/split. Ficam fora: preferências offline (OfflineHive) e boot BIOS/Legacy — registrados |
+| 04 §6 / 11 | Injeção de drivers, ISO/USB, OfflineHive | **Ausente (removido por decisão)** | a parte de ISO/USB/debloat foi **removida do Sevenzin em 17/11/2026** — fora do escopo (instalação de SO; o original usa binários GPL) |
 | 04 §7 / 05 §6-8 | Catálogo de instaladores + winget allowlist | **b** | 36 utilitários oficiais + allowlist literal de 5 IDs |
 | 04 §8 / 05 §4 | CPU Sets, afinidade, prioridade, boost, working set, `timeBeginPeriod` | **b** | `Jogos.cs`: afinidade+prioridade+boost+CPU Sets (P-cores, `Get/SetProcessDefaultCpuSets`)+WS+timer opt-in por jogo, tudo revertido ao fechar |
 | 04 §9 | Captura + anotação | **b** | 4 modos + editor + envio explícito (webhook do usuário) |

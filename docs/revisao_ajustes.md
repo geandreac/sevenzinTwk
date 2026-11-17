@@ -320,6 +320,22 @@ próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem 
 
 **Testes:** `dotnet build` 0/0 · `dotnet test` **210/210**.
 
+## §16. Remoção da ISO + verificação de estado real (17/11/2026)
+
+- **ISO/Windows Media removida por decisão do dono**: `WindowsMedia.cs`, `CriadorIso.cs`, `GravadorUsb.cs`,
+  `ConstrutorMedia.cs`, `MediaView.xaml/.cs`, testes `WindowsMediaTests`/`ConstrutorMediaTests`, item "Mídia"
+  da sidebar (ícone + rota) e o cartão "Análise de imagem do Windows". Permanecem: plano de energia com os
+  134 índices literais, hibernação e desinstalação assistida.
+- **Verificação de estado real (só leitura, §11.3)**: `powercfg /getactivescheme` revelou o plano ativo
+  renomeado para o GUID `00000000-…` (`@honestzin`) — efeito do `geandre.exe` (execução prévia). Tweaks de
+  registro (EnableLUA, HwSchMode, SystemResponsiveness, HibernateEnabled) **no padrão de fábrica** — nunca
+  aplicados pelo Sevenzin. Registrado em `validacao_paridade.md` §9.
+- **Métricas/valores de otimização**: todos os valores do catálogo (76 tweaks + 134 índices de energia +
+  rede por interface + CPU Sets) são os **literais do geandre.exe**, extraídos de
+  `docs/otimizacoes-originais/*` — nada é inventado.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **201/201** (9 testes de ISO removidos).
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`

@@ -116,11 +116,29 @@ executada, pode rebaixar itens para `Divergente`.
 
 1. **Win32PrioritySeparation** — original calculava o valor por CPU (dinâmico); Sevenzin usa 38 fixo. Impacto: médio.
 2. **AllowTelemetry** — original grava 0; Sevenzin grava 1 (Home/Pro clampam em 1). Impacto: baixo (funcionalmente igual em Home/Pro).
-3. **Plano de energia** — sem os ~100 índices `powercfg` sem proveniência individual. Impacto: médio.
-4. **KMS Activator** — excluído por decisão (risco de malware/licença). Impacto: alto (é a diferença visível no catálogo).
-5. **Hibernação (HibernateEnabled=0)** — pendente (ação na tela Windows). Impacto: baixo.
+3. **KMS Activator** — excluído por decisão (risco de malware/licença). Impacto: alto (é a diferença visível no catálogo).
+4. **ISO/USB/Windows Media** — **removido por decisão do dono (17/11/2026)**: `MediaView`, `ConstrutorIso`, `GravadorUsb`,
+   `ExecutorDism`, `UsbMedia`, `CopiadorVerificado`, `AnalisadorImagem` e o cartão de análise da `WindowsView`.
+   O plano de energia com os 134 índices literais e a hibernação permanecem.
 
-## 9. Pendências de validação manual
+## 9. Verificação de estado real (somente leitura, 17/11/2026)
+
+Executada em MODO LEITURA (nenhuma otimização aplicada). Método §11.3 do plano de paridade.
+
+| consulta | resultado lido | interpretação |
+|---|---|---|
+| `powercfg /getactivescheme` | GUID `00000000-0000-0000-0000-000000000000` (`@honestzin`) | plano ativo já renomeado para o GUID todo-zero — comportamento do **geandre.exe**; indica execução prévia do original nesta máquina |
+| `Get-Service lfsvc` | Running / Manual | padrão de fábrica (não desativado) |
+| `reg query …\Control\Power /v HibernateEnabled` | (ausente) | hibernação no padrão |
+| `reg query …\Policies\System /v EnableLUA` | (ausente) | UAC no padrão (não alterado) |
+| `reg query …\GraphicsDrivers /v HwSchMode` | (ausente) | HAGS no padrão |
+| `reg query …\SystemProfile /v SystemResponsiveness` | (ausente) | MMCSS no padrão |
+
+Conclusão `[CONFIRMADO]`: os tweaks do Sevenzin **não foram aplicados** nesta máquina (estado de fábrica), exceto o plano
+de energia, que já reflete o efeito do original (execução prévia). A validação pós-aplicação continua pendente de
+execução em máquina controlada com confirmação explícita.
+
+## 10. Pendências de validação manual
 
 - Aplicar/desfazer 1 item de cada grupo em máquina controlada e registrar `reg query` antes/depois.
 - Bootar a ISO construída e o pendrive gravado (UEFI) em VM/hardware real.
