@@ -271,6 +271,32 @@ serviços/tarefas do original (#US cifrado); lista fixa de apps do debloat (o Se
 **Testes:** `dotnet build` 0/0 · `dotnet test` **177/177** (parser de CPU Sets, filtro P/E, aplicar/reverter no
 próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem de adaptadores sem exceção).
 
+## §14. Ciclo de paridade (17/11/2026)
+
+- **F0/F1:** `docs/inventario_inicial.md` (mapa do repo, navegação, serviços, persistência, baseline 198→202
+  testes, lacunas e conflitos de instrução registrados).
+- **Catálogo completo:** grupo UAC completo (8 chaves literais de `Policies\System`), AMD power gating (9
+  chaves literais), visual/tema escuro (6), mouse hover, LMHOSTS, DontSendAdditionalData, Bing, timer global
+  de 1 ms; correção de `mitigacoes-off` para o literal **33554435** (0x2000003). Total: 76 tweaks.
+- **Home:** atalhos "Ajustes de driver"/"Perfil por jogo" agora **clicáveis** (navegam para GPU/Jogos) +
+  4 cards "Jogos em destaque" (EA FC, Fortnite, Rust, Warzone — confirmados na RE).
+- **Sidebar:** item "Assistente" removido (item + rota + mapa de ícone); `AssistenteView`/engine mantidos
+  (Configurações ainda referencia o endpoint — registrado). Nenhuma rota morta restante.
+- **Toasts (F9):** `ToastHost` overlay superior direito; 3 s; fade/slide 150/220 ms (reduzir movimento =
+  sumiço simples); máx. 4 visíveis + fila; dedup < 1 s; pause no hover/foco; Esc dispensa; botão "Desfazer"
+  nas ações reversíveis; aria-live polite/assertive. Lógica pura em `FilaToasts` (5 testes).
+- **Downloads (F5):** staging `.part` + move atômico, checagem de espaço, progresso com velocidade/ETA;
+  URLs oficiais "latest" para Chrome, VS Code e Brave; falha preserva arquivo existente (testes).
+- **Capturas (F6):** preview reduzida (máx. 1600 px) + conversão HBitmap direta (sem re-encode PNG) +
+  throttle de ~30 fps no lápis; salvamento continua em resolução cheia. Medição antes/depois: pendente manual.
+- **Paridade (F7):** `docs/validacao_paridade.md` com matriz completa e percentual calculado
+  (75,6% sobre itens verificáveis, excluindo 8 não verificáveis).
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **202/202**.
+
+**Pendências:** aplicação real em máquina controlada com `reg query` antes/depois; boot da ISO/pendrive;
+2FA/Supabase reais; renders visuais humanos; medição do F6; hibernação (HibernateEnabled=0) como próxima ação.
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`
