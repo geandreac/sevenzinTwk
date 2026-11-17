@@ -28,6 +28,8 @@ public partial class InicioView : UserControl
     readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(1200) };
     readonly MedidorCpuUso _cpuUso = new(); // GetSystemTimes (05 §3): delta puro, sem warm-up de WMI
     CardMonitor _cpu = null!, _gpu = null!, _mem = null!, _lat = null!;
+    TextBlock _subtitulo = null!, _chipTxt = null!;
+    Border _chip = null!;
     double _totalGB;
 
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
@@ -54,7 +56,12 @@ public partial class InicioView : UserControl
     {
         Raiz.Children.Add(new TextBlock { Text = "OTIMIZAÇÃO", Style = EyebrowStyle });
         Raiz.Children.Add(new TextBlock { Text = "Início", FontFamily = Heading, FontSize = 24, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 2) });
-        Raiz.Children.Add(new TextBlock { Text = "Windows · Monitorando em tempo real", Foreground = Secondary, FontSize = 13, Margin = new Thickness(0, 0, 0, 22) });
+        _subtitulo = new TextBlock { Text = "Windows · Monitorando em tempo real", Foreground = Secondary, FontSize = 13, Margin = new Thickness(0, 0, 0, 10) };
+        Raiz.Children.Add(_subtitulo);
+        // Selo de estado (como no original: "Otimizado · N de N ajustes ativos"). Preenchido com contagem REAL em IniciarAsync.
+        _chipTxt = new TextBlock { Text = "Verificando ajustes…", Foreground = Muted, FontSize = 12, FontWeight = FontWeights.SemiBold };
+        _chip = new Border { Child = _chipTxt, CornerRadius = new CornerRadius(8), Padding = new Thickness(10, 4, 10, 4), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 22), Background = (Brush)Application.Current.Resources["Surface2Brush"] };
+        Raiz.Children.Add(_chip);
 
         Raiz.Children.Add(new TextBlock { Text = "MONITORES AO VIVO", Style = SectionStyle });
         var grade = new UniformGrid { Rows = 1, Columns = 4, Margin = new Thickness(0, 0, 0, 24) };
@@ -116,6 +123,14 @@ public partial class InicioView : UserControl
         _lat.Sub.Text = "Google DNS";
         _totalGB = ExtrairGB(total);
         if (_totalGB > 0) _mem.Max = _totalGB;
+
+        // Subtítulo com a edição real do Windows (ex.: "Windows 11 Pro 25H2") e selo "Otimizado · N de N".
+        _subtitulo.Text = (Val("Windows") != "—" ? Val("Windows") : "Windows") + " · Monitorando em tempo real";
+        var (ativos, totalAj) = await System.Threading.Tasks.Task.Run(ContarAjustes);
+        bool otimizado = totalAj > 0 && ativos == totalAj;
+        _chipTxt.Text = (otimizado ? "Otimizado · " : "") + $"{ativos} de {totalAj} ajustes ativos";
+        _chipTxt.Foreground = otimizado ? Success : Secondary;
+        _chip.Background = otimizado ? SuccessBg : (Brush)Application.Current.Resources["Surface2Brush"];
 
         // SISTEMA (faixa compacta com divisores verticais — Figma 3:1039)
         Raiz.Children.Add(new TextBlock { Text = "SISTEMA", Style = SectionStyle });
@@ -296,6 +311,15 @@ public partial class InicioView : UserControl
         };
         System.Windows.Automation.AutomationProperties.SetName(card, nome);
         return card;
+    }
+
+    // Quantos ajustes BÁSICOS (sem os de risco alto, que exigem confirmação) estão aplicados agora. Só leitura do registro.
+    static (int ativos, int total) ContarAjustes()
+    {
+        var motor = new MotorTweaks(new RegistroWindows());
+        var basicos = CatalogoTweaks.Todos.Where(t => !t.ExigeConfirmacao).ToList();
+        int ativos = basicos.Count(t => { try { return motor.Aplicado(t); } catch { return false; } });
+        return (ativos, basicos.Count);
     }
 
     static double ExtrairGB(string texto)
