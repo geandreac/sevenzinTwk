@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using Sevenzin.Diagnostics;
 
@@ -14,9 +15,14 @@ public partial class AjustesView : UserControl
     readonly MotorTweaks _motor = new(new RegistroWindows());
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Secondary => (Brush)Application.Current.Resources["TextSecondaryBrush"];
+    static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
+    static Brush SuccessBg => new SolidColorBrush((Color)Application.Current.Resources["SuccessBg"]);
+    static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
     static Style Switch => (Style)Application.Current.Resources["ToggleSwitch"];
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style SectionStyle => (Style)Application.Current.Resources["SectionLabel"];
+
+    sealed record LinhaRef(Tweak T, Border Chip); // liga o toggle ao seu chip "Aplicado" para atualizar em lugar
 
     public AjustesView()
     {
@@ -161,11 +167,30 @@ public partial class AjustesView : UserControl
         var desc = t.ExigeAdmin ? t.Descricao + "  ·  requer administrador" : t.Descricao;
         if (t.ExigeConfirmacao) desc += $"  ·  risco: {t.Risco}";
         var g = LinhaBase(t.Nome, desc, out _);
-        var sw = new ToggleButton { Style = Switch, VerticalAlignment = VerticalAlignment.Center, Tag = t, IsChecked = _motor.Aplicado(t) };
+
+        var sw = new ToggleButton { Style = Switch, VerticalAlignment = VerticalAlignment.Center, IsChecked = _motor.Aplicado(t) };
+        var chip = ChipAplicado(sw, t);
+        sw.Tag = new LinhaRef(t, chip);
         sw.Click += Toggle_Click;
-        Grid.SetColumn(sw, 1);
-        g.Children.Add(sw);
+
+        var direita = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        direita.Children.Add(chip);
+        direita.Children.Add(sw);
+        Grid.SetColumn(direita, 1);
+        g.Children.Add(direita);
         return g;
+    }
+
+    // Chip "● Aplicado · Desfazer" (adaptado do original): visível só quando o item está aplicado; "Desfazer"
+    // chama o mesmo fluxo de reversão do toggle. O toggle continua sendo o controle principal.
+    Border ChipAplicado(ToggleButton sw, Tweak t)
+    {
+        var sp = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        sp.Children.Add(new TextBlock { Text = "● Aplicado", Foreground = Success, FontSize = 11, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
+        var des = new TextBlock { Text = "Desfazer", Foreground = Secondary, FontSize = 11, Margin = new Thickness(8, 0, 0, 0), Cursor = Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, TextDecorations = TextDecorations.Underline };
+        des.MouseLeftButtonUp += (_, _) => { sw.IsChecked = false; Toggle_Click(sw, new RoutedEventArgs()); };
+        sp.Children.Add(des);
+        return new Border { Background = SuccessBg, CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Child = sp, Visibility = _motor.Aplicado(t) ? Visibility.Visible : Visibility.Collapsed };
     }
 
     static Grid LinhaBase(string titulo, string descricao, out StackPanel left)
@@ -184,7 +209,8 @@ public partial class AjustesView : UserControl
     void Toggle_Click(object sender, RoutedEventArgs e)
     {
         var sw = (ToggleButton)sender;
-        var t = (Tweak)sw.Tag;
+        var r = (LinhaRef)sw.Tag;
+        var t = r.T;
 
         // Elevação sob demanda: ajustes de máquina (HKLM) exigem administrador.
         if (t.ExigeAdmin && !Elevacao.EhAdmin())
@@ -213,7 +239,7 @@ public partial class AjustesView : UserControl
                 NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' aplicado", $"Novo valor: {(t.Tipo == TipoValor.String ? t.ValorTexto : t.ValorOtimizado.ToString())}. Desfazer restaura o anterior.");
                 Toasts.Mostrar(this, confirmado ? TipoToast.Sucesso : TipoToast.Aviso, confirmado ? "Ajuste aplicado" : "Ajuste não confirmado",
                     confirmado ? t.Nome : $"Não foi possível confirmar '{t.Nome}' no registro — verifique permissões.",
-                    confirmado ? (Action?)(() => { if (_motor.Desfazer(t)) AtualizarContador(); }) : null);
+                    confirmado ? (Action?)(() => { if (_motor.Desfazer(t)) { sw.IsChecked = false; AtualizarLinha(r); AtualizarContador(); } }) : null);
             }
             else if (!_motor.Desfazer(t)) sw.IsChecked = true;
             else
@@ -234,12 +260,21 @@ public partial class AjustesView : UserControl
             Toasts.Mostrar(this, TipoToast.Erro, "Falha no ajuste", ex.Message);
             MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+        AtualizarLinha(r);
         AtualizarContador();
     }
 
+    void AtualizarLinha(LinhaRef r) =>
+        r.Chip.Visibility = _motor.Aplicado(r.T) ? Visibility.Visible : Visibility.Collapsed;
+
     void AtualizarContador()
     {
+        int total = CatalogoTweaks.Todos.Count;
         int ativos = CatalogoTweaks.Todos.Count(_motor.Aplicado);
-        Contador.Text = $"{ativos} de {CatalogoTweaks.Todos.Count} ativos · reversível e auditado · máquina (HKLM) pede admin · meça A/B antes de confiar no ganho";
+        bool tudo = ativos == total && total > 0;
+        ResumoTxt.Text = (tudo ? "Otimizado · " : "") + $"{ativos} de {total} ajustes ativos";
+        ResumoTxt.Foreground = tudo ? Success : Secondary;
+        ResumoPill.Background = tudo ? SuccessBg : Surface2;
+        Contador.Text = "Reversível e auditado · máquina (HKLM) pede admin · meça A/B antes de confiar no ganho";
     }
 }

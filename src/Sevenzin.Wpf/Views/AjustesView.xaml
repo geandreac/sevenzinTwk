@@ -7,8 +7,11 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0">
-            <TextBlock Text="Ajustes" Style="{StaticResource TituloTela}" Margin="0,8,0,2"/>
-            <TextBlock x:Name="Contador" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,20"/>
+            <TextBlock Text="Ajustes" Style="{StaticResource TituloTela}" Margin="0,8,0,8"/>
+            <Border x:Name="ResumoPill" Background="{StaticResource Surface2Brush}" CornerRadius="8" Padding="12,5" HorizontalAlignment="Left" Margin="0,0,0,8">
+                <TextBlock x:Name="ResumoTxt" FontWeight="SemiBold" FontSize="13"/>
+            </Border>
+            <TextBlock x:Name="Contador" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,20"/>
         </StackPanel>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,24">
             <StackPanel x:Name="Lista"/>
