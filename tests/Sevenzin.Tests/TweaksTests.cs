@@ -35,12 +35,9 @@ public class TweaksTests
             Assert.True(t.Risco.Contains("ALTO", StringComparison.OrdinalIgnoreCase) || t.Risco.Contains("CRÍTICO", StringComparison.OrdinalIgnoreCase));
             Assert.False(string.IsNullOrWhiteSpace(t.Descricao));
         });
-        // Os mecanismos previstos na F1.1 do plano estão presentes.
-        var ids = seguranca.Select(t => t.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        Assert.Superset(ids, new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "uac-off", "defender-rt-off", "defender-antispyware-off", "smartscreen-off", "hvci-off", "mitigacoes-off", "wu-pausar",
-        });
+        // Os mecanismos previstos na F1.1 do plano estão presentes (verificação explícita, id a id).
+        foreach (var esperado in new[] { "uac-off", "defender-rt-off", "defender-antispyware-off", "smartscreen-off", "hvci-off", "mitigacoes-off", "wu-pausar" })
+            Assert.Contains(seguranca, t => t.Id.Equals(esperado, StringComparison.OrdinalIgnoreCase));
         // Admin exigido exatamente para os ajustes de máquina (HKLM); HKCU nunca pede admin.
         Assert.All(CatalogoTweaks.Todos, t => Assert.Equal(t.Colmeia == Colmeia.MaquinaLocal, t.ExigeAdmin));
         Assert.Contains(CatalogoTweaks.Todos, t => t.Colmeia == Colmeia.UsuarioAtual); // há HKCU sem admin

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">SevenzinTwks</title>
+  <desc id="desc">Logo SevenzinTwks com símbolo geométrico azul e prata e assinatura Otimização de Computadores.</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00E5FF"/>
+      <stop offset=".48" stop-color="#078BFF"/>
+      <stop offset="1" stop-color="#073DBB"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset=".45" stop-color="#C9D5E8"/>
+      <stop offset="1" stop-color="#71839F"/>
+    </linearGradient>
+    <linearGradient id="wordBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22E7FF"/>
+      <stop offset="1" stop-color="#0872E8"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="13" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Emblema geométrico em forma de S -->
+  <g transform="translate(0 6)" stroke-linejoin="miter">
+    <path d="M650 135 L760 25 L1060 25 L950 135 L790 135 L720 205 L835 320 L735 420 L430 420 L540 310 L700 310 L765 245 Z"
+          fill="url(#blue)" stroke="#13BFFF" stroke-width="3"/>
+    <path d="M650 135 L760 25 L890 25 L780 135 L720 195 Z"
+          fill="url(#silver)" stroke="#E8F2FF" stroke-width="2"/>
+    <path d="M835 320 L735 420 L605 420 L715 310 L775 250 Z"
+          fill="url(#silver)" stroke="#DCE8FA" stroke-width="2"/>
+    <path d="M430 205 L500 135 L650 285 L580 355 Z"
+          fill="url(#blue)" stroke="#08CFFF" stroke-width="3"/>
+    <path d="M850 175 L1000 175 L1110 285 L1040 355 Z"
+          fill="url(#blue)" stroke="#08CFFF" stroke-width="3"/>
+    <path d="M780 135 L950 135 L890 195 L835 195 Z" fill="#061A48" opacity=".9"/>
+    <path d="M650 310 L765 310 L715 360 L600 360 Z" fill="#062A76" opacity=".75"/>
+  </g>
+
+  <!-- Nome da marca -->
+  <g font-family="Montserrat, Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">
+    <text x="800" y="610" font-size="112" letter-spacing="-3" fill="url(#silver)">Sevenzin<tspan fill="url(#wordBlue)">Twks</tspan></text>
+    <text x="800" y="690" font-size="31" font-weight="500" letter-spacing="12" fill="#B9C9E0">OTIMIZAÇÃO DE COMPUTADORES</text>
+  </g>
+  <g fill="none" stroke="url(#blue)" stroke-width="4">
+    <path d="M245 680 H390"/>
+    <path d="M1210 680 H1355"/>
+  </g>
+</svg>

@@ -222,6 +222,8 @@ public partial class MediaView : UserControl
         _isoStatus.Text = resultado.Ok
             ? $"✔ ISO criada em {resultado.Destino} (boot UEFI). Você pode gravá-la no pendrive abaixo."
             : "Falha: " + resultado.Erro;
+        Toasts.Mostrar(this, resultado.Ok ? TipoToast.Sucesso : TipoToast.Erro,
+            resultado.Ok ? "ISO criada" : "Falha na construção", resultado.Ok ? resultado.Destino! : resultado.Erro!);
     }
 
     void AtualizarUsbs()
@@ -263,6 +265,7 @@ public partial class MediaView : UserControl
         _gravarBtn.IsEnabled = true;
         _usbStatus.Foreground = resultado.Ok ? Secondary : Danger;
         _usbStatus.Text = resultado.Ok ? "✔ " + resultado.Detalhe : "Falha: " + resultado.Detalhe;
+        Toasts.Mostrar(this, resultado.Ok ? TipoToast.Sucesso : TipoToast.Erro, resultado.Ok ? "Pendrive gravado" : "Falha na gravação", resultado.Detalhe);
     }
 
     static Button Botao(Style estilo, string texto, Action acao)

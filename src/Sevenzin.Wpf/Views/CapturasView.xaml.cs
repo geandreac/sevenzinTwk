@@ -248,16 +248,16 @@ public partial class CapturasView : UserControl
         _ultimoCaminho = CapturaTela.Salvar(final);
         StatusLbl.Text = $"Salvo em {_ultimoCaminho} · envio continua opcional.";
         NotificacoesStore.Padrao.Adicionar("Capturas", "Captura salva", _ultimoCaminho);
+        Toasts.Mostrar(this, TipoToast.Sucesso, "Captura salva", _ultimoCaminho);
     }
 
     void Copiar_Click(object sender, RoutedEventArgs e)
     {
         if (_base is null) return;
         using var final = ComporFinal();
-        using var ms = new MemoryStream();
-        final.Save(ms, ImageFormat.Png);
         Clipboard.SetImage(ParaImagem(final));
         StatusLbl.Text = "Imagem copiada para a área de transferência.";
+        Toasts.Mostrar(this, TipoToast.Sucesso, "Copiada", "Imagem na área de transferência.");
     }
 
     async void Enviar_Click(object sender, RoutedEventArgs e)
@@ -277,6 +277,8 @@ public partial class CapturasView : UserControl
             final.Save(ms, ImageFormat.Png);
             bool ok = await EnvioCaptura.EnviarAsync(ms.ToArray(), CapturaTela.NomeArquivo(DateTime.Now), cfg.WebhookUrl);
             StatusLbl.Text = ok ? "Enviado para o webhook (ação explícita)." : "Falha no envio — verifique a URL e sua conexão. Nada foi salvo a menos que você tenha usado Salvar PNG.";
+            Toasts.Mostrar(this, ok ? TipoToast.Sucesso : TipoToast.Erro, ok ? "Captura enviada" : "Falha no envio",
+                ok ? "Envio explícito concluído." : "Verifique a URL do webhook e sua conexão.");
         }
         catch (Exception ex)
         {

@@ -184,10 +184,28 @@ public static class CatalogoTweaks
             Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\System", "EnableSmartScreen", 0, "ALTO — remove avisos de apps/arquivos não reconhecidos", true, true),
         new Tweak("hvci-off", "Desligar Isolamento de Núcleo (HVCI)", "Desativa a integridade de memória por virtualização (HypervisorEnforcedCodeIntegrity=0). Requer reinício.", "Segurança",
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled", 0, "CRÍTICO — reduz a proteção do kernel; requer reinício", true, true),
-        new Tweak("mitigacoes-off", "Desligar mitigações Spectre/Meltdown", "Desativa as mitigações de hardware contra Spectre/Meltdown (FeatureSettingsOverride=1). Requer reinício.", "Segurança",
-            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", 1, "ALTO — expõe a CPU às falhas Spectre/Meltdown; requer reinício", true, true),
+        new Tweak("mitigacoes-off", "Desligar mitigações Spectre/Meltdown", "Desativa as mitigações de hardware contra Spectre/Meltdown (FeatureSettingsOverride=33554435, valor literal do original). Requer reinício.", "Segurança",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", 33554435, "ALTO — expõe a CPU às falhas Spectre/Meltdown; requer reinício", true, true),
         new Tweak("wu-pausar", "Pausar atualizações automáticas", "Política que impede o download/instalação automática de atualizações do Windows (NoAutoUpdate=1).", "Segurança",
             Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 1, "ALTO — deixa o sistema sem correções de segurança novas", true, true),
+
+        // ── UAC completo (valores literais do original: Policies\System) ──
+        new Tweak("uac-consent-admin", "UAC: consentimento de admin", "ConsentPromptBehaviorAdmin=0 (valor do original) — elevações de admin não pedem confirmação.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "ConsentPromptBehaviorAdmin", 0, "ALTO — remove o consentimento; requer reinício", true, true),
+        new Tweak("uac-consent-user", "UAC: consentimento de usuário", "ConsentPromptBehaviorUser=0 (valor do original) — usuários elevam sem pedir senha.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "ConsentPromptBehaviorUser", 0, "ALTO — remove o consentimento; requer reinício", true, true),
+        new Tweak("uac-default-consent", "UAC: consentimento padrão", "DefaultConsent=1 (valor do original) — consentimento implícito para o usuário padrão.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "DefaultConsent", 1, "ALTO — reduz o consentimento; requer reinício", true, true),
+        new Tweak("uac-filter-token", "UAC: filtro de token", "FilterAdministratorToken=0 (valor do original) — remove o token filtrado do admin.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "FilterAdministratorToken", 0, "ALTO — requer reinício", true, true),
+        new Tweak("uac-secure-desktop", "UAC: prompt fora da área segura", "PromptOnSecureDesktop=0 (valor do original) — o prompt do UAC não usa a área de trabalho segura.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "PromptOnSecureDesktop", 0, "ALTO — o prompt pode ser interceptado", true, true),
+        new Tweak("uac-validate-signatures", "UAC: validar assinaturas", "ValidateAdminCodeSignatures=0 (valor do original) — não exige assinatura para elevar.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "ValidateAdminCodeSignatures", 0, "ALTO", true, true),
+        new Tweak("uac-uiadesktop", "UAC: toggle de acessibilidade", "EnableUIADesktopToggle=0 (valor do original).", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableUIADesktopToggle", 0, "ALTO", true, true),
+        new Tweak("uac-secureuia", "UAC: caminhos seguros da UI", "EnableSecureUIAPaths=0 (valor do original).", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableSecureUIAPaths", 0, "ALTO", true, true),
 
         // ── Mouse (HKCU, REG_SZ — o original gravava strings em Control Panel\Mouse) ──
         new Tweak("mouse-aceleracao-off", "Desligar aceleração do mouse", "Remove a aceleração do ponteiro (MouseSpeed=0) — movimento 1:1, previsível para jogos.", "Mouse",
@@ -226,6 +244,26 @@ public static class CatalogoTweaks
         new Tweak("amd-chill-off", "Desligar Radeon Chill (AMD)", "Desativa o Radeon Chill (limita FPS para economizar energia) — ChillEnabled=0.", "GPU",
             Colmeia.UsuarioAtual, @"Software\AMD\DVR", "ChillEnabled", 0, "Baixo — Chill limita FPS; desligar devolve o FPS livre", false),
 
+        // ── GPU AMD — power gating (valores literais do original; caminho do driver de vídeo 0000) ──
+        new Tweak("amd-gmm-powergate-off", "AMD: power gating GMM off", "DisableGMMPowerGating=1 (valor do original) — desliga o power gating de memória gráfica.", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "DisableGMMPowerGating", 1, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-samu-powergate-off", "AMD: power gating SAMU off", "DisableSAMUPowerGating=1 (valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "DisableSAMUPowerGating", 1, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-vcn-powergate-off", "AMD: power gating VCN off", "DisableVCNPowerGating=1 (valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "DisableVCNPowerGating", 1, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-drmdma-powergate-off", "AMD: power gating DRMDMA off", "DisableDrmdmaPowerGating=1 (valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "DisableDrmdmaPowerGating", 1, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-ulps-off", "AMD: ULPS off", "EnableUlps=0 (valor do original) — desliga a economia de energia ultra-baixa da GPU.", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "EnableUlps", 0, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-asic-lowpower-off", "AMD: ASIC low power off", "AsicOnLowPower=0 (valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "AsicOnLowPower", 0, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-gpu-powerdown-off", "AMD: GPU PowerDown off", "PP_GPUPowerDownEnabled=0 (valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "PP_GPUPowerDownEnabled", 0, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-sclk-deepsleep-off", "AMD: SCLK deep sleep off", "PP_SclkDeepSleepDisable=1 (valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "PP_SclkDeepSleepDisable", 1, "Médio — só AMD; calor/consumo; meça A/B", true),
+        new Tweak("amd-power-containment-off", "AMD: power containment off", "PP_DisablePowerContainment=1 (valor do original).", "GPU",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "PP_DisablePowerContainment", 1, "Médio — só AMD; calor/consumo; meça A/B", true),
+
         // ── Rede / multimídia (HKLM, admin; valores do original) ──
         new Tweak("rm-throttle-off", "Desligar atraso de throttle (RM)", "Zera o RMPriorityThrottleDelay (valor do original) — reduz o atraso do throttling de multimídia.", "Rede",
             Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "RMPriorityThrottleDelay", 0, "Médio — afeta o escalonamento de multimídia; meça A/B", true),
@@ -259,5 +297,32 @@ public static class CatalogoTweaks
             Colmeia.MaquinaLocal, @"SOFTWARE\Microsoft\Windows\Windows Error Reporting", "Disabled", 1, "Baixo — menos diagnóstico em caso de falha", true),
         new Tweak("copilot-off", "Desligar Copilot do Windows", "Desativa o Copilot por política de usuário (TurnOffWindowsCopilot=1).", "Telemetria",
             Colmeia.UsuarioAtual, @"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", 1, "Baixo — remove o botão e o painel do Copilot", false),
+
+        // ── Visual extra (valores literais do original) ──
+        new Tweak("tema-escuro", "Tema escuro do Windows", "AppsUseLightTheme=0 (valor do original) — tema escuro para os aplicativos.", "Visual",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 0, "Baixo (cosmético)", false),
+        new Tweak("botao-taskview-off", "Esconder botão Visão de Tarefas", "ShowTaskViewButton=0 (valor do original).", "Visual",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowTaskViewButton", 0, "Baixo (cosmético)", false),
+        new Tweak("botao-cortana-off", "Esconder botão Cortana", "ShowCortanaButton=0 (valor do original).", "Visual",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowCortanaButton", 0, "Baixo (cosmético)", false),
+        new Tweak("som-inicializacao-off", "Desligar som de inicialização", "DisableStartupSound=1 (valor do original).", "Visual",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\BootAnimation", "DisableStartupSound", 1, "Baixo (cosmético)", false),
+        new Tweak("min-animate-off", "Desligar animações de minimizar", "MinAnimate=0 (valor do original) — minimizar/maximizar sem animação.", "Visual",
+            Colmeia.UsuarioAtual, @"Control Panel\Desktop\WindowMetrics", "MinAnimate", 0, "Baixo (cosmético)", false),
+        new Tweak("bing-busca-off", "Desligar busca web no Menu Iniciar", "BingSearchEnabled=0 (valor do original) — remove resultados da web na busca.", "Privacidade",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\Search", "BingSearchEnabled", 0, "Baixo — privacidade", false),
+        new Tweak("mouse-hover-off", "Hover do mouse instantâneo", "MouseHoverTime=0 (valor do original, REG_SZ) — balões e dicas aparecem sem atraso.", "Mouse",
+            Colmeia.UsuarioAtual, @"Control Panel\Mouse", "MouseHoverTime", 0, "Baixo", false,
+            Tipo: TipoValor.String, ValorTexto: "0"),
+
+        // ── Privacidade/rede extras (valores literais do original) ──
+        new Tweak("dados-adicionais-off", "Não enviar dados adicionais", "DontSendAdditionalData=1 (valor do original) — reduz dados enviados ao Windows.", "Telemetria",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\DeviceAccess\Global", "DontSendAdditionalData", 1, "Baixo — privacidade", false),
+        new Tweak("lmhosts-off", "Desligar LMHOSTS", "EnableLMHOSTS=0 (valor do original) — desliga a resolução legada por arquivo LMHOSTS.", "Rede",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Services\NetBT\Parameters", "EnableLMHOSTS", 0, "Baixo — legado de rede", true),
+
+        // ── Timer global de alta resolução (valor literal do original) ──
+        new Tweak("timer-global-1ms", "Timer global de alta resolução", "GlobalTimerResolutionRequests=1 (valor do original) — o sistema atende pedidos de resolução de 1 ms. ATENÇÃO: aumenta o consumo de energia (o Sevenzin prefere o timer opt-in por jogo, que é temporário).", "Desempenho",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "GlobalTimerResolutionRequests", 1, "ALTO — global e permanente até desfazer; aumenta consumo de energia", true, true),
     };
 }

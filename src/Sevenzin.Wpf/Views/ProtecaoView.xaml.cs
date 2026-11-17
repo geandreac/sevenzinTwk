@@ -171,10 +171,17 @@ public partial class ProtecaoView : UserControl
             if (sw.IsChecked == true)
             {
                 _motor.Aplicar(t);
+                bool confirmado = _motor.Aplicado(t);
                 NotificacoesStore.Padrao.Adicionar("Proteção", $"'{t.Nome}' aplicado", "Confirmação explícita feita. Desfazer restaura o valor anterior.");
+                Toasts.Mostrar(this, confirmado ? TipoToast.Sucesso : TipoToast.Aviso, confirmado ? "Alteração aplicada" : "Alteração não confirmada", t.Nome,
+                    confirmado ? (Action?)(() => { if (_motor.Desfazer(t)) Montar(); }) : null);
             }
             else if (!_motor.Desfazer(t)) sw.IsChecked = true;
-            else NotificacoesStore.Padrao.Adicionar("Proteção", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
+            else
+            {
+                NotificacoesStore.Padrao.Adicionar("Proteção", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Alteração desfeita", t.Nome);
+            }
             Montar();
         }
         catch (UnauthorizedAccessException)

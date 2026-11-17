@@ -49,7 +49,7 @@ public class GuiasENotificacoesTests
     public void Catalogo_tem_tweaks_de_mouse_como_string_e_de_localizacao_confirmados()
     {
         var mouse = CatalogoTweaks.Todos.Where(t => t.Categoria == "Mouse").ToList();
-        Assert.Equal(3, mouse.Count);
+        Assert.Equal(4, mouse.Count);
         Assert.All(mouse, t => Assert.Equal(TipoValor.String, t.Tipo)); // o original gravava REG_SZ em Control Panel\Mouse
         Assert.All(mouse, t => Assert.Equal(Colmeia.UsuarioAtual, t.Colmeia));
         Assert.All(mouse, t => Assert.Equal(@"Control Panel\Mouse", t.Caminho));

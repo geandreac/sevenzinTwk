@@ -101,8 +101,13 @@ public partial class PerfilView : UserControl
                 MessageBox.Show("Formato esperado: 4 grupos de 4 caracteres alfanuméricos (ex.: A1B2-C3D4-E5F6-G7H8).", "Chave inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            _licenca.Salvar(new Licenca(c, DateTime.UtcNow));
-            Montar();
+            if (ValidadorLicenca.ChaveValida(c))
+            {
+                _licenca.Salvar(new Licenca(c, DateTime.UtcNow));
+                Montar();
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Chave de licença salva", c);
+                return;
+            }
         });
         linha.Children.Add(salvar);
         if (lic.Ativa)
@@ -153,6 +158,7 @@ public partial class PerfilView : UserControl
                 MessageBox.Show("Verificação em dois fatores ativada. No próximo login o código será pedido.", "2FA", MessageBoxButton.OK, MessageBoxImage.Information);
                 _segredoPendente = null;
                 Montar();
+                Toasts.Mostrar(this, TipoToast.Sucesso, "2FA ativado", "O próximo login pedirá o código do autenticador.");
             }
             else
             {

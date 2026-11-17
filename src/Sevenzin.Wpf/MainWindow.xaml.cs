@@ -30,7 +30,6 @@ public partial class MainWindow : Window
         ("midia", "", "Mídia"),
         // Ferramentas (uso pontual)
         ("capturas", "", "Capturas"),
-        ("assistente", "", "Assistente"),
         ("guias", "", "Guias"),
         ("notificacoes", "", "Notificações"),
         // Técnico / Conta (configura-uma-vez — no fim)
@@ -41,6 +40,9 @@ public partial class MainWindow : Window
 
     readonly List<TextBlock> _rotulos = new(); // rótulos ocultos na sidebar estreita; aparecem ao expandir
     bool _expandido;
+
+    /// <summary>Anfitrião dos toasts (as telas disparam via <see cref="Toasts.Mostrar"/>).</summary>
+    public ToastHost ToastHost => ToastHostPanel;
 
     public MainWindow()
     {
@@ -105,7 +107,6 @@ public partial class MainWindow : Window
         ["inicio"] = "ic_inicio", ["ajustes"] = "ic_ajustes", ["gpu"] = "ic_gpu", ["instaladores"] = "ic_instaladores",
         ["jogos"] = "ic_jogos", ["bios"] = "ic_bios", ["capturas"] = "ic_capturas", ["windows"] = "ic_windows", ["config"] = "ic_config",
         ["midia"] = "ic_midia",
-        ["assistente"] = "ic_assistente",
         ["inventario"] = "ic_inventario", ["telemetria"] = "ic_telemetria", ["benchmark"] = "ic_benchmark", ["admin"] = "ic_admin",
         ["protecao"] = "ic_protecao", ["guias"] = "ic_guias", ["notificacoes"] = "ic_notificacoes", ["perfil"] = "ic_perfil",
     };
@@ -168,7 +169,6 @@ public partial class MainWindow : Window
             "guias" => new GuiasView(),
             "notificacoes" => new NotificacoesView(),
             "bios" => new BiosView(),
-            "assistente" => new AssistenteView(),
             "capturas" => new CapturasView(),
             "windows" => new WindowsView(),
             "midia" => new MediaView(),

@@ -2,6 +2,7 @@ using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
@@ -143,9 +144,18 @@ public partial class InicioView : UserControl
         // RECURSOS
         Raiz.Children.Add(new TextBlock { Text = "RECURSOS", Style = SectionStyle });
         var rec = new UniformGrid { Rows = 1, Columns = 2 };
-        rec.Children.Add(CardRecurso("Ajustes de driver", "Perfis de driver para NVIDIA e AMD.", 0));
-        rec.Children.Add(CardRecurso("Perfil por jogo", "Afinidade e prioridade por título.", 1));
+        rec.Children.Add(CardRecurso("Ajustes de driver", "Diagnóstico de GPU, modos de vídeo e tweaks de driver.", 0, "gpu"));
+        rec.Children.Add(CardRecurso("Perfil por jogo", "Detecção Steam/Epic, afinidade, prioridade e opt-ins por título.", 1, "jogos"));
         Raiz.Children.Add(rec);
+
+        // JOGOS EM DESTAQUE (cards confirmados na RE: EA FC, Fortnite, Rust, Warzone — 05_metricas §9)
+        Raiz.Children.Add(new TextBlock { Text = "JOGOS EM DESTAQUE", Style = SectionStyle, Margin = new Thickness(0, 22, 0, 0) });
+        var jogos = new UniformGrid { Rows = 1, Columns = 4 };
+        jogos.Children.Add(CardJogo("EA SPORTS FC", "Futebol — perfil detectado pela pasta do jogo.", 0));
+        jogos.Children.Add(CardJogo("Fortnite", "Battle Royale — perfil detectado pela pasta do jogo.", 1));
+        jogos.Children.Add(CardJogo("Rust", "Sobrevivência — perfil detectado pela pasta do jogo.", 2));
+        jogos.Children.Add(CardJogo("Warzone", "Call of Duty — perfil detectado pela pasta do jogo.", 3));
+        Raiz.Children.Add(jogos);
 
         _cpuUso.Ler(); // 1ª amostra do GetSystemTimes: o próximo tick já tem intervalo para calcular o %
         _timer.Start();
@@ -228,18 +238,18 @@ public partial class InicioView : UserControl
         return sp;
     }
 
-    UIElement CardRecurso(string titulo, string sub, int indice)
+    UIElement CardRecurso(string titulo, string sub, int indice, string destino)
     {
         var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom };
         sp.Children.Add(new TextBlock { Text = titulo, FontSize = 15, FontWeight = FontWeights.SemiBold });
-        sp.Children.Add(new TextBlock { Text = sub, Foreground = Secondary, FontSize = 13, Margin = new Thickness(0, 4, 0, 0) });
+        sp.Children.Add(new TextBlock { Text = sub, Foreground = Secondary, FontSize = 13, Margin = new Thickness(0, 4, 0, 0), TextWrapping = TextWrapping.Wrap });
         // Degradê diagonal amostrado do Figma 3:1052 (topo-esq claro → rodapé/direita preto)
         Color C(string k) => (Color)Application.Current.Resources[k];
         var grad = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 1) };
         grad.GradientStops.Add(new GradientStop(C("ResGradTop"), 0));
         grad.GradientStops.Add(new GradientStop(C("ResGradMid"), 0.5));
         grad.GradientStops.Add(new GradientStop(C("ResGradBot"), 1));
-        return new Border
+        var card = new Border
         {
             Background = grad,
             BorderBrush = Borda,
@@ -249,7 +259,43 @@ public partial class InicioView : UserControl
             Height = 160,
             Margin = new Thickness(indice == 0 ? 0 : 7, 0, indice == 0 ? 7 : 0, 0),
             Child = sp,
+            Cursor = Cursors.Hand,
+            ToolTip = $"Abrir {titulo}",
         };
+        card.MouseLeftButtonDown += (_, _) =>
+        {
+            if (Window.GetWindow(this) is MainWindow mw) mw.SelecionarAba(destino);
+        };
+        System.Windows.Automation.AutomationProperties.SetName(card, titulo);
+        return card;
+    }
+
+    /// <summary>Card de jogo em destaque (arte confirmada na RE: cardEafc/cardFortnite/cardRust/cardWarzone) —
+    /// leva à tela Jogos, onde o perfil é detectado/criado. Nenhuma otimização específica por jogo é inventada.</summary>
+    UIElement CardJogo(string nome, string sub, int indice)
+    {
+        var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom };
+        sp.Children.Add(new TextBlock { Text = nome, FontSize = 15, FontWeight = FontWeights.SemiBold });
+        sp.Children.Add(new TextBlock { Text = sub, Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 4, 0, 0), TextWrapping = TextWrapping.Wrap });
+        var card = new Border
+        {
+            Background = (Brush)Application.Current.Resources["Surface2Brush"],
+            BorderBrush = Borda,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(16),
+            Height = 120,
+            Margin = new Thickness(indice == 0 ? 0 : 6, 0, indice == 3 ? 0 : 6, 0),
+            Child = sp,
+            Cursor = Cursors.Hand,
+            ToolTip = $"Abrir Jogos para {nome}",
+        };
+        card.MouseLeftButtonDown += (_, _) =>
+        {
+            if (Window.GetWindow(this) is MainWindow mw) mw.SelecionarAba("jogos");
+        };
+        System.Windows.Automation.AutomationProperties.SetName(card, nome);
+        return card;
     }
 
     static double ExtrairGB(string texto)

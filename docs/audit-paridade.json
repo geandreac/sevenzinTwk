@@ -1,0 +1,709 @@
+{
+  "registro": {
+    "nomes_no_original": 272,
+    "nomes_implementados": [
+      "AllowTelemetry",
+      "AppCaptureEnabled",
+      "CacheIsPowerProtected",
+      "ChillEnabled",
+      "DisableAntiSpyware",
+      "DisableDynamicPstate",
+      "DisablePagingExecutive",
+      "DisableRealtimeMonitoring",
+      "Disabled",
+      "DragFullWindows",
+      "EnableActivityFeed",
+      "EnableAeroPeek",
+      "EnableLUA",
+      "EnableSmartScreen",
+      "EnableTransparency",
+      "Enabled",
+      "FeatureSettingsOverride",
+      "GPU Priority",
+      "GameDVR_Enabled",
+      "GpuPreference",
+      "HiberbootEnabled",
+      "HideSCALocation",
+      "HwSchMode",
+      "IsDynamicSearchBoxEnabled",
+      "LargeSystemCache",
+      "MenuShowDelay",
+      "MouseSpeed",
+      "MouseThreshold1",
+      "MouseThreshold2",
+      "NetworkThrottlingIndex",
+      "NoAutoUpdate",
+      "Priority",
+      "RMPriorityThrottleDelay",
+      "SFIO Priority",
+      "Scheduling Category",
+      "SilentInstalledAppsEnabled",
+      "SoftLandingEnabled",
+      "Start",
+      "SubscribedContent-338388Enabled",
+      "SystemPaneSuggestionsEnabled",
+      "SystemResponsiveness",
+      "TailoredExperiencesWithDiagnosticDataEnabled",
+      "TaskbarAnimations",
+      "TaskbarDa",
+      "TdrDelay",
+      "ToastEnabled",
+      "TurnOffWindowsCopilot",
+      "UseOLEDTaskbarTransparency",
+      "Win32PrioritySeparation"
+    ],
+    "ausentes_no_sevenzin": [
+      ".bmp",
+      ".dib",
+      ".gif",
+      ".jfif",
+      ".jpe",
+      ".jpeg",
+      ".jpg",
+      ".jxr",
+      ".png",
+      ".tif",
+      ".tiff",
+      "ACE",
+      "AMDPcieSettingsEnabled",
+      "AMDTweaksEnabled",
+      "AccentColorInTitlebars",
+      "ActiveProfile",
+      "ActiveSceneId",
+      "Affinity",
+      "AllowUntriggeredNetworkTrafficOnSettingsPage",
+      "AlwaysHibernateThumbnails",
+      "AnalysisHistory",
+      "Animations",
+      "AntiStuttering",
+      "Applied",
+      "AppsUseLightTheme",
+      "AsicOnLowPower",
+      "AssignmentSetOverride",
+      "AutoDownloadAndUpdateMapData",
+      "AutoOn",
+      "AutocheckTimeout",
+      "AutomaticFolderTypeDiscovery",
+      "BGM_EnableLTR",
+      "Background",
+      "Background Only",
+      "BackgroundType",
+      "Beep",
+      "BingSearchEnabled",
+      "Blur",
+      "Clock Rate",
+      "ConsentPromptBehaviorAdmin",
+      "ConsentPromptBehaviorUser",
+      "ContextMenu",
+      "CpuPriorityClass",
+      "DalDisableCursorCache",
+      "DalDisableCursorCaching",
+      "DefaultConsent",
+      "DefaultOverrideBehavior",
+      "DesktopBackgroundAccessPolicy",
+      "DevicePolicy",
+      "DevicePriority",
+      "DisableBandwidthMonitoring",
+      "DisableDMACopy",
+      "DisableDrmdmaPowerGating",
+      "DisableFBCForFullScreenApp",
+      "DisableGMMPowerGating",
+      "DisableLddmSpriteTearDown",
+      "DisableSAMUPowerGating",
+      "DisableStartupSound",
+      "DisableVCNPowerGating",
+      "DontDisplayFirstTimeUserExperience",
+      "DontSendAdditionalData",
+      "DpcOptimization",
+      "DpcTimeout",
+      "DpcWatchdogPeriod",
+      "DpcWatchdogProfileOffset",
+      "DvrEnabled",
+      "ElimDupExtract",
+      "EnableAspmL0s",
+      "EnableAspmL1",
+      "EnableAutoTray",
+      "EnableIdlePowerManagement",
+      "EnableInstallerDetection",
+      "EnableLMHOSTS",
+      "EnableSecureUIAPaths",
+      "EnableUIADesktopToggle",
+      "EnableUlps",
+      "EnableUlps_NA",
+      "EnableVirtualization",
+      "EnableVirtualizationBasedSecurity",
+      "EnhancedPowerManagementEnabled",
+      "ExcludeWUDriversInQualityUpdate",
+      "ExitLatencyCheckEnabled",
+      "ExtendedSounds",
+      "FRXMaxLat0",
+      "FRXMaxLat1",
+      "FeatureSettings",
+      "FeatureSettingsOverrideMask",
+      "FilterAdministratorToken",
+      "FontSmoothing",
+      "GameDVR_DXGIHonorFSEWindowsCompatible",
+      "GameDVR_EFSEFeatureFlags",
+      "GameDVR_FSEBehaviorMode",
+      "GameDVR_HonorUserFSEBehaviorMode",
+      "GlobalTimerResolutionRequests",
+      "HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Memory Management",
+      "HibernateEnabled",
+      "HibernateEnabledDefault",
+      "Hidden",
+      "HideFileExt",
+      "HideRecentlyAddedApps",
+      "HideSCACenterAction",
+      "HideSCAInputIndicator",
+      "HideSCAMeetNow",
+      "HideSCAMicrophone",
+      "HideSCATouch",
+      "HideSCAVirtualKeyboard",
+      "HideSCAWindowsInkWorkspace",
+      "IoPriority",
+      "KMD_APlusISharedMiniSegmentOptions",
+      "KMD_APlusISharedMiniSegmentSize",
+      "KMD_CopyToGSMemEnabled",
+      "KMD_DisableStutterMode",
+      "KMD_EnableComputePreemption",
+      "KMD_EnableCrossGpuDisplaySupport",
+      "KMD_FRTEnabled",
+      "KMD_PXForceVideoPlaybackToIntegrated",
+      "KernelThreadPriorityFloor",
+      "KeyboardDataQueueSize",
+      "LTRConfig",
+      "License",
+      "LinkResolveIgnoreLinkInfo",
+      "ListviewAlphaSelect",
+      "ListviewShadow",
+      "Locked",
+      "LoggingDisabled",
+      "MLSetLowPriGfx_DEF",
+      "MSIIRQ",
+      "MSISupported",
+      "Main3D",
+      "MaximumSharedReadyQueueSize",
+      "MessageNumberLimit",
+      "MinAnimate",
+      "MiracastForceDisable",
+      "MitigationAuditOptions",
+      "MitigationOptions",
+      "Mode",
+      "MouseHoverTime",
+      "MouseSensitivity",
+      "NetbiosOptions",
+      "NoCloudApplicationNotification",
+      "NoInternetOpenWith",
+      "NoLazyMode",
+      "NoLowDiskSpaceChecks",
+      "NoResolveSearch",
+      "NoResolveTrack",
+      "OEMBackground",
+      "PP_ActivityTarget",
+      "PP_DisableGfxASPML0s",
+      "PP_DisableGfxASPML1",
+      "PP_DisablePowerContainment",
+      "PP_FuzzyFanControl_EnableDPMBasedFuzzyFan_DEF",
+      "PP_GPUPowerDownEnabled",
+      "PP_MCLKStutterModeThreshold",
+      "PP_SclkDeepSleepDisable",
+      "PP_ThermalAutoThrottlingEnable",
+      "PcieSettingsEnabled",
+      "PerfLevelSrc",
+      "PerformanceMonitorOpacityWA",
+      "PlatformAoAcOverride",
+      "PowerGatingEnabled",
+      "PowerScheme_DEF",
+      "PrevInGameReplayEnabled",
+      "PrevInstantGifEnabled",
+      "PrevInstantReplayEnable",
+      "PromptOnSecureDesktop",
+      "RMBlcg",
+      "RMDOPSB",
+      "RMDisableGpuASPMFlags",
+      "RMElcg",
+      "RMElpg",
+      "RMEnableASPMAtLoad",
+      "RMEnableASPMDT",
+      "RMEnableASPMPublicBits",
+      "RMFspg",
+      "RMGC6Feature",
+      "RML1ExitLatencyOverride",
+      "RMOPSB",
+      "RMPcieLinkSpeed",
+      "RMPcieLtrL12ThresholdOverride",
+      "RMSlcg",
+      "RemoteServerStatus",
+      "RequirePlatformSecurityFeatures",
+      "RmClkPowerOffDramPllWhenUnused",
+      "RmClkSlowdown",
+      "RmDisableACPI",
+      "RmL2CleanFbPull",
+      "RmMIONoPowerOff",
+      "RmOverrideSupportChipsetAspm",
+      "RmPerformanceEnabled",
+      "RmPowerFeaturesMask",
+      "RmRcWatchdog",
+      "SQSEnabled",
+      "SearchOrderConfig",
+      "SearchboxTaskbarMode",
+      "SensorPermissionState",
+      "ShaderCache",
+      "ShowColorInStart",
+      "ShowColorInTaskbar",
+      "ShowCopilotButton",
+      "ShowCortanaButton",
+      "ShowFirstSignInExperience",
+      "ShowHibernateOption",
+      "ShowLockOption",
+      "ShowRSOverlay",
+      "ShowSleepOption",
+      "ShowSyncProviderNotifications",
+      "ShowTaskViewButton",
+      "SkipHibernateMemoryMapValidation",
+      "SleepStudyDisabled",
+      "SplitLargeCaches",
+      "Start_AccountNotifications",
+      "Start_IrisRecommendations",
+      "Start_TrackDocs",
+      "Start_TrackProgs",
+      "Status",
+      "StutterMode",
+      "SystemUsesLightTheme",
+      "TCPNoDelay",
+      "TcpAckFrequency",
+      "TcpDelAckTicks",
+      "Tessellation",
+      "Tessellation_OPTION",
+      "ThreadDpcEnable",
+      "ThreadPriority",
+      "TileWallpaper",
+      "TroubleshooterPrefs",
+      "TweakDriver",
+      "UserPreferencesMask",
+      "UserWriteCacheSetting",
+      "VSyncControl",
+      "ValidateAdminCodeSignatures",
+      "Value",
+      "VisualFX",
+      "VisualFXSetting",
+      "VsyncIdleTimeout",
+      "Wallpaper",
+      "WallpaperStyle",
+      "value"
+    ]
+  },
+  "chaves": {
+    "chaves_no_original": 110,
+    "chaves_estaticas_implementadas": [
+      "Control Panel\\Desktop",
+      "Control Panel\\Mouse",
+      "SOFTWARE\\Microsoft\\Windows Defender",
+      "SOFTWARE\\Microsoft\\Windows Defender\\Real-Time Protection",
+      "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+      "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+      "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+      "SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting",
+      "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+      "SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors",
+      "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+      "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+      "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000",
+      "SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity",
+      "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
+      "SYSTEM\\CurrentControlSet\\Control\\PriorityControl",
+      "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+      "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power",
+      "SYSTEM\\CurrentControlSet\\Services\\lfsvc",
+      "Software\\AMD\\DVR",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+      "Software\\Microsoft\\Windows\\DWM",
+      "Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+      "System\\GameConfigStore"
+    ],
+    "chaves_dinamicas_implementadas": [
+      "Tcpip/NetBT/Dnscache por {GUID}",
+      "UserGpuPreferences por .exe",
+      "write-cache (Enum por disco)"
+    ]
+  },
+  "instaladores": {
+    "confirmados": [
+      {
+        "nome": "7-Zip",
+        "chave": "7zip",
+        "status": "✅"
+      },
+      {
+        "nome": "Autoruns",
+        "chave": "autorun",
+        "status": "✅"
+      },
+      {
+        "nome": "Brave",
+        "chave": "brave",
+        "status": "✅"
+      },
+      {
+        "nome": "CPU-Z",
+        "chave": "cpuz",
+        "status": "✅"
+      },
+      {
+        "nome": "DirectX",
+        "chave": "directx",
+        "status": "✅"
+      },
+      {
+        "nome": "DriverStore Explorer",
+        "chave": "driverstools",
+        "status": "✅"
+      },
+      {
+        "nome": "Epic Games Launcher",
+        "chave": "epicgames",
+        "status": "✅"
+      },
+      {
+        "nome": "FACEIT",
+        "chave": "faceit",
+        "status": "✅"
+      },
+      {
+        "nome": "Gamers Club",
+        "chave": "gamersclub",
+        "status": "✅"
+      },
+      {
+        "nome": "Google Chrome",
+        "chave": "googlechrome",
+        "status": "✅"
+      },
+      {
+        "nome": "HWiNFO",
+        "chave": "hwinfo",
+        "status": "✅"
+      },
+      {
+        "nome": "Driver de rede Intel",
+        "chave": "internetdriver",
+        "status": "⬜"
+      },
+      {
+        "nome": "LatencyMon",
+        "chave": "latencymon",
+        "status": "✅"
+      },
+      {
+        "nome": "Logitech G HUB",
+        "chave": "logitechghub",
+        "status": "✅"
+      },
+      {
+        "nome": "Microsoft Edge",
+        "chave": "microsoftedge",
+        "status": "✅"
+      },
+      {
+        "nome": "MSI Afterburner",
+        "chave": "msiafterburner",
+        "status": "✅"
+      },
+      {
+        "nome": "NVCleanstall",
+        "chave": "nvcleanstall",
+        "status": "✅"
+      },
+      {
+        "nome": "OCAT",
+        "chave": "ocat",
+        "status": "✅"
+      },
+      {
+        "nome": "Open-Shell",
+        "chave": "openshell",
+        "status": "✅"
+      },
+      {
+        "nome": "Process Explorer",
+        "chave": "processexplorer",
+        "status": "✅"
+      },
+      {
+        "nome": "Radeon Software Slimmer",
+        "chave": "radeonslimmer",
+        "status": "✅"
+      },
+      {
+        "nome": "Rockstar Games Launcher",
+        "chave": "rockstar",
+        "status": "✅"
+      },
+      {
+        "nome": "StartAllBack",
+        "chave": "startallback",
+        "status": "✅"
+      },
+      {
+        "nome": "TeamSpeak",
+        "chave": "teamspeak",
+        "status": "✅"
+      },
+      {
+        "nome": "Ubisoft Connect",
+        "chave": "ubisoftconnect",
+        "status": "✅"
+      },
+      {
+        "nome": "VALORANT",
+        "chave": "valorant",
+        "status": "✅"
+      },
+      {
+        "nome": "Visual Studio",
+        "chave": "visualstudio",
+        "status": "✅"
+      },
+      {
+        "nome": "Visual Studio Code",
+        "chave": "vscode",
+        "status": "✅"
+      },
+      {
+        "nome": "ZenTimings",
+        "chave": "zentimings",
+        "status": "✅"
+      },
+      {
+        "nome": "DDU",
+        "chave": "ddu",
+        "status": "✅"
+      },
+      {
+        "nome": "Prime95",
+        "chave": "prime95",
+        "status": "✅"
+      },
+      {
+        "nome": "Geekbench",
+        "chave": "geek",
+        "status": "✅"
+      },
+      {
+        "nome": "OCCT",
+        "chave": "occt",
+        "status": "✅"
+      },
+      {
+        "nome": "GPU-Z",
+        "chave": "gpuz",
+        "status": "✅"
+      },
+      {
+        "nome": "KMS Activator",
+        "chave": "kmsactivator",
+        "status": "✅"
+      },
+      {
+        "nome": "Discord",
+        "chave": "discord",
+        "status": "✅"
+      },
+      {
+        "nome": "Steam",
+        "chave": "steam",
+        "status": "✅"
+      }
+    ],
+    "provaveis": [
+      {
+        "nome": "VLC",
+        "chave": "vlcplayer",
+        "status": "⬜"
+      },
+      {
+        "nome": "Spotify",
+        "chave": "spotify",
+        "status": "⬜"
+      },
+      {
+        "nome": "Everything",
+        "chave": "everything",
+        "status": "⬜"
+      },
+      {
+        "nome": "Revo Uninstaller",
+        "chave": "revouninstaller",
+        "status": "⬜"
+      },
+      {
+        "nome": "Notepad++",
+        "chave": "notepad",
+        "status": "⬜"
+      },
+      {
+        "nome": "qBittorrent",
+        "chave": "qbittorrent",
+        "status": "⬜"
+      },
+      {
+        "nome": "OBS Studio",
+        "chave": "obsstudio",
+        "status": "⬜"
+      },
+      {
+        "nome": "CapFrameX",
+        "chave": "capframex",
+        "status": "⬜"
+      },
+      {
+        "nome": "HWMonitor",
+        "chave": "hwmonitor",
+        "status": "⬜"
+      },
+      {
+        "nome": "TestMem5",
+        "chave": "testmem5",
+        "status": "⬜"
+      },
+      {
+        "nome": "AMD Chipset",
+        "chave": "amdchipset",
+        "status": "⬜"
+      },
+      {
+        "nome": "EA App",
+        "chave": "eaapp",
+        "status": "⬜"
+      },
+      {
+        "nome": "Minecraft",
+        "chave": "minecraft",
+        "status": "⬜"
+      },
+      {
+        "nome": "FiveM",
+        "chave": "fivem",
+        "status": "⬜"
+      },
+      {
+        "nome": "League of Legends",
+        "chave": "leagueoflegends",
+        "status": "⬜"
+      },
+      {
+        "nome": "VC++ Redist",
+        "chave": "vcredist",
+        "status": "⬜"
+      },
+      {
+        "nome": "Driver Bluetooth",
+        "chave": "bluetoothdriver",
+        "status": "⬜"
+      },
+      {
+        "nome": "Unlocker",
+        "chave": "unlocker",
+        "status": "⬜"
+      },
+      {
+        "nome": "Medal.tv",
+        "chave": "medaltv",
+        "status": "⬜"
+      }
+    ]
+  },
+  "valores_originais_dos_itens_criticos": {
+    "GPU Priority": [
+      "8|DWord"
+    ],
+    "Priority": [
+      "2|DWord"
+    ],
+    "SFIO Priority": [
+      "\"Normal\"|String"
+    ],
+    "Scheduling Category": [
+      "\"Medium\"|String"
+    ],
+    "TdrDelay": [
+      "8|DWord"
+    ],
+    "DisableDynamicPstate": [
+      "1|DWord"
+    ],
+    "NetworkThrottlingIndex": [
+      "10|DWord"
+    ],
+    "RMPriorityThrottleDelay": [
+      "0|DWord"
+    ],
+    "MenuShowDelay": [
+      "\"0\"|String"
+    ],
+    "DragFullWindows": [
+      "\"0\"|String",
+      "\"1\"|String"
+    ],
+    "EnableTransparency": [
+      "0|DWord"
+    ],
+    "EnableAeroPeek": [
+      "0|DWord",
+      "1|DWord"
+    ],
+    "ToastEnabled": [
+      "0|DWord",
+      "1|DWord"
+    ],
+    "ChillEnabled": [
+      "1|DWord"
+    ],
+    "SystemResponsiveness": [
+      "10|DWord"
+    ],
+    "Win32PrioritySeparation": [
+      "(int)obj._0002|DWord"
+    ],
+    "AllowTelemetry": [
+      "0|DWord"
+    ],
+    "EnableLUA": [
+      "0|DWord"
+    ],
+    "HwSchMode": [
+      "2|DWord"
+    ],
+    "HiberbootEnabled": [
+      "0|DWord"
+    ],
+    "FeatureSettingsOverride": [
+      "33554435|DWord"
+    ],
+    "HideSCALocation": [
+      "1|DWord"
+    ],
+    "MouseSpeed": [
+      "\"0\"|String"
+    ],
+    "MouseThreshold1": [
+      "\"0\"|String"
+    ],
+    "MouseThreshold2": [
+      "\"0\"|String"
+    ],
+    "GameDVR_Enabled": [
+      "0|DWord"
+    ],
+    "AppCaptureEnabled": [
+      "0|DWord"
+    ]
+  }
+}

@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
+using Sevenzin.Diagnostics;
 
 namespace Sevenzin.Wpf.Views;
 
@@ -52,15 +53,18 @@ public partial class ConfiguracoesView : UserControl
         {
             new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(null));
             AtualizarStatusAssistente();
+            Toasts.Mostrar(this, TipoToast.Sucesso, "Endpoint removido", "O envio do assistente volta a ficar desligado.");
             return;
         }
         if (!Sevenzin.Diagnostics.Assistente.UrlEndpointValida(url))
         {
+            Toasts.Mostrar(this, TipoToast.Erro, "URL inválida", "Use uma URL HTTPS absoluta.");
             MessageBox.Show("Use uma URL HTTPS absoluta.", "URL inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(url));
         AtualizarStatusAssistente();
+        Toasts.Mostrar(this, TipoToast.Sucesso, "Endpoint salvo", "O envio do assistente é explícito, por mensagem.");
     }
 
     void AssistenteLimpar_Click(object sender, RoutedEventArgs e)
@@ -85,15 +89,18 @@ public partial class ConfiguracoesView : UserControl
         {
             new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(null));
             AtualizarStatusWebhook();
+            Toasts.Mostrar(this, TipoToast.Sucesso, "Webhook removido", "O envio de capturas volta a ficar desligado.");
             return;
         }
         if (!Sevenzin.Diagnostics.EnvioCaptura.UrlWebhookValida(url))
         {
+            Toasts.Mostrar(this, TipoToast.Erro, "URL inválida", "Use uma URL HTTPS absoluta (ex.: https://hooks.exemplo.com/...).");
             MessageBox.Show("Use uma URL HTTPS absoluta (ex.: https://hooks.exemplo.com/...).", "URL inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(url));
         AtualizarStatusWebhook();
+        Toasts.Mostrar(this, TipoToast.Sucesso, "Webhook salvo", "O botão Enviar fica disponível na tela Capturas (cada envio pede confirmação).");
     }
 
     void WebhookLimpar_Click(object sender, RoutedEventArgs e)
@@ -133,10 +140,16 @@ public partial class ConfiguracoesView : UserControl
             using var k = Registry.CurrentUser.CreateSubKey(RunPath, writable: true);
             if (SwInicio.IsChecked == true) k.SetValue(RunName, $"\"{Environment.ProcessPath}\"", RegistryValueKind.String);
             else k.DeleteValue(RunName, throwOnMissingValue: false);
+            bool confirmado = StartupLigado() == SwInicio.IsChecked; // releitura do estado real
+            Toasts.Mostrar(this, confirmado ? TipoToast.Sucesso : TipoToast.Aviso,
+                confirmado ? "Inicialização salva" : "Alteração não confirmada",
+                confirmado ? "Iniciar com o Windows " + (SwInicio.IsChecked == true ? "ligado." : "desligado.") : "Releitura do registro divergiu — verifique permissões.",
+                SwInicio.IsChecked == true ? () => { SwInicio.IsChecked = false; Inicio_Click(sender, e); } : null);
         }
         catch (Exception ex)
         {
             SwInicio.IsChecked = StartupLigado();
+            Toasts.Mostrar(this, TipoToast.Erro, "Falha ao salvar", ex.Message);
             MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }

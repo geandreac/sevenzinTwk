@@ -166,19 +166,29 @@ public partial class AjustesView : UserControl
             if (sw.IsChecked == true)
             {
                 _motor.Aplicar(t);
+                bool confirmado = _motor.Aplicado(t); // lê o estado real antes de declarar sucesso
                 NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' aplicado", $"Novo valor: {(t.Tipo == TipoValor.String ? t.ValorTexto : t.ValorOtimizado.ToString())}. Desfazer restaura o anterior.");
+                Toasts.Mostrar(this, confirmado ? TipoToast.Sucesso : TipoToast.Aviso, confirmado ? "Ajuste aplicado" : "Ajuste não confirmado",
+                    confirmado ? t.Nome : $"Não foi possível confirmar '{t.Nome}' no registro — verifique permissões.",
+                    confirmado ? (Action?)(() => { if (_motor.Desfazer(t)) AtualizarContador(); }) : null);
             }
             else if (!_motor.Desfazer(t)) sw.IsChecked = true;
-            else NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
+            else
+            {
+                NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Ajuste desfeito", t.Nome);
+            }
         }
         catch (UnauthorizedAccessException)
         {
             sw.IsChecked = _motor.Aplicado(t);
+            Toasts.Mostrar(this, TipoToast.Erro, "Permissão negada", "Execute o Sevenzin como administrador para aplicar este ajuste.");
             MessageBox.Show("Esta otimização exige executar o Sevenzin como administrador.", "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
             sw.IsChecked = _motor.Aplicado(t);
+            Toasts.Mostrar(this, TipoToast.Erro, "Falha no ajuste", ex.Message);
             MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         AtualizarContador();

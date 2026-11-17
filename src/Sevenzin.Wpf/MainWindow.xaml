@@ -1,6 +1,7 @@
 <Window x:Class="Sevenzin.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Sevenzin.Wpf"
         Title="Sevenzin Program" Height="760" Width="1280" MinWidth="980" MinHeight="620"
         Icon="pack://application:,,,/Assets/sevenzin.ico"
         WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterScreen"
@@ -111,5 +112,8 @@
             </DockPanel>
             <ContentControl x:Name="Host" Grid.Row="1"/>
         </Grid>
+
+        <!-- Toasts: overlay no canto superior direito, sobre tudo, sem deslocar o layout -->
+        <local:ToastHost x:Name="ToastHostPanel" Grid.ColumnSpan="2" Panel.ZIndex="100"/>
     </Grid>
 </Window>

@@ -1,0 +1,276 @@
+{
+  "ConsentPromptBehaviorAdmin": [
+    "0|DWord"
+  ],
+  "ConsentPromptBehaviorUser": [
+    "0|DWord"
+  ],
+  "DefaultConsent": [
+    "1|DWord"
+  ],
+  "FilterAdministratorToken": [
+    "0|DWord"
+  ],
+  "PromptOnSecureDesktop": [
+    "0|DWord"
+  ],
+  "ValidateAdminCodeSignatures": [
+    "0|DWord"
+  ],
+  "EnableUIADesktopToggle": [
+    "0|DWord"
+  ],
+  "EnableSecureUIAPaths": [
+    "0|DWord"
+  ],
+  "CpuPriorityClass": [
+    "2|DWord",
+    "4|DWord",
+    "_0002.Value|DWord",
+    "num2|DWord"
+  ],
+  "IoPriority": [
+    "_0008.Value|DWord",
+    "num|DWord"
+  ],
+  "DevicePriority": [
+    "_0002|DWord",
+    "num|DWord",
+    "num3.Value|DWord"
+  ],
+  "ThreadPriority": [
+    "31|DWord"
+  ],
+  "KernelThreadPriorityFloor": [
+    "15|DWord"
+  ],
+  "DisableGMMPowerGating": [
+    "1|DWord"
+  ],
+  "DisableSAMUPowerGating": [
+    "1|DWord"
+  ],
+  "DisableVCNPowerGating": [
+    "1|DWord"
+  ],
+  "DisableDrmdmaPowerGating": [
+    "1|DWord"
+  ],
+  "EnableUlps": [
+    "0|DWord"
+  ],
+  "AsicOnLowPower": [
+    "0|DWord"
+  ],
+  "PP_GPUPowerDownEnabled": [
+    "0|DWord"
+  ],
+  "PP_SclkDeepSleepDisable": [
+    "1|DWord"
+  ],
+  "PP_DisablePowerContainment": [
+    "1|DWord"
+  ],
+  "HibernateEnabled": [
+    "0|DWord"
+  ],
+  "DisableStartupSound": [
+    "1|DWord"
+  ],
+  "FontSmoothing": [
+    "\"0\"|String",
+    "\"2\"|String"
+  ],
+  "MinAnimate": [
+    "\"0\"|DWord",
+    "\"0\"|String",
+    "\"1\"|String"
+  ],
+  "VisualFXSetting": [
+    "\"2\"|DWord",
+    "3|DWord"
+  ],
+  "UserPreferencesMask": "N/A",
+  "AppsUseLightTheme": [
+    "0|DWord",
+    "1|DWord"
+  ],
+  "SystemUsesLightTheme": [
+    "0|DWord",
+    "1|DWord"
+  ],
+  "ShowTaskViewButton": [
+    "0|DWord"
+  ],
+  "ShowCortanaButton": [
+    "0|DWord"
+  ],
+  "ShowCopilotButton": [
+    "0|DWord"
+  ],
+  "BingSearchEnabled": [
+    "0|DWord"
+  ],
+  "AllowTelemetry": [
+    "0|DWord"
+  ],
+  "DontSendAdditionalData": [
+    "1|DWord"
+  ],
+  "EnableLMHOSTS": [
+    "0|DWord"
+  ],
+  "MouseHoverTime": [
+    "\"0\"|String"
+  ],
+  "MouseSensitivity": [
+    "\"10\"|String"
+  ],
+  "UserWriteCacheSetting": [
+    "1|DWord",
+    "num2|DWord"
+  ],
+  "EnableVirtualizationBasedSecurity": [
+    "0|DWord",
+    "1|DWord"
+  ],
+  "MitigationOptions": [
+    "1|DWord",
+    "_0002_2006_2001.m__0008_2002|Binary"
+  ],
+  "FeatureSettingsOverride": [
+    "33554435|DWord"
+  ],
+  "DpcWatchdogPeriod": [
+    "0|DWord"
+  ],
+  "DpcTimeout": [
+    "0|DWord"
+  ],
+  "MSISupported": [
+    "_0002|DWord",
+    "num|DWord",
+    "num.Value|DWord"
+  ],
+  "MSIIRQ": [
+    "1|DWord"
+  ],
+  "GlobalTimerResolutionRequests": [
+    "1|DWord"
+  ],
+  "TaskbarAnimations": [
+    "0|DWord",
+    "1|DWord"
+  ],
+  "EnableVirtualization": [
+    "0|DWord"
+  ],
+  "ConsentPromptBehavior": "N/A",
+  "EnableLUA": [
+    "0|DWord"
+  ],
+  "DisableRealtimeMonitoring": "N/A",
+  "DisableAntiSpyware": "N/A",
+  "EnableSmartScreen": "N/A",
+  "HwSchMode": [
+    "2|DWord"
+  ],
+  "HiberbootEnabled": [
+    "0|DWord"
+  ],
+  "SystemResponsiveness": [
+    "10|DWord"
+  ],
+  "Win32PrioritySeparation": [
+    "(int)obj._0002|DWord"
+  ],
+  "NetworkThrottlingIndex": [
+    "10|DWord"
+  ],
+  "RMPriorityThrottleDelay": [
+    "0|DWord"
+  ],
+  "DisablePagingExecutive": "N/A",
+  "LargeSystemCache": "N/A",
+  "TdrDelay": [
+    "8|DWord"
+  ],
+  "DisableDynamicPstate": [
+    "1|DWord"
+  ],
+  "ChillEnabled": [
+    "1|DWord"
+  ],
+  "DvrEnabled": [
+    "1|DWord"
+  ],
+  "GPU Priority": [
+    "8|DWord"
+  ],
+  "Priority": [
+    "2|DWord"
+  ],
+  "SFIO Priority": [
+    "\"Normal\"|String"
+  ],
+  "Scheduling Category": [
+    "\"Medium\"|String"
+  ],
+  "MenuShowDelay": [
+    "\"0\"|String"
+  ],
+  "DragFullWindows": [
+    "\"0\"|String",
+    "\"1\"|String"
+  ],
+  "EnableTransparency": [
+    "0|DWord"
+  ],
+  "EnableAeroPeek": [
+    "0|DWord",
+    "1|DWord"
+  ],
+  "ToastEnabled": [
+    "0|DWord",
+    "1|DWord"
+  ],
+  "UseOLEDTaskbarTransparency": [
+    "0|DWord"
+  ],
+  "GameDVR_Enabled": [
+    "0|DWord"
+  ],
+  "AppCaptureEnabled": [
+    "0|DWord"
+  ],
+  "MouseSpeed": [
+    "\"0\"|String"
+  ],
+  "MouseThreshold1": [
+    "\"0\"|String"
+  ],
+  "MouseThreshold2": [
+    "\"0\"|String"
+  ],
+  "HideSCALocation": [
+    "1|DWord"
+  ],
+  "Start": [
+    "2|DWord",
+    "3|DWord",
+    "4|DWord"
+  ],
+  "NoAutoUpdate": "N/A",
+  "FeatureSettings": [
+    "0|DWord"
+  ],
+  "FeatureSettingsOverrideMask": [
+    "33554435|DWord"
+  ],
+  "MitigationAuditOptions": [
+    "_0002_2006_2001.m__0008_2002|Binary"
+  ],
+  "Affinity": [
+    "0|DWord"
+  ]
+}

@@ -150,6 +150,7 @@ public partial class WindowsView : UserControl
         var r = await System.Threading.Tasks.Task.Run(() => acao(CancellationToken.None));
         status.Foreground = r.Ok ? Secondary : (Brush)Application.Current.Resources["DangerBrush"];
         status.Text = r.Ok ? $"✔ {nome}: {r.Detalhe}" : $"Falha: {r.Detalhe}";
+        Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? $"{nome} desinstalado" : $"Falha ao desinstalar {nome}", r.Detalhe);
     }
 
     async System.Threading.Tasks.Task AnalisarIsoAsync(TextBlock status, Button botao)
@@ -196,6 +197,7 @@ public partial class WindowsView : UserControl
         if (MessageBox.Show(confirmar, "Plano de energia", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK) return;
         var r = acao();
         AtualizarEnergia();
+        Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Plano de energia aplicado" : "Falha no plano de energia", r.Mensagem);
         MessageBox.Show(r.Mensagem, "Plano de energia", MessageBoxButton.OK, r.Ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
     }
 }

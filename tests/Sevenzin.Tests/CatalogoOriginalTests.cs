@@ -45,6 +45,37 @@ public class CatalogoOriginalTests
     }
 
     [Fact]
+    public void Mitigacoes_usam_o_valor_literal_do_original()
+    {
+        Assert.Equal(33554435, T("mitigacoes-off").ValorOtimizado); // 0x2000003 do original
+    }
+
+    [Fact]
+    public void Grupo_uac_completo_reproduz_os_valores_literais()
+    {
+        Assert.Equal(0, T("uac-consent-admin").ValorOtimizado);
+        Assert.Equal(0, T("uac-consent-user").ValorOtimizado);
+        Assert.Equal(1, T("uac-default-consent").ValorOtimizado); // DefaultConsent=1 é o literal
+        Assert.Equal(0, T("uac-filter-token").ValorOtimizado);
+        Assert.Equal(0, T("uac-secure-desktop").ValorOtimizado);
+        Assert.Equal(0, T("uac-validate-signatures").ValorOtimizado);
+        Assert.All(new[] { "uac-consent-admin", "uac-consent-user", "uac-default-consent", "uac-filter-token", "uac-secure-desktop", "uac-validate-signatures", "uac-uiadesktop", "uac-secureuia" },
+            id => Assert.True(T(id).ExigeConfirmacao)); // todo o grupo pede confirmação
+    }
+
+    [Fact]
+    public void Grupo_amd_power_gating_reproduz_os_valores_literais()
+    {
+        foreach (var id in new[] { "amd-gmm-powergate-off", "amd-samu-powergate-off", "amd-vcn-powergate-off", "amd-drmdma-powergate-off", "amd-sclk-deepsleep-off", "amd-power-containment-off" })
+            Assert.Equal(1, T(id).ValorOtimizado);
+        foreach (var id in new[] { "amd-ulps-off", "amd-asic-lowpower-off", "amd-gpu-powerdown-off" })
+            Assert.Equal(0, T(id).ValorOtimizado);
+        Assert.Equal(0, T("tema-escuro").ValorOtimizado);
+        Assert.Equal(1, T("timer-global-1ms").ValorOtimizado);
+        Assert.True(T("timer-global-1ms").ExigeConfirmacao);
+    }
+
+    [Fact]
     public void Itens_de_maquina_e_de_usuario_estao_na_colmeia_correta()
     {
         // HKLM (admin) para GPU/rede/memória; HKCU (sem admin) para visual/cosmético.

@@ -87,6 +87,7 @@ public partial class InstaladoresView : UserControl
                 executar.Visibility = Visibility.Visible;
                 _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Concluido, "assinatura verificada", null));
                 NotificacoesStore.Padrao.Adicionar("Instaladores", $"'{u.Nome}' verificado", "Assinatura confere — pronto para executar.");
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Download verificado", $"{u.Nome} — assinatura confere.");
             }
             else
             {
@@ -94,6 +95,7 @@ public partial class InstaladoresView : UserControl
                 status.Foreground = Danger;
                 _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, Motivo(r), null));
                 NotificacoesStore.Padrao.Adicionar("Instaladores", $"'{u.Nome}' reprovado na verificação", Motivo(r));
+                Toasts.Mostrar(this, TipoToast.Erro, "Verificação falhou", $"{u.Nome}: {Motivo(r)}. O arquivo foi descartado.");
                 try { File.Delete(destino); } catch { }
             }
         }
@@ -103,6 +105,7 @@ public partial class InstaladoresView : UserControl
             status.Foreground = Danger;
             _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, ex.Message, null));
             NotificacoesStore.Padrao.Adicionar("Instaladores", $"Falha no download de '{u.Nome}'", ex.Message);
+            Toasts.Mostrar(this, TipoToast.Erro, "Falha no download", ex.Message);
         }
         finally { baixar.IsEnabled = true; AtualizarFila(); }
     }

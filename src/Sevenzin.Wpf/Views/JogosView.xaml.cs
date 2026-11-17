@@ -289,9 +289,13 @@ public partial class JogosView : UserControl
             if (j.TimerAltaResolucao) extras.Add("timer 1 ms (revertido ao fechar)");
             var textoExtras = extras.Count > 0 ? $" · {string.Join(" + ", extras)}" : "";
             StatusLbl.Text = $"'{j.Nome}' aplicado (prioridade {NomePrio(j.Prioridade)}, afinidade {NomeAfinidade(j)}{textoExtras}) — reversível.";
+            Toasts.Mostrar(this, TipoToast.Sucesso, "Perfil aplicado", j.Nome);
         }
         else
+        {
             StatusLbl.Text = $"Não foi possível aplicar em '{j.Nome}' (pode exigir administrador ou ser bloqueado por anti-cheat).";
+            Toasts.Mostrar(this, TipoToast.Erro, "Falha ao aplicar perfil", j.Nome);
+        }
         Montar();
     }
 
