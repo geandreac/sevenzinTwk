@@ -179,19 +179,7 @@ public partial class MainWindow : Window
             "benchmark" => new BenchmarkView(),
             _ => EmBreve(Itens.First(i => i.Tag == tag).Rotulo),
         };
-        AnimarEntrada(Host);
-    }
-
-    // Transição suave ao trocar de tela: fade + leve slide para cima. Respeita "reduzir movimento".
-    static void AnimarEntrada(UIElement el)
-    {
-        if (!SystemParameters.ClientAreaAnimation) { el.Opacity = 1; el.RenderTransform = null; return; }
-        el.Opacity = 0;
-        var tt = new TranslateTransform(0, 10);
-        el.RenderTransform = tt;
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        el.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
-        tt.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(280)) { EasingFunction = ease });
+        Movimento.Entrar(Host); // troca de tela: só o corpo entra (fade + 8px); sidebar e barra ficam paradas
     }
 
     static UIElement EmBreve(string rotulo)

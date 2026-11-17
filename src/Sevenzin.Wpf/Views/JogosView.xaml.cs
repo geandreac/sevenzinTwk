@@ -86,7 +86,7 @@ public partial class JogosView : UserControl
         sp.Children.Add(new TextBlock { Text = "JOGOS DETECTADOS (STEAM/EPIC)", Style = (Style)Application.Current.Resources["SectionLabel"] });
         sp.Children.Add(new TextBlock
         {
-            Text = "Só leitura: o Sevenzin procura instalações nos manifestos locais (nada é executado). Adicionar cria o perfil — aplicar continua sendo manual ou pelo \"Aplicar ao abrir\".",
+            Text = "Só leitura: o SevenzinTwks procura instalações nos manifestos locais (nada é executado). Adicionar cria o perfil — aplicar continua sendo manual ou pelo \"Aplicar ao abrir\".",
             Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 2, 0, 8), TextWrapping = TextWrapping.Wrap,
         });
 
@@ -219,12 +219,18 @@ public partial class JogosView : UserControl
 
     // ---- Modal "OTIMIZAÇÕES DO JOGO": toggles em grade 2 colunas + executável + Reverter/Aplicar ----
 
-    void AbrirPerfil(string exe) { _perfilAberto = exe; RenderPerfil(); }
+    // Só ABRIR e FECHAR animam: RenderPerfil é chamado a cada toggle e não pode "piscar" o modal.
+    void AbrirPerfil(string exe)
+    {
+        _perfilAberto = exe;
+        RenderPerfil();
+        if (_overlay is { } o) Movimento.AbrirModal(o.Children[0], o.Children[1]);
+    }
 
     void FecharPerfil()
     {
         _perfilAberto = null;
-        if (_overlay is not null) { Raiz.Children.Remove(_overlay); _overlay = null; }
+        if (_overlay is { } o) { _overlay = null; Movimento.Sair(o, () => Raiz.Children.Remove(o)); }
     }
 
     void RenderPerfil()

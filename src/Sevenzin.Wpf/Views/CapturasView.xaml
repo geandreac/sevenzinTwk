@@ -26,7 +26,7 @@
                 <Button Style="{StaticResource SecondaryButton}" Content="Abrir pasta" Click="AbrirPasta_Click"/>
             </StackPanel>
             <TextBlock x:Name="StatusLbl" Foreground="{StaticResource TextMutedBrush}" Margin="2,10,0,0" TextWrapping="Wrap"
-                       Text="Escolha o modo e clique em Capturar. A janela do Sevenzin sai da frente por um instante."/>
+                       Text="Escolha o modo e clique em Capturar. A janela do SevenzinTwks sai da frente por um instante."/>
         </StackPanel>
 
         <Grid Grid.Row="2" Margin="0,0,0,16">

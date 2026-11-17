@@ -33,6 +33,30 @@ Arquivos:
    setx SEVENZIN_SUPABASE_ANON "a_chave_anon_publica"
    ```
 
+## Redefinição de senha por código (obrigatório configurar o template)
+
+O app **não usa link** de recuperação (não há navegador no meio): ele pede um **código** de 6 dígitos por e-mail e
+o usuário digita na própria tela "Esqueci minha senha" (e-mail → código + nova senha → pronto). Fluxo no servidor:
+`POST /auth/v1/recover` → `POST /auth/v1/verify` (`type=recovery`) → `PUT /auth/v1/user`.
+
+1. **Authentication → Emails → Reset Password**: troque o conteúdo para usar `{{ .Token }}` (o código), não o link:
+   ```html
+   <h2>Redefinir sua senha do SevenzinTwks</h2>
+   <p>Use este código no app para criar uma nova senha:</p>
+   <p style="font-size:28px;font-weight:700;letter-spacing:6px">{{ .Token }}</p>
+   <p>O código expira em pouco tempo. Se você não pediu, ignore este e-mail — sua senha continua a mesma.</p>
+   ```
+   Assunto sugerido: `Seu código para redefinir a senha — SevenzinTwks`.
+2. **SMTP próprio (Authentication → SMTP Settings)**: o SMTP padrão do Supabase só entrega para e-mails da equipe do
+   projeto e tem limite baixo de envios por hora. Para clientes reais, configure um SMTP (ex.: Resend, Brevo, SES).
+3. **Authentication → Providers → Email → Email OTP Expiration**: o padrão é 3600 s; reduza se quiser (ex.: 900 s).
+
+## Administrador único (Geandre)
+
+Só existe **um** administrador. A função `criar-usuario` ignora qualquer `papel` enviado e sempre cria **usuário**
+(acesso completo ao otimizador). Depois de alterar a função, faça o deploy de novo:
+`supabase functions deploy criar-usuario`.
+
 ## Como o app vai usar (próxima etapa — eu implemento após o projeto existir)
 
 Troca da autenticação local pelo Supabase, lendo URL/anon das env vars acima:

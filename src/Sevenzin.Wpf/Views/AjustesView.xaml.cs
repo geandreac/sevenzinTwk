@@ -216,7 +216,7 @@ public partial class AjustesView : UserControl
         if (t.ExigeAdmin && !Elevacao.EhAdmin())
         {
             sw.IsChecked = _motor.Aplicado(t); // mantém o estado real
-            if (MessageBox.Show("Esta otimização mexe no sistema (HKLM) e exige administrador.\n\nReabrir o Sevenzin como administrador?",
+            if (MessageBox.Show("Esta otimização mexe no sistema (HKLM) e exige administrador.\n\nReabrir o SevenzinTwks como administrador?",
                     "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
                 Elevacao.ReabrirComoAdmin();
             return;
@@ -251,8 +251,8 @@ public partial class AjustesView : UserControl
         catch (UnauthorizedAccessException)
         {
             sw.IsChecked = _motor.Aplicado(t);
-            Toasts.Mostrar(this, TipoToast.Erro, "Permissão negada", "Execute o Sevenzin como administrador para aplicar este ajuste.");
-            MessageBox.Show("Esta otimização exige executar o Sevenzin como administrador.", "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Toasts.Mostrar(this, TipoToast.Erro, "Permissão negada", "Execute o SevenzinTwks como administrador para aplicar este ajuste.");
+            MessageBox.Show("Esta otimização exige executar o SevenzinTwks como administrador.", "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {

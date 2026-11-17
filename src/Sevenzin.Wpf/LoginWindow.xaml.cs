@@ -24,7 +24,6 @@ public partial class LoginWindow : Window
 
     readonly bool _bootstrap;
     string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA
-    bool _modoCadastro;
     ClienteSupabase? _clienteMfa;  // sessão Supabase aguardando o código MFA
     string? _fatorMfa, _emailMfa, _senhaMfa;
 
@@ -60,7 +59,11 @@ public partial class LoginWindow : Window
         }
 
         if (ModoAdmin && !_bootstrap) Subtitulo.Text = "Acesso de administrador";
+        if (ModoAdmin || _bootstrap) SemAcessoTxt.Visibility = Visibility.Collapsed;
 
+        _timerReenvio.Tick += (_, _) => AtualizarReenvio();
+        // Entrada em dois tempos: formulário primeiro, painel da marca 80ms depois (leitura da esquerda p/ direita).
+        Loaded += (_, _) => { Movimento.Entrar(Formulario, 12, 260); Movimento.Entrar(PainelMarca, 12, 260, 80); };
         // Com e-mail e senha já preenchidos (lembrados), o foco vai direto no botão Entrar.
         Loaded += (_, _) => (Senha.Password.Length > 0 ? (Control)EntrarBtn : Email.Text.Length > 0 ? Senha : Email).Focus();
     }
@@ -83,7 +86,6 @@ public partial class LoginWindow : Window
         var email = Email.Text;
         var senha = SenhaAtual();
         if (_bootstrap) { CriarPrimeiroAdmin(email, senha); return; }
-        if (_modoCadastro) { CriarContaComConvite(email, senha); return; }
 
         // Modo Supabase: autentica no backend; o papel (admin/usuário) vem da tabela perfis (RLS).
         if (Servicos.UsaSupabase)
@@ -195,29 +197,6 @@ public partial class LoginWindow : Window
         DialogResult = true;
     }
 
-    void CriarConta_Click(object sender, RoutedEventArgs e)
-    {
-        _modoCadastro = !_modoCadastro;
-        CadastroBloco.Visibility = _modoCadastro ? Visibility.Visible : Visibility.Collapsed;
-        EntrarBtn.Content = _modoCadastro ? "Criar conta" : "Entrar";
-        Subtitulo.Text = _modoCadastro ? "Crie sua conta com o código de convite" : "Acesse sua conta";
-        Mensagem.Visibility = Visibility.Collapsed;
-    }
-
-    void CriarContaComConvite(string email, string senha)
-    {
-        var erros = ValidacaoCredenciais.ValidarEmail(email).Concat(ValidacaoCredenciais.ValidarSenha(senha, email, NomeCadastro.Text)).ToList();
-        if (!IdentidadeAdmin.CodigoConviteValido(Convite.Text)) erros.Add("Informe o código de convite de 12 caracteres (peça ao administrador).");
-        if (erros.Count > 0) { Erro("• " + string.Join("\n• ", erros.Distinct())); return; }
-        try
-        {
-            var u = Servicos.Contas.RegistrarComConvite(email, senha, Convite.Text, NomeCadastro.Text);
-            Servicos.Sessao.Abrir(u);
-            DialogResult = true;
-        }
-        catch (Exception ex) { Erro(ex.Message); }
-    }
-
     void CriarPrimeiroAdmin(string email, string senha)    {
         // ADMINISTRADOR ÚNICO: o bootstrap só cria o administrador se o e-mail for EXATAMENTE a
         // identidade provisionada. Sem identidade configurada, nega e instrui — nunca concede ADM.
@@ -249,24 +228,126 @@ public partial class LoginWindow : Window
         catch (Exception ex) { Erro(ex.Message); }
     }
 
-    async void Esqueci_Click(object sender, RoutedEventArgs e)
+    // ---- Redefinir senha por código de e-mail (Supabase): e-mail → código + nova senha → pronto ----
+
+    readonly System.Windows.Threading.DispatcherTimer _timerReenvio = new() { Interval = TimeSpan.FromSeconds(1) };
+    DateTime _podeReenviarEm;
+    string _emailRedef = "";
+
+    void Esqueci_Click(object sender, RoutedEventArgs e)
     {
-        if (Servicos.UsaSupabase)
+        Mensagem.Visibility = Visibility.Collapsed;
+        LoginCampos.Visibility = Visibility.Collapsed;
+        RedefinirBloco.Visibility = Visibility.Visible;
+        Subtitulo.Text = "Redefinir senha";
+        bool online = Servicos.UsaSupabase;
+        RedefLocal.Visibility = online ? Visibility.Collapsed : Visibility.Visible;
+        MostrarEtapa(online ? EtapaEmail : null);
+        if (online)
         {
-            var email = Email.Text.Trim();
-            if (email.Length == 0) { Erro("Digite seu e-mail para receber o link de redefinição."); return; }
-            var ok = await new ClienteSupabase().ResetSenhaAsync(email);
-            MessageBox.Show(this, ok
-                ? $"Se houver uma conta com {email}, enviamos um link para redefinir a senha. Verifique seu e-mail."
-                : "Não foi possível solicitar a redefinição agora. Tente de novo em instantes.",
-                "Esqueci minha senha", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
+            RedefEmail.Text = Email.Text.Trim();
+            (RedefEmail.Text.Length > 0 ? (Control)EnviarCodigoBtn : RedefEmail).Focus();
         }
-        MessageBox.Show(this,
-            "Este é um app local, sem servidor: não há recuperação por e-mail.\n\n" +
-            "Para redefinir a senha, peça a outro administrador (tela Admin) ou refaça o seed " +
-            "pelas variáveis de ambiente SEVENZIN_ADMIN_EMAIL / SEVENZIN_ADMIN_SENHA.",
-            "Esqueci minha senha", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    void MostrarEtapa(StackPanel? etapa)
+    {
+        foreach (var p in new[] { EtapaEmail, EtapaCodigo, EtapaOk }) p.Visibility = p == etapa ? Visibility.Visible : Visibility.Collapsed;
+        VoltarLinha.Visibility = etapa == EtapaOk ? Visibility.Collapsed : Visibility.Visible;
+        Mensagem.Visibility = Visibility.Collapsed;
+        Movimento.Entrar(etapa ?? (UIElement)RedefLocal); // troca de etapa: só o corpo entra, o cabeçalho fica
+    }
+
+    void RedefCampo_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        if (EtapaEmail.Visibility == Visibility.Visible) EnviarCodigo_Click(sender, e);
+        else if (EtapaCodigo.Visibility == Visibility.Visible) SalvarSenha_Click(sender, e);
+    }
+
+    async void EnviarCodigo_Click(object sender, RoutedEventArgs e)
+    {
+        var email = RedefEmail.Text.Trim();
+        var erros = ValidacaoCredenciais.ValidarEmail(email);
+        if (erros.Count > 0) { Erro(erros[0]); RedefEmail.Focus(); return; }
+        if (await PedirCodigo(email, EnviarCodigoBtn, "Enviar código"))
+        {
+            _emailRedef = email;
+            RedefInfo.Text = $"Se existir uma conta com {email}, enviamos um código. Confira a caixa de entrada e o spam.";
+            RedefCodigo.Clear(); RedefSenha.Clear(); RedefConfirmar.Clear();
+            MostrarEtapa(EtapaCodigo);
+            RedefCodigo.Focus();
+        }
+    }
+
+    /// <summary>Pede o código ao Supabase e inicia a espera para reenviar. Mostra o erro no rodapé se falhar.</summary>
+    async Task<bool> PedirCodigo(string email, Button? botao, string rotulo)
+    {
+        if (botao is not null) { botao.IsEnabled = false; botao.Content = "Enviando…"; }
+        var r = await new ClienteSupabase().ResetSenhaAsync(email);
+        if (botao is not null) { botao.IsEnabled = true; botao.Content = rotulo; }
+        if (!r.Ok) { Erro(r.Mensagem ?? "Não foi possível enviar o código."); return false; }
+        _podeReenviarEm = DateTime.UtcNow.AddSeconds(RecuperacaoSenha.EsperaReenvioSegundos);
+        AtualizarReenvio();
+        _timerReenvio.Start();
+        return true;
+    }
+
+    void AtualizarReenvio()
+    {
+        var falta = (int)Math.Ceiling((_podeReenviarEm - DateTime.UtcNow).TotalSeconds);
+        ReenviarLink.IsEnabled = falta <= 0;
+        ReenviarLink.Foreground = (System.Windows.Media.Brush)FindResource(falta > 0 ? "TextMutedBrush" : "Brand400Brush"); // desabilitado não parece clicável
+        ReenviarTxt.Text = falta > 0 ? $"Reenviar código em {falta}s" : "Reenviar código";
+        if (falta <= 0) _timerReenvio.Stop();
+    }
+
+    async void Reenviar_Click(object sender, RoutedEventArgs e)
+    {
+        if (await PedirCodigo(_emailRedef, null, ""))
+        {
+            Mensagem.Foreground = (System.Windows.Media.Brush)FindResource("SuccessBrush");
+            Mensagem.Text = "Novo código enviado. Use o código do e-mail mais recente.";
+            Mensagem.Visibility = Visibility.Visible;
+        }
+    }
+
+    void OutroEmail_Click(object sender, RoutedEventArgs e)
+    {
+        MostrarEtapa(EtapaEmail);
+        RedefEmail.Focus();
+        RedefEmail.SelectAll();
+    }
+
+    async void SalvarSenha_Click(object sender, RoutedEventArgs e)
+    {
+        var erros = RecuperacaoSenha.Validar(_emailRedef, RedefCodigo.Text, RedefSenha.Password, RedefConfirmar.Password);
+        if (erros.Count > 0) { Erro("• " + string.Join("\n• ", erros)); return; }
+
+        SalvarSenhaBtn.IsEnabled = false; SalvarSenhaBtn.Content = "Salvando…";
+        var r = await new ClienteSupabase().RedefinirSenhaComCodigoAsync(_emailRedef, RedefCodigo.Text, RedefSenha.Password);
+        SalvarSenhaBtn.IsEnabled = true; SalvarSenhaBtn.Content = "Salvar nova senha";
+        if (!r.Ok) { Erro(r.Mensagem ?? "Não foi possível salvar a nova senha."); return; }
+
+        // A senha "lembrada" (DPAPI) ficou velha: apaga para não preencher a antiga no próximo login.
+        try { if (File.Exists(ArqSenha)) File.Delete(ArqSenha); } catch { }
+        RedefSenha.Clear(); RedefConfirmar.Clear(); RedefCodigo.Clear();
+        _timerReenvio.Stop();
+        Subtitulo.Text = "Tudo certo";
+        MostrarEtapa(EtapaOk);
+    }
+
+    void VoltarLogin_Click(object sender, RoutedEventArgs e)
+    {
+        _timerReenvio.Stop();
+        RedefinirBloco.Visibility = Visibility.Collapsed;
+        LoginCampos.Visibility = Visibility.Visible;
+        Movimento.Entrar(LoginCampos);
+        Subtitulo.Text = ModoAdmin ? "Acesso de administrador" : "Acesse sua conta";
+        Mensagem.Visibility = Visibility.Collapsed;
+        if (_emailRedef.Length > 0) Email.Text = _emailRedef;
+        if (EtapaOk.Visibility == Visibility.Visible) { Senha.Clear(); SenhaVisivel.Clear(); }
+        (Email.Text.Length > 0 ? (Control)Senha : Email).Focus();
     }
 
     /// <summary>Com "Lembrar de mim" marcado, guarda o e-mail e a senha (cifrada por DPAPI) para preencher o próximo
@@ -305,6 +386,7 @@ public partial class LoginWindow : Window
 
     void Erro(string msg)
     {
+        Mensagem.Foreground = (System.Windows.Media.Brush)FindResource("DangerBrush"); // pode ter ficado verde (aviso de reenvio)
         Mensagem.Text = msg;
         Mensagem.Visibility = Visibility.Visible;
     }

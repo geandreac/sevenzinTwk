@@ -322,7 +322,7 @@ public static class CatalogoTweaks
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Services\NetBT\Parameters", "EnableLMHOSTS", 0, "Baixo — legado de rede", true),
 
         // ── Timer global de alta resolução (valor literal do original) ──
-        new Tweak("timer-global-1ms", "Timer global de alta resolução", "GlobalTimerResolutionRequests=1 (valor do original) — o sistema atende pedidos de resolução de 1 ms. ATENÇÃO: aumenta o consumo de energia (o Sevenzin prefere o timer opt-in por jogo, que é temporário).", "Desempenho",
+        new Tweak("timer-global-1ms", "Timer global de alta resolução", "GlobalTimerResolutionRequests=1 (valor do original) — o sistema atende pedidos de resolução de 1 ms. ATENÇÃO: aumenta o consumo de energia (o SevenzinTwks prefere o timer opt-in por jogo, que é temporário).", "Desempenho",
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "GlobalTimerResolutionRequests", 1, "ALTO — global e permanente até desfazer; aumenta consumo de energia", true, true),
     };
 }

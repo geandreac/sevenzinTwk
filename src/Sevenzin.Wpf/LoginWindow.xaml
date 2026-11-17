@@ -12,14 +12,6 @@
 
     <Window.Resources>
         <!-- Gradientes do Figma (01 · Login) -->
-        <LinearGradientBrush x:Key="GradLogo" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#38BDF8" Offset="0"/>
-            <GradientStop Color="#1E6FE0" Offset="1"/>
-        </LinearGradientBrush>
-        <LinearGradientBrush x:Key="GradTitulo" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#FFFFFF" Offset="0"/>
-            <GradientStop Color="#A9B6C8" Offset="1"/>
-        </LinearGradientBrush>
         <LinearGradientBrush x:Key="GradBotao" StartPoint="0,0.5" EndPoint="1,0.5">
             <GradientStop Color="#1E6FE0" Offset="0"/>
             <GradientStop Color="#1656B8" Offset="1"/>
@@ -168,14 +160,27 @@
         </StackPanel>
 
         <!-- Formulário (coluna esquerda, 400px centrado) -->
-        <StackPanel Grid.Column="0" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <Viewbox Height="68" HorizontalAlignment="Center">
-                <Path Data="{StaticResource ic_logo}" Fill="{StaticResource GradLogo}"/>
-            </Viewbox>
-            <TextBlock Text="SEVENZIN" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,16,0,0"
-                       Foreground="{StaticResource GradTitulo}"/>
-            <TextBlock Text="PC OPTIMIZER" FontSize="12" Foreground="#A9B6C8" HorizontalAlignment="Center"
-                       Margin="0,4,0,0" TextOptions.TextFormattingMode="Ideal"/>
+        <StackPanel x:Name="Formulario" Grid.Column="0" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Image x:Name="LogoTopo" Source="{StaticResource LogoSimbolo}" Height="74" HorizontalAlignment="Center"
+                   RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="SevenzinTwks">
+                <Image.Effect><DropShadowEffect Color="#008CFF" BlurRadius="36" ShadowDepth="0" Opacity="0.5"/></Image.Effect>
+            </Image>
+            <TextBlock x:Name="Marca" FontFamily="{StaticResource MarcaFont}" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"
+                       Margin="0,14,0,0" AutomationProperties.Name="SevenzinTwks">
+                <Run Text="Sevenzin" Foreground="{StaticResource MarcaPrata}"/><Run Text="Twks" Foreground="{StaticResource MarcaAzul}"/>
+            </TextBlock>
+            <!-- Assinatura da marca: traços azuis + "OTIMIZAÇÃO DE COMPUTADORES" espaçado (WPF não tem letter-spacing:
+                 o espaço entre letras é um thin space U+2009). -->
+            <Grid HorizontalAlignment="Center" Margin="0,6,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Rectangle Width="28" Height="2" RadiusX="1" RadiusY="1" Fill="{StaticResource LogoAzul}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Grid.Column="1" FontSize="10.5" FontWeight="Medium" Foreground="#B9C9E0" VerticalAlignment="Center"
+                           AutomationProperties.Name="Otimização de computadores"
+                           Text="O&#x2009;T&#x2009;I&#x2009;M&#x2009;I&#x2009;Z&#x2009;A&#x2009;Ç&#x2009;Ã&#x2009;O&#x2003;D&#x2009;E&#x2003;C&#x2009;O&#x2009;M&#x2009;P&#x2009;U&#x2009;T&#x2009;A&#x2009;D&#x2009;O&#x2009;R&#x2009;E&#x2009;S"/>
+                <Rectangle Grid.Column="2" Width="28" Height="2" RadiusX="1" RadiusY="1" Fill="{StaticResource LogoAzul}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </Grid>
             <!-- Selo visível só no app Admin (SevenzinAdmin.exe) -->
             <Border x:Name="AdminBadge" Visibility="Collapsed" HorizontalAlignment="Center" Margin="0,12,0,0"
                     CornerRadius="999" Background="{StaticResource BrandTintBrush}" BorderBrush="{StaticResource Brand500Brush}" BorderThickness="1" Padding="12,5">
@@ -188,6 +193,8 @@
             <Rectangle Width="220" Height="2" RadiusX="1" RadiusY="1" Margin="0,16,0,0" Fill="{StaticResource GradDivisor}"/>
             <TextBlock x:Name="Subtitulo" Text="Acesse sua conta" Foreground="#A9B6C8" HorizontalAlignment="Center" Margin="0,16,0,26"/>
 
+            <!-- Campos de login (somem enquanto o painel "Redefinir senha" está aberto) -->
+            <StackPanel x:Name="LoginCampos">
             <TextBlock Text="E-mail" Foreground="#A9B6C8" FontSize="12" Margin="2,0,0,6"/>
             <TextBox x:Name="Email" Style="{StaticResource CampoLogin}" KeyDown="Campo_KeyDown"/>
 
@@ -243,35 +250,86 @@
                 <PasswordBox x:Name="Confirmar" Style="{StaticResource CampoLoginSenha}" KeyDown="Campo_KeyDown"/>
             </StackPanel>
 
-            <!-- Criar conta com convite (usuário comum; o convite é gerado pelo administrador único) -->
-            <StackPanel x:Name="CadastroBloco" Visibility="Collapsed">
-                <TextBlock Text="Nome" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
-                <TextBox x:Name="NomeCadastro" Style="{StaticResource CampoLogin}"/>
-                <TextBlock Text="Código de convite" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
-                <TextBox x:Name="Convite" Style="{StaticResource CampoLogin}" MaxLength="12" CharacterCasing="Upper" Tag="ABCDEFGHJKLM"/>
-                <TextBlock Text="Peça o código ao administrador (Geandre). A conta criada é de USUÁRIO — nunca administrador."
-                           Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="2,6,0,0" TextWrapping="Wrap"/>
-            </StackPanel>
-
             <Grid x:Name="LinhaOpcoes" Margin="0,18,0,0">
                 <CheckBox x:Name="Lembrar" Content="Lembrar de mim" Foreground="#A9B6C8" VerticalAlignment="Center"/>
-                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Margin="0,0,14,0" VerticalAlignment="Center">
-                        <Hyperlink x:Name="CriarContaLink" Click="CriarConta_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Criar conta</Hyperlink>
-                    </TextBlock>
-                    <TextBlock VerticalAlignment="Center">
-                        <Hyperlink x:Name="EsqueciLink" Click="Esqueci_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Esqueci minha senha</Hyperlink>
-                    </TextBlock>
-                </StackPanel>
+                <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Hyperlink x:Name="EsqueciLink" Click="Esqueci_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Esqueci minha senha</Hyperlink>
+                </TextBlock>
             </Grid>
 
             <Button x:Name="EntrarBtn" Style="{StaticResource BotaoEntrar}" Content="Entrar" Margin="0,24,0,0" Click="Entrar_Click"/>
+            <!-- Sem "Criar conta": o acesso é gerado só pelo administrador (Geandre) no app Admin, ao vender a licença. -->
+            <TextBlock x:Name="SemAcessoTxt" Text="Ainda não tem acesso? Adquira sua licença com o administrador." Foreground="{StaticResource TextMutedBrush}"
+                       FontSize="11.5" HorizontalAlignment="Center" Margin="0,14,0,0"/>
+            </StackPanel>
+
+            <!-- Redefinir senha por código de e-mail (Supabase): 1) e-mail → 2) código + nova senha → 3) pronto -->
+            <StackPanel x:Name="RedefinirBloco" Visibility="Collapsed">
+                <!-- Etapa 1: e-mail -->
+                <StackPanel x:Name="EtapaEmail">
+                    <TextBlock Text="Informe o e-mail da sua conta. Vamos enviar um código de 6 dígitos para você criar uma nova senha."
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,18"/>
+                    <TextBlock Text="E-mail" Foreground="#A9B6C8" FontSize="12" Margin="2,0,0,6"/>
+                    <TextBox x:Name="RedefEmail" Style="{StaticResource CampoLogin}" KeyDown="RedefCampo_KeyDown"
+                             AutomationProperties.Name="E-mail da conta"/>
+                    <Button x:Name="EnviarCodigoBtn" Style="{StaticResource BotaoEntrar}" Content="Enviar código" Margin="0,22,0,0" Click="EnviarCodigo_Click"/>
+                </StackPanel>
+
+                <!-- Etapa 2: código + nova senha -->
+                <StackPanel x:Name="EtapaCodigo" Visibility="Collapsed">
+                    <TextBlock x:Name="RedefInfo" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" TextWrapping="Wrap"
+                               TextAlignment="Center" Margin="0,0,0,16"/>
+                    <TextBlock Text="Código do e-mail" Foreground="#A9B6C8" FontSize="12" Margin="2,0,0,6"/>
+                    <TextBox x:Name="RedefCodigo" Style="{StaticResource CampoLogin}" MaxLength="12" FontSize="22" FontWeight="SemiBold"
+                             TextAlignment="Center" InputScope="Number" KeyDown="RedefCampo_KeyDown" AutomationProperties.Name="Código recebido por e-mail"/>
+                    <TextBlock Text="Nova senha" Foreground="#A9B6C8" FontSize="12" Margin="2,14,0,6"/>
+                    <PasswordBox x:Name="RedefSenha" Style="{StaticResource CampoLoginSenha}" KeyDown="RedefCampo_KeyDown"
+                                 AutomationProperties.Name="Nova senha"/>
+                    <TextBlock Text="mínimo 12 · maiúsc/minúsc, número e símbolo" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="2,6,0,0"/>
+                    <TextBlock Text="Confirmar nova senha" Foreground="#A9B6C8" FontSize="12" Margin="2,12,0,6"/>
+                    <PasswordBox x:Name="RedefConfirmar" Style="{StaticResource CampoLoginSenha}" KeyDown="RedefCampo_KeyDown"
+                                 AutomationProperties.Name="Confirmar nova senha"/>
+                    <Button x:Name="SalvarSenhaBtn" Style="{StaticResource BotaoEntrar}" Content="Salvar nova senha" Margin="0,20,0,0" Click="SalvarSenha_Click"/>
+                    <Grid Margin="0,12,0,0">
+                        <TextBlock HorizontalAlignment="Left">
+                            <Hyperlink x:Name="ReenviarLink" Click="Reenviar_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">
+                                <Run x:Name="ReenviarTxt" Text="Reenviar código"/>
+                            </Hyperlink>
+                        </TextBlock>
+                        <TextBlock HorizontalAlignment="Right">
+                            <Hyperlink Click="OutroEmail_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Usar outro e-mail</Hyperlink>
+                        </TextBlock>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Etapa 3: sucesso -->
+                <StackPanel x:Name="EtapaOk" Visibility="Collapsed" HorizontalAlignment="Center">
+                    <Grid Width="56" Height="56" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <Ellipse Fill="{StaticResource SuccessBrush}" Opacity="0.15"/>
+                        <Path Data="M0,8 L7,15 L20,0" Width="20" Height="15" Stretch="None" Stroke="{StaticResource SuccessBrush}" StrokeThickness="3"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <TextBlock Text="Senha redefinida" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Pronto! Agora entre com a sua nova senha." Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                    <Button Style="{StaticResource BotaoEntrar}" Content="Ir para o login" Width="400" Margin="0,24,0,0" Click="VoltarLogin_Click"/>
+                </StackPanel>
+
+                <!-- Sem servidor (modo local): não há e-mail; explica o caminho -->
+                <TextBlock x:Name="RedefLocal" Visibility="Collapsed" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"
+                           Text="Este app está no modo local, sem servidor de e-mail. Peça ao administrador para redefinir o seu acesso no app Admin."/>
+
+                <TextBlock x:Name="VoltarLinha" HorizontalAlignment="Center" Margin="0,18,0,0">
+                    <Hyperlink Click="VoltarLogin_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">← Voltar para o login</Hyperlink>
+                </TextBlock>
+            </StackPanel>
             <TextBlock x:Name="Mensagem" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" Margin="0,14,0,0"
                        HorizontalAlignment="Center" TextAlignment="Center" Visibility="Collapsed"/>
         </StackPanel>
 
         <!-- Painel decorativo (Figma: x690 y60 560×640, gradiente + glow + "S") -->
-        <Border Grid.Column="1" Margin="0,60,30,40" CornerRadius="18" Background="{StaticResource GradPainel}"
+        <Border x:Name="PainelMarca" Grid.Column="1" Margin="0,60,30,40" CornerRadius="18" Background="{StaticResource GradPainel}"
                 BorderBrush="#CC26364F" BorderThickness="1" ClipToBounds="True">
             <Grid>
                 <Ellipse Width="340" Height="220" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
@@ -282,9 +340,10 @@
                         </RadialGradientBrush>
                     </Ellipse.Fill>
                 </Ellipse>
-                <Viewbox Height="120" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Path Data="{StaticResource ic_logo}" Fill="{StaticResource GradLogo}"/>
-                </Viewbox>
+                <Image Source="{StaticResource LogoSimbolo}" Height="170" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="SevenzinTwks">
+                    <Image.Effect><DropShadowEffect Color="#008CFF" BlurRadius="60" ShadowDepth="0" Opacity="0.55"/></Image.Effect>
+                </Image>
             </Grid>
         </Border>
     </Grid>

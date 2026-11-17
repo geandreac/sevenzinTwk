@@ -10,7 +10,7 @@
         <StackPanel Grid.Row="0">
             <TextBlock Text="SEU SEVENZIN" Foreground="{StaticResource Brand400Brush}" FontSize="11" FontWeight="SemiBold" Margin="0,8,0,4"/>
             <TextBlock Text="Configurações do aplicativo" Style="{StaticResource TituloTela}"/>
-            <TextBlock Text="Deixe o Sevenzin do seu jeito. Tudo local, sem login." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+            <TextBlock Text="Deixe o SevenzinTwks do seu jeito. Tudo local, sem login." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
 
             <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
                 <Border x:Name="TabGeral" Tag="0" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,28,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
@@ -39,7 +39,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Margin="0,0,16,0">
                                 <TextBlock Text="Iniciar com o Windows" FontSize="14"/>
-                                <TextBlock Text="Abre o Sevenzin automaticamente ao entrar no Windows (atalho no seu usuário, sem administrador)." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="Abre o SevenzinTwks automaticamente ao entrar no Windows (atalho no seu usuário, sem administrador)." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
                             <ToggleButton x:Name="SwInicio" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Inicio_Click"/>
                         </Grid>
@@ -55,7 +55,7 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Margin="0,0,16,0">
                                     <TextBlock Text="Minimizar para a bandeja" FontSize="14"/>
-                                    <TextBlock Text="Mantém o Sevenzin perto do relógio. Requer ícone de bandeja — próxima fatia." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Text="Mantém o SevenzinTwks perto do relógio. Requer ícone de bandeja — próxima fatia." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
                                 <ToggleButton Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" IsEnabled="False"/>
                             </Grid>

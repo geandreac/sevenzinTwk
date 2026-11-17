@@ -14,8 +14,62 @@
     <StreamGeometry x:Key="ic_config">M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z M10 1.66667V4.16667M10 15.8333V18.3333M3.5 3.5L5.25 5.25M14.75 14.75L16.5 16.5M1.66667 10H4.16667M15.8333 10H18.3333M3.5 16.5L5.25 14.75M14.75 5.25L16.5 3.5</StreamGeometry>
     <StreamGeometry x:Key="ic_menu">M3.33333 5H16.6667M3.33333 10H16.6667M3.33333 15H16.6667</StreamGeometry>
 
-    <!-- Logo oficial Sevenzin (Figma node 3:2898, "S-raio"), preenchida em #2F8CFF. -->
-    <StreamGeometry x:Key="ic_logo">M13.8288 0V2.75H5.56893L3.82332 6.82129L15.7409 9.57129L11.9856 18.3333H1.91211V15.5833H10.172L11.9167 11.5111L0 8.76204L3.75529 0H13.8288Z</StreamGeometry>
+    <!-- Identidade SevenzinTwks (docs/adicionais/Logo/SevenzinTwks_identidade.svg), convertida para XAML vetorial.
+         O "glow" do SVG (feGaussianBlur) não existe em DrawingImage: onde a logo aparece grande, use um
+         DropShadowEffect ciano no Image. A DrawingImage recorta no contorno do símbolo (sem a margem do viewBox). -->
+    <LinearGradientBrush x:Key="LogoAzul" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#20F0FF" Offset="0"/><GradientStop Color="#078EFF" Offset="0.42"/><GradientStop Color="#073BBE" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LogoAzul2" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#08DFFF" Offset="0"/><GradientStop Color="#0878F4" Offset="0.52"/><GradientStop Color="#071D76" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LogoPrata" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFFFFF" Offset="0"/><GradientStop Color="#DCE5F2" Offset="0.35"/><GradientStop Color="#8C9BB2" Offset="0.72"/><GradientStop Color="#EAF2FF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LogoPrata2" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F7FAFF" Offset="0"/><GradientStop Color="#AAB8CC" Offset="0.55"/><GradientStop Color="#64748D" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LogoEscuro" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#092A83" Offset="0"/><GradientStop Color="#06164B" Offset="0.55"/><GradientStop Color="#020B26" Offset="1"/>
+    </LinearGradientBrush>
+    <!-- Wordmark: "Sevenzin" em prata + "Twks" em azul (SevenzinTwks_frase.svg) -->
+    <LinearGradientBrush x:Key="MarcaPrata" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFF" Offset="0"/><GradientStop Color="#C9D5E8" Offset="0.55"/><GradientStop Color="#8A9AB4" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="MarcaAzul" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#22E7FF" Offset="0"/><GradientStop Color="#0872E8" Offset="1"/>
+    </LinearGradientBrush>
+    <FontFamily x:Key="MarcaFont">pack://application:,,,/Fonts/#Geist</FontFamily>
+
+    <DrawingImage x:Key="LogoSimbolo">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{StaticResource LogoAzul}"
+                    Geometry="M350 235 L475 110 L820 110 L695 235 L510 235 C470 235 447 250 425 274 L565 414 C612 461 612 531 565 578 L430 713 L105 713 L230 588 L410 588 L470 528 L350 408 C302 360 302 283 350 235Z"/>
+                <GeometryDrawing Brush="{StaticResource LogoPrata}"
+                    Geometry="M350 235 L475 110 L635 110 L510 235 C470 275 470 310 505 345 L565 405 L490 480 L350 340 C302 292 302 283 350 235Z">
+                    <GeometryDrawing.Pen><Pen Brush="#EAF4FF" Thickness="3" LineJoin="Round"/></GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="{StaticResource LogoPrata2}"
+                    Geometry="M565 578 L430 713 L270 713 L405 578 C447 536 447 501 410 464 L350 408 L425 333 L565 473 C612 520 612 531 565 578Z">
+                    <GeometryDrawing.Pen><Pen Brush="#EAF4FF" Thickness="3" LineJoin="Round"/></GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="{StaticResource LogoAzul2}" Geometry="M230 370 L325 275 L510 460 L415 555Z">
+                    <GeometryDrawing.Pen><Pen Brush="#12DFFF" Thickness="4" LineJoin="Round"/></GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="{StaticResource LogoAzul}" Geometry="M535 315 L720 315 L850 445 L755 540Z">
+                    <GeometryDrawing.Pen><Pen Brush="#12DFFF" Thickness="4" LineJoin="Round"/></GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="{StaticResource LogoEscuro}"
+                    Geometry="M510 235 L695 235 L635 295 L535 295 L490 340 L565 414 L505 474 L425 394 L470 345 C447 322 460 275 510 235Z"/>
+                <DrawingGroup Opacity="0.9">
+                    <GeometryDrawing Geometry="M475 110 H820 L695 235 H635 M105 713 H430 L565 578">
+                        <GeometryDrawing.Pen><Pen Brush="#38E9FF" Thickness="4"/></GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
     <!-- Itens extras (não existem no Figma) — criados no mesmo estilo (0–20, traço 1.6). -->
     <StreamGeometry x:Key="ic_inventario">M6.66667 5H16.6667M6.66667 10H16.6667M6.66667 15H16.6667 M3.33333 5H3.34M3.33333 10H3.34M3.33333 15H3.34</StreamGeometry>

@@ -1,17 +1,17 @@
 namespace Sevenzin.Diagnostics;
 
-/// <summary>Um guia do Sevenzin: título, resumo e passos numerados. Conteúdo baseado SOMENTE em
+/// <summary>Um guia do SevenzinTwks: título, resumo e passos numerados. Conteúdo baseado SOMENTE em
 /// funcionalidades implementadas e confirmadas (nunca instrui sobre recursos que não existem).</summary>
 public sealed record Guia(string Titulo, string Resumo, string[] Passos);
 
 /// <summary>Catálogo de guias (tela 11 do original, 03_telas §11 — os textos exatos do original são
-/// lacuna no #US cifrado; estes guias são reconstruídos a partir do que o Sevenzin realmente faz).</summary>
+/// lacuna no #US cifrado; estes guias são reconstruídos a partir do que o SevenzinTwks realmente faz).</summary>
 public static class CatalogoGuias
 {
     public static readonly IReadOnlyList<Guia> Todos = new[]
     {
         new Guia("Medir antes de otimizar",
-            "O princípio do Sevenzin: só mude o que você consegue medir. Use Telemetria e Benchmark para provar o ganho — nunca confie em promessa.",
+            "O princípio do SevenzinTwks: só mude o que você consegue medir. Use Telemetria e Benchmark para provar o ganho — nunca confie em promessa.",
             new[]
             {
                 "Abra Benchmark e rode a cena para ter o FPS/1% low de referência.",

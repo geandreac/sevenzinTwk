@@ -258,14 +258,39 @@ public sealed class ClienteSupabase
         return r;
     }
 
-    /// <summary>Dispara o e-mail de redefinição de senha (Supabase Auth).</summary>
-    public async Task<bool> ResetSenhaAsync(string email)
+    /// <summary>Etapa 1 do "Esqueci minha senha": envia o e-mail com o código de recuperação (template "Reset Password"
+    /// do Supabase com {{ .Token }}). Responde OK mesmo se o e-mail não existir (o Supabase não revela contas).</summary>
+    public async Task<ResultadoSupabase> ResetSenhaAsync(string email)
     {
         try
         {
             var resp = await Http.SendAsync(Req(HttpMethod.Post, "/auth/v1/recover", new { email = (email ?? "").Trim() }));
-            return resp.IsSuccessStatusCode;
+            if (resp.IsSuccessStatusCode) return new(true, null);
+            return new(false, RecuperacaoSenha.Mensagem((int)resp.StatusCode, ErroDe(await resp.Content.ReadAsStringAsync())));
         }
-        catch { return false; }
+        catch { return new(false, "Sem conexão com o servidor. Verifique a internet e tente de novo."); }
+    }
+
+    /// <summary>Etapa 2: troca o código do e-mail por uma sessão de recuperação (verify type=recovery), grava a nova
+    /// senha (PUT /user) e encerra essa sessão. A senha só trafega por TLS; nada é guardado localmente.</summary>
+    public async Task<ResultadoSupabase> RedefinirSenhaComCodigoAsync(string email, string codigo, string novaSenha)
+    {
+        try
+        {
+            var rv = await Http.SendAsync(Req(HttpMethod.Post, "/auth/v1/verify",
+                new { type = "recovery", email = (email ?? "").Trim(), token = RecuperacaoSenha.NormalizarCodigo(codigo) }));
+            var txt = await rv.Content.ReadAsStringAsync();
+            if (!rv.IsSuccessStatusCode) return new(false, RecuperacaoSenha.Mensagem((int)rv.StatusCode, ErroDe(txt)));
+            string token;
+            using (var doc = JsonDocument.Parse(txt)) token = doc.RootElement.GetProperty("access_token").GetString()!;
+
+            var ru = await Http.SendAsync(Req(HttpMethod.Put, "/auth/v1/user", new { password = novaSenha }, token: token));
+            if (!ru.IsSuccessStatusCode)
+                return new(false, RecuperacaoSenha.Mensagem((int)ru.StatusCode, ErroDe(await ru.Content.ReadAsStringAsync())));
+
+            try { await Http.SendAsync(Req(HttpMethod.Post, "/auth/v1/logout", token: token)); } catch { } // não deixa sessão pendurada
+            return new(true, null);
+        }
+        catch { return new(false, "Sem conexão com o servidor. Verifique a internet e tente de novo."); }
     }
 }

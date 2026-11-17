@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Sevenzin.Diagnostics;
@@ -53,12 +54,13 @@ public partial class LimpezaView : UserControl
         esq.Children.Add(new TextBlock { Text = a.Descricao, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap });
         var tam = new TextBlock { Text = bloqueadoPorAdmin ? "Reabra como administrador para medir e limpar." : "—", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) };
         esq.Children.Add(tam);
-        Grid.SetColumn(esq, 0);
-        g.Children.Add(esq);
 
         CheckBox? chk = null;
         if (a.Permanente)
         {
+            esq.Margin = new Thickness(28, 0, 16, 0); // 18 (caixa) + 10 (gap): título na mesma coluna dos cartões com checkbox
+            Grid.SetColumn(esq, 0);
+            g.Children.Add(esq);
             var esvaziar = new Button { Style = SecButton, Content = "Esvaziar (permanente)", Padding = new Thickness(12, 7, 12, 7), VerticalAlignment = VerticalAlignment.Center };
             esvaziar.Click += (_, _) => Esvaziar(a);
             Grid.SetColumn(esvaziar, 1);
@@ -66,11 +68,18 @@ public partial class LimpezaView : UserControl
         }
         else
         {
-            // Alvos de sistema começam desmarcados (opt-in) e ficam desabilitados sem admin.
-            chk = new CheckBox { IsChecked = !a.ExigeAdmin, IsEnabled = !bloqueadoPorAdmin, VerticalAlignment = VerticalAlignment.Center };
+            // O cartão inteiro é a área de clique: a caixa fica à esquerda, alinhada com o título (padrão de lista
+            // selecionável), em vez de um quadradinho solto na borda direita. Alvos de sistema começam desmarcados
+            // (opt-in) e ficam desabilitados sem admin.
+            chk = new CheckBox
+            {
+                Content = esq, IsChecked = !a.ExigeAdmin, IsEnabled = !bloqueadoPorAdmin,
+                VerticalContentAlignment = VerticalAlignment.Top, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            };
+            AutomationProperties.SetName(chk, a.Nome);
             chk.Checked += (_, _) => AtualizarResumo();
             chk.Unchecked += (_, _) => AtualizarResumo();
-            Grid.SetColumn(chk, 1);
+            Grid.SetColumnSpan(chk, 2);
             g.Children.Add(chk);
         }
 

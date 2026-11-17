@@ -34,7 +34,9 @@ Deno.serve(async (req) => {
   const email = String(body.email ?? "").trim();
   const senha = String(body.senha ?? "");
   const nome = body.nome ? String(body.nome) : null;
-  const papel = body.papel === "admin" ? "admin" : "usuario";
+  // Administrador ÚNICO (Geandre): esta função só gera acessos de USUÁRIO (licença). Ignora qualquer "papel"
+  // enviado pelo cliente — nunca cria outro admin, mesmo que alguém altere o app.
+  const papel = "usuario";
   if (!email || senha.length < 12) return json({ erro: "e-mail e senha (mínimo 12) são obrigatórios" }, 400);
 
   const comoAdmin = createClient(url, service);

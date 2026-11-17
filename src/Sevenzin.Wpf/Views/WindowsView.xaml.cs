@@ -100,7 +100,7 @@ public partial class WindowsView : UserControl
 
         var sp = new StackPanel();
         sp.Children.Add(new TextBlock { Text = "Salvaguardas", FontWeight = FontWeights.SemiBold, Foreground = Success });
-        sp.Children.Add(new TextBlock { Text = "O Sevenzin não constrói ISO do Windows, não remove apps em massa, não desliga o Defender/UAC/SmartScreen/Windows Update e não executa nada de forma oculta. Mudanças exigem sua confirmação e são reversíveis.", Foreground = Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
+        sp.Children.Add(new TextBlock { Text = "O SevenzinTwks não constrói ISO do Windows, não remove apps em massa, não desliga o Defender/UAC/SmartScreen/Windows Update e não executa nada de forma oculta. Mudanças exigem sua confirmação e são reversíveis.", Foreground = Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
         Raiz.Children.Add(new Border { Style = CardStyle, Child = sp });
     }
 
@@ -137,7 +137,7 @@ public partial class WindowsView : UserControl
     {
         if (!Elevacao.EhAdmin())
         {
-            if (MessageBox.Show($"Desinstalar {nome} exige administrador.\n\nReabrir o Sevenzin como administrador?",
+            if (MessageBox.Show($"Desinstalar {nome} exige administrador.\n\nReabrir o SevenzinTwks como administrador?",
                     "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
                 Elevacao.ReabrirComoAdmin();
             return;
@@ -159,7 +159,7 @@ public partial class WindowsView : UserControl
     {
         if (!Elevacao.EhAdmin())
         {
-            if (MessageBox.Show("Alterar o plano de energia exige administrador.\n\nReabrir o Sevenzin como administrador?",
+            if (MessageBox.Show("Alterar o plano de energia exige administrador.\n\nReabrir o SevenzinTwks como administrador?",
                     "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
                 Elevacao.ReabrirComoAdmin();
             return;
@@ -178,7 +178,7 @@ public partial class WindowsView : UserControl
     {
         if (!Elevacao.EhAdmin())
         {
-            if (MessageBox.Show("Alterar a hibernação exige administrador.\n\nReabrir o Sevenzin como administrador?",
+            if (MessageBox.Show("Alterar a hibernação exige administrador.\n\nReabrir o SevenzinTwks como administrador?",
                     "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
                 Elevacao.ReabrirComoAdmin();
             return;

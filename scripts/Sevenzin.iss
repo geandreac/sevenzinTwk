@@ -3,7 +3,7 @@
 ;   dist\Sevenzin\Sevenzin.exe  e  dist\SevenzinAdmin\SevenzinAdmin.exe
 ; Compilar: scripts\build-installer.ps1  (ou abrir este .iss no Inno Setup e Build). Saída: dist\installer\.
 
-#define AppName "Sevenzin"
+#define AppName "SevenzinTwks"
 #define AppVersion "1.0.0"
 #define AppExe "Sevenzin.exe"
 #define AdminExe "SevenzinAdmin.exe"
@@ -22,7 +22,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=..\dist\installer
-OutputBaseFilename=Sevenzin-{#AppVersion}-setup
+OutputBaseFilename=SevenzinTwks-{#AppVersion}-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

@@ -116,7 +116,7 @@ public partial class BiosView : UserControl
     {
         var sp = new StackPanel();
         sp.Children.Add(new TextBlock { Text = "Salvaguardas", FontWeight = FontWeights.SemiBold, Foreground = Success });
-        sp.Children.Add(new TextBlock { Text = "O Sevenzin não executa flash de BIOS, não muda Secure Boot/TPM/boot/voltagem/clock e não eleva privilégio de forma oculta. Opções variam por hardware; na dúvida, consulte o manual da sua placa.", Foreground = Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
+        sp.Children.Add(new TextBlock { Text = "O SevenzinTwks não executa flash de BIOS, não muda Secure Boot/TPM/boot/voltagem/clock e não eleva privilégio de forma oculta. Opções variam por hardware; na dúvida, consulte o manual da sua placa.", Foreground = Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
         return new Border { Style = CardStyle, Child = sp };
     }
 }

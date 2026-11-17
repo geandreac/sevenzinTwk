@@ -6,8 +6,8 @@ using System.Windows.Media.Imaging;
 
 namespace Sevenzin.Wpf;
 
-/// <summary>Gera o ícone do app (.ico multi-tamanho) a partir do asset oficial "S em raio" (geometria ic_logo),
-/// preservando proporção e cor (#2F8CFF). Usado via `--makeicon saida.ico`. Frames em PNG (suportado desde o Vista).</summary>
+/// <summary>Gera o ícone do app (.ico multi-tamanho) a partir do símbolo da identidade SevenzinTwks
+/// (DrawingImage LogoSimbolo, com seus gradientes). Usado via `--makeicon saida.ico`. Frames em PNG (suportado desde o Vista).</summary>
 static class IconeGerador
 {
     public static void Gerar(string saida, int[] tamanhos)
@@ -36,11 +36,10 @@ static class IconeGerador
 
     static byte[] RenderPng(int s)
     {
-        var geo = (Geometry)Application.Current.Resources["ic_logo"];
-        var brush = (Brush)Application.Current.Resources["Brand500Brush"];
-        var path = new System.Windows.Shapes.Path { Data = geo, Fill = brush, Stretch = Stretch.Uniform };
+        var logo = (ImageSource)Application.Current.Resources["LogoSimbolo"];
         var host = new Grid { Width = s, Height = s, Background = Brushes.Transparent };
-        host.Children.Add(new Viewbox { Stretch = Stretch.Uniform, Margin = new Thickness(s * 0.18), Child = path });
+        // Margem pequena: o símbolo já é recortado no contorno; em 16/24 px cada pixel conta.
+        host.Children.Add(new Image { Source = logo, Stretch = Stretch.Uniform, Margin = new Thickness(s <= 24 ? 0 : s * 0.05) });
         host.Measure(new Size(s, s));
         host.Arrange(new Rect(0, 0, s, s));
         host.UpdateLayout();

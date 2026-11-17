@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Símbolo gráfico SevenzinTwks">
+ <defs>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20F0FF"/><stop offset=".42" stop-color="#078EFF"/><stop offset="1" stop-color="#073BBE"/></linearGradient>
+  <linearGradient id="blue2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#08DFFF"/><stop offset=".52" stop-color="#0878F4"/><stop offset="1" stop-color="#071D76"/></linearGradient>
+  <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset=".35" stop-color="#DCE5F2"/><stop offset=".72" stop-color="#8C9BB2"/><stop offset="1" stop-color="#EAF2FF"/></linearGradient>
+  <linearGradient id="silver2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F7FAFF"/><stop offset=".55" stop-color="#AAB8CC"/><stop offset="1" stop-color="#64748D"/></linearGradient>
+  <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#092A83"/><stop offset=".55" stop-color="#06164B"/><stop offset="1" stop-color="#020B26"/></linearGradient>
+  <filter id="glow" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur stdDeviation="18"/></filter>
+ </defs>
+ <path d="M350 235 L475 110 L820 110 L695 235 L510 235 L425 274 L565 414 L565 578 L430 713 L105 713 L230 588 L410 588 L470 528 L350 408 C302 360 302 283 350 235Z" fill="#008CFF" opacity=".2" filter="url(#glow)"/>
+ <path d="M350 235 L475 110 L820 110 L695 235 L510 235 C470 235 447 250 425 274 L565 414 C612 461 612 531 565 578 L430 713 L105 713 L230 588 L410 588 L470 528 L350 408 C302 360 302 283 350 235Z" fill="url(#blue)"/>
+ <path d="M350 235 L475 110 L635 110 L510 235 C470 275 470 310 505 345 L565 405 L490 480 L350 340 C302 292 302 283 350 235Z" fill="url(#silver)" stroke="#EAF4FF" stroke-width="3" stroke-linejoin="round"/>
+ <path d="M565 578 L430 713 L270 713 L405 578 C447 536 447 501 410 464 L350 408 L425 333 L565 473 C612 520 612 531 565 578Z" fill="url(#silver2)" stroke="#EAF4FF" stroke-width="3" stroke-linejoin="round"/>
+ <path d="M230 370 L325 275 L510 460 L415 555Z" fill="url(#blue2)" stroke="#12DFFF" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M535 315 L720 315 L850 445 L755 540Z" fill="url(#blue)" stroke="#12DFFF" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M510 235 L695 235 L635 295 L535 295 L490 340 L565 414 L505 474 L425 394 L470 345 C447 322 460 275 510 235Z" fill="url(#dark)"/>
+ <path d="M475 110 H820 L695 235 H635 M105 713 H430 L565 578" fill="none" stroke="#38E9FF" stroke-width="4" opacity=".9"/>
+</svg>

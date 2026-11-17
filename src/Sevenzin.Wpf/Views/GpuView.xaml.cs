@@ -135,7 +135,7 @@ public partial class GpuView : UserControl
 
         sp.Children.Add(new TextBlock
         {
-            Text = "O Sevenzin lista os modos, mas não altera a taxa de atualização por você — troque nas configurações de vídeo do Windows ou do driver.",
+            Text = "O SevenzinTwks lista os modos, mas não altera a taxa de atualização por você — troque nas configurações de vídeo do Windows ou do driver.",
             Foreground = Muted,
             FontSize = 11,
             Margin = new Thickness(0, 10, 0, 0),

@@ -9,7 +9,7 @@
         <StackPanel Grid.Row="0" Margin="0,8,0,12">
             <TextBlock Text="ATIVIDADE" Style="{StaticResource Eyebrow}"/>
             <TextBlock Text="Notificações" Style="{StaticResource TituloTela}"/>
-            <TextBlock Text="Histórico local do que o Sevenzin fez nesta máquina: tweaks, instalações e capturas. Nada sai do PC." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            <TextBlock Text="Histórico local do que o SevenzinTwks fez nesta máquina: tweaks, instalações e capturas. Nada sai do PC." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
             <Button Style="{StaticResource SecondaryButton}" Content="Limpar histórico" HorizontalAlignment="Left" Margin="0,12,0,0" Click="Limpar_Click"/>
         </StackPanel>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,16">

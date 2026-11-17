@@ -5,7 +5,7 @@ using Sevenzin.Diagnostics;
 
 namespace Sevenzin.Wpf.Views;
 
-/// <summary>Tela "Guias" (tela 11 do original — 03_telas §11). Conteúdo reconstruído do que o Sevenzin
+/// <summary>Tela "Guias" (tela 11 do original — 03_telas §11). Conteúdo reconstruído do que o SevenzinTwks
 /// realmente faz; os textos exatos do original são lacuna (#US cifrado), registrada no plano.</summary>
 public partial class GuiasView : UserControl
 {
