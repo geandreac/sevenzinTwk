@@ -38,4 +38,20 @@ public class RedeGlobalTests
         Assert.Null(at);
         Assert.Null(cong);
     }
+
+    [Fact]
+    public void AnalisarSaida_parseia_supplemental_portugues()
+    {
+        const string saida = "Provedor de controle de congestionamento : ctcp";
+        var (_, cong) = RedeGlobal.AnalisarSaida(saida);
+        Assert.Equal("ctcp", cong);
+    }
+
+    [Fact]
+    public void AnalisarSaida_reconhece_congestao_legada_global()
+    {
+        const string saida = "Provedor de Controle de Congestão de Complementos : default";
+        var (_, cong) = RedeGlobal.AnalisarSaida(saida);
+        Assert.Equal("default", cong);
+    }
 }
