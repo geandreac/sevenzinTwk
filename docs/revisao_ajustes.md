@@ -327,9 +327,14 @@ próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem 
   da sidebar (ícone + rota) e o cartão "Análise de imagem do Windows". Permanecem: plano de energia com os
   134 índices literais, hibernação e desinstalação assistida.
 - **Verificação de estado real (só leitura, §11.3)**: `powercfg /getactivescheme` revelou o plano ativo
-  renomeado para o GUID `00000000-…` (`@honestzin`) — efeito do `geandre.exe` (execução prévia). Tweaks de
+  renomeado para o GUID `00000000-…` (`@honestzin`) — **resíduo do `geandre.exe`** (execução prévia), não o
+  nome do Sevenzin (o plano do Sevenzin é "Sevenzin"). Tweaks de
   registro (EnableLUA, HwSchMode, SystemResponsiveness, HibernateEnabled) **no padrão de fábrica** — nunca
   aplicados pelo Sevenzin. Registrado em `validacao_paridade.md` §9.
+- **Nomenclatura**: o app é **"Sevenzin"** em todo lugar (título, assembly, plano de energia, pastas
+  `%LOCALAPPDATA%\Sevenzin`). Os nomes "Honest"/"Honestzin" restantes no repositório são (a) citações FACTUAIS
+  dos nomes internos do binário original em `docs/engenharia-reversa/` e `docs/otimizacoes-originais/` (não
+  alterados para não falsear evidência) e (b) o resíduo do plano de energia deixado pelo original nesta máquina.
 - **Métricas/valores de otimização**: todos os valores do catálogo (76 tweaks + 134 índices de energia +
   rede por interface + CPU Sets) são os **literais do geandre.exe**, extraídos de
   `docs/otimizacoes-originais/*` — nada é inventado.

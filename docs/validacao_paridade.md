@@ -127,7 +127,7 @@ Executada em MODO LEITURA (nenhuma otimização aplicada). Método §11.3 do pla
 
 | consulta | resultado lido | interpretação |
 |---|---|---|
-| `powercfg /getactivescheme` | GUID `00000000-0000-0000-0000-000000000000` (`@honestzin`) | plano ativo já renomeado para o GUID todo-zero — comportamento do **geandre.exe**; indica execução prévia do original nesta máquina |
+| `powercfg /getactivescheme` | GUID `00000000-0000-0000-0000-000000000000` (`@honestzin`) | resíduo do **geandre.exe** (execução prévia) — NÃO é o nome do Sevenzin; o plano do Sevenzin se chama **"Sevenzin"** (`GestorEnergia.Nome`). Ao rodar "Criar e ativar Sevenzin", o Sevenzin cria/ativa o plano "Sevenzin" (não "honestzin") |
 | `Get-Service lfsvc` | Running / Manual | padrão de fábrica (não desativado) |
 | `reg query …\Control\Power /v HibernateEnabled` | (ausente) | hibernação no padrão |
 | `reg query …\Policies\System /v EnableLUA` | (ausente) | UAC no padrão (não alterado) |
