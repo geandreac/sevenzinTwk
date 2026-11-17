@@ -30,9 +30,9 @@ item do catálogo termina em exatamente um destes três estados terminais:
 
 | bucket | itens hoje | contagem | fecha em |
 |---|---|---|---|
-| ① Reproduzido + validar | `Idêntico` 34 + `Parcial` 2 + `Divergente`-implementado 2 (Win32PrioritySeparation=38, AllowTelemetry=1) + Rede Global | **39** | G1–G10 |
-| ② Excluir por decisão | KMS, ISO/USB, DPC, MSI/IRQ, overclock/fan/voltagem | **5** | assinatura §decisões |
-| ③ Não aplicável | IFEO PerfOptions, VisualFX/FeatureSettingsOverrideMask/MitigationOptions, extensões de arquivo, demais serviços/tarefas (`#US`), FPS/temp, otimizações por jogo, flash BIOS, nomes de instaladores inferidos | **9** | classificação §decisões |
+| ① Reproduzido + validar | `Idêntico` 37 + `Parcial` 2 + `Divergente`-implementado 2 (Win32PrioritySeparation=38, AllowTelemetry=1) | **41** | G1–G10 |
+| ② Excluir por decisão | KMS, DPC, MSI/IRQ, overclock/fan/voltagem (matriz) + ISO/USB (removido do escopo) | **5** | assinatura §decisões |
+| ③ Não aplicável | IFEO PerfOptions, VisualFX/FeatureSettingsOverrideMask/MitigationOptions, extensões de arquivo, demais serviços/tarefas (`#US`), FPS/temp, otimizações por jogo, flash BIOS | **7** | classificação §decisões |
 | **pendente** | nada a mais — fechado | **0** | — |
 
 ---

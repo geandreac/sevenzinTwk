@@ -354,6 +354,43 @@ próprio processo, caminhos das chaves, valores literais dos 5 tweaks, listagem 
 
 **Testes:** `dotnet build` 0/0 · `dotnet test` **204/204**.
 
+## §18. Identidade SevenzinTwks + execução do P0 em máquina real (17/11/2026)
+
+### 18.1 Identidade — "SevenzinTwks" como nome exibido
+Renomeado o nome exibido do produto para **SevenzinTwks**: título das janelas (`MainWindow`, `LoginWindow`),
+`AssemblyTitle`, nome do plano de energia (`GestorEnergia.Nome`), friendly_name do TOTP, User-Agent do
+updater e rótulo de versão. **Mantidos como identificadores técnicos** (por compatibilidade de migração):
+namespaces `Sevenzin.*`, diretório de dados `%LOCALAPPDATA%\Sevenzin` e `AssemblyName=Sevenzin` (exe
+`Sevenzin.exe`). Commit `e8eb97f`.
+
+### 18.2 Correção contábil da matriz
+A matriz `validacao_paridade.md` tinha itens **já implementados** marcados como Ausente/Divergente:
+Hibernação (→ Idêntico), Plano de energia com os 134 índices (→ Idêntico), Rede Global (adicionada),
+KMS reclassificado Divergente → Ausente (excluído por decisão). A paridade confirmada subiu de **75,6% → 82,2%**
+(37/45 itens verificáveis), sem alterar código — apenas refletindo o que já existia. §7/§11 recalculados.
+
+### 18.3 Execução do roteiro P0 (autorizado pelo dono)
+Harness `scripts/validacao_p0.ps1` (ciclo aplicar → reler → reverter → reler, backup exato de tipo+valor,
+restauração confirmada) executado como administrador. **31 itens CONFIRMADO** (G7 13, G6 11, G5 2, G3 5,
+G1-hibernação). G4 (segurança) e G1-plano em **só leitura** (ambiente isolado + reinício). Evidências em
+`docs/evidencia_p0.md` (E-001 a E-043). Nenhum valor permaneceu aplicado.
+
+### 18.4 Divergência real descoberta e corrigida — CTCP
+O comando literal do original `netsh int tcp set global congestionprovider=ctcp` **falha no Windows 11**
+("Parâmetro incorreto", exit=1): o parâmetro global `congestionprovider` foi **removido**. Corrigido
+`RedeGlobal` para usar `netsh int tcp set supplemental internet congestionprovider=ctcp` (mesma intenção),
+lendo `show supplemental` na releitura. `autotuninglevel=normal` (global) continua funcionando.
+Divergência registrada em `validacao_paridade.md` §8.5.
+
+### 18.5 Descobertas de ground truth (máquina com resíduos do original)
+- A máquina **não está em fábrica**: `EnableLUA=0`, `HwSchMode=2`, `TdrDelay=8`, `SystemResponsiveness=10`,
+  `TcpAckFrequency=1`, plano `@honestzin` etc. — resíduos de execução anterior do original.
+- **Win32PrioritySeparation = 26 (0x1A)** na máquina — confirma que o original usa valor dinâmico ≠ 38.
+- **Catálogo MMCSS Games correto**: máquina tem `Priority=8/SFIO=High/Scheduling=High`, mas o catálogo
+  (`2/Normal/Medium`) está confirmado em `01_registro_setvalues.txt` linhas 224/254/256.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **209/209** (+2 `RedeGlobalTests`).
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`

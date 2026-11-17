@@ -40,7 +40,7 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 | DPC (DpcWatchdogPeriod/Timeout=0) | `01` = 0 | — | — | Ausente (justificativa: mascara instabilidade; catalogado como 🟡 perigoso) | não implementar sem decisão |
 | MSI/IRQ (MSISupported, MSIIRQ, DevicePriority) | `01` por dispositivo | — | — | Ausente (justificativa: por dispositivo, risco de travamento) | — |
 | Redes por interface (TcpAckFrequency=1, TCPNoDelay=1, TcpDelAckTicks=0, NetbiosOptions=2, EnableMulticast=0) | catálogo §4 | `RedePorInterface` literais | releitura | Idêntico (valor) | — |
-| Hibernação (HibernateEnabled=0) | `01` = 0 | pendente (ação powercfg) | — | Ausente | próxima fatia: botão na tela Windows |
+| Hibernação (HibernateEnabled=0) | `01` = 0 | `DefinirHibernacao` (powercfg /hibernate off) + botões na `WindowsView` | releitura | Idêntico (valor) · aplicação real pendente | — |
 | VisualFXSetting / FeatureSettingsOverrideMask / MitigationOptions (binário) | `01` ambíguo/binário | — | — | Não verificável | registrar |
 | Extensões de arquivo (.bmp/.jpg/ACE…) | `01` associações | — | — | Não verificável (cosmético, fora de escopo funcional) | — |
 
@@ -48,8 +48,9 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 
 | Item | geandre.exe | Sevenzin | Verificação | Resultado |
 |---|---|---|---|---|
-| Plano de energia próprio + ~100 powercfg índices | catálogo §3 (comandos em `03_comandos_sistema.txt`) | plano "Sevenzin" (duplica o ativo; fábrica intacta) | `powercfg /getactivescheme` | Divergente (sem os 100 índices sem proveniência individual) |
+| Plano de energia próprio + 134 powercfg índices | catálogo §3 (comandos em `03_comandos_sistema.txt`) | plano "SevenzinTwks" (duplica o ativo; fábrica intacta) + `IndicesEnergiaOriginal` (134 literais) | `powercfg /getactivescheme` | Idêntico (valor) · aplicação real pendente |
 | Serviço de localização lfsvc | catálogo §7 | `localizacao-servico-off` (Start=4) | `Get-Service lfsvc` | Idêntico (efeito) |
+| Rede global (TCP: autotuninglevel=normal, congestionprovider=ctcp) | `03_comandos_sistema.txt` | `RedeGlobal` (netsh) | `netsh int tcp show global` | Idêntico (valor) · aplicação real pendente |
 | Demais serviços/tarefas (lista) | lista no `#US` cifrado | — | — | Não verificável |
 
 ## 3. Programas / Instaladores
@@ -60,7 +61,7 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 | 19 nomes prováveis (VLC, Spotify, Everything…) | `05 §6` inferidos | VLC/Steam/Discord via winget; demais ausentes | — | Parcial (nomes inferidos não confirmados) |
 | winget allowlist (5 IDs) | `110_BuildMedia.ps1` literal | `WingetAllowlist` literal + comando exato | teste de comando | Idêntico (comando) |
 | Download direto | URLs do original no `#US` | URLs oficiais "latest" só onde documentadas (Chrome, VS Code, Brave, Sysinternals); staging .part + hash/assinatura | testes F5 | Parcial (origens diferentes por design) |
-| KMS Activator | logo confirmado | excluído (risco malware/licença) | teste `Excluidos` | Divergente (justificada) |
+| KMS Activator | logo confirmado | excluído (risco malware/licença) | teste `Excluidos` | Ausente (excluído por decisão) |
 
 ## 4. Jogos
 
@@ -98,16 +99,18 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 
 | Categoria | Idêntico | Divergente | Parcial | Ausente | Não verificável |
 |---|---|---|---|---|---|
-| Otimizações de registro | 17 | 2 | 0 | 3 | 4 |
-| Energia/Serviços | 1 | 1 | 0 | 1 | 1 |
-| Programas/Instaladores | 2 | 1 | 2 | 0 | 0 |
+| Otimizações de registro | 19 | 2 | 0 | 2 | 3 |
+| Energia/Serviços | 3 | 0 | 0 | 0 | 1 |
+| Programas/Instaladores | 2 | 0 | 2 | 1 | 0 |
 | Jogos | 5 | 0 | 0 | 0 | 1 |
 | BIOS | 3 | 0 | 0 | 0 | 1 |
-| GPU/CPU | 6 | 0 | 0 | 1 | 1 |
-| **Total** | **34** | **4** | **2** | **5** | **8** |
+| GPU/CPU | 5 | 0 | 0 | 1 | 1 |
+| **Total** | **37** | **2** | **2** | **4** | **7** |
 
-**Percentual de paridade confirmada** = `Idêntico / (Idêntico + Divergente + Parcial + Ausente)` = 34 / 45 = **75,6%**
-(método §11.5: `Não verificável` fica FORA do denominador; 8 itens nessa categoria, informados à parte).
+**Percentual de paridade confirmada** = `Idêntico / (Idêntico + Divergente + Parcial + Ausente)` = 37 / 45 = **82,2%**
+(método §11.5: `Não verificável` fica FORA do denominador; 7 itens nessa categoria, informados à parte).
+Recontagem de 17/11/2026: Hibernação e Plano de energia movidos de Ausente/Divergente → Idêntico (já implementados),
+Rede Global adicionada, KMS reclassificado de Divergente → Ausente (excluído por decisão).
 Observação: "Idêntico" aqui significa **valor/efeito idêntico com releitura implementada e testada em código**;
 a aplicação real em máquina controlada (releitura pós-ação) permanece como validação manual pendente e, quando
 executada, pode rebaixar itens para `Divergente`.
@@ -124,23 +127,37 @@ executada, pode rebaixar itens para `Divergente`.
 4. **ISO/USB/Windows Media** — **removido por decisão do dono (17/11/2026)**: `MediaView`, `ConstrutorIso`, `GravadorUsb`,
    `ExecutorDism`, `UsbMedia`, `CopiadorVerificado`, `AnalisadorImagem` e o cartão de análise da `WindowsView`.
    O plano de energia com os 134 índices literais e a hibernação permanecem.
+5. **CTCP / congestionprovider** — o original usava `netsh int tcp set global congestionprovider=ctcp`; no Windows 11
+   moderno esse parâmetro global foi **removido** ("Parâmetro incorreto", validado em 17/11/2026). O Sevenzin usa o
+   comando moderno `netsh int tcp set supplemental internet congestionprovider=ctcp` (mesma intenção). Impacto: baixo.
 
-## 9. Verificação de estado real (somente leitura, 17/11/2026)
+## 9. Verificação de estado real + validação P0 (17/11/2026)
 
-Executada em MODO LEITURA (nenhuma otimização aplicada). Método §11.3 do plano de paridade.
+Executada em máquina real (GEANDRE), como administrador, com o harness `scripts/validacao_p0.ps1` (evidências em
+`docs/evidencia_p0.md`). Grupos G7/G6/G5/G3/G2/G1-hibernação com ciclo completo **aplicar → reler → reverter → reler**;
+G4 (segurança) e G1-plano em **SÓ LEITURA** (ambiente isolado + reinício exigidos pela regra de segurança do dono).
 
-| consulta | resultado lido | interpretação |
+**Correção importante:** a máquina **não está em estado de fábrica** — tem resíduos de execução anterior do
+original (`@honestzin`, UAC off, HAGS on, etc.). A leitura anterior ("ausente") estava incorreta; os valores abaixo
+são os reais:
+
+| consulta | valor real lido | interpretação |
 |---|---|---|
-| `powercfg /getactivescheme` | GUID `00000000-0000-0000-0000-000000000000` (`@honestzin`) | resíduo do **geandre.exe** (execução prévia) — NÃO é o nome do Sevenzin; o plano do Sevenzin se chama **"Sevenzin"** (`GestorEnergia.Nome`). Ao rodar "Criar e ativar Sevenzin", o Sevenzin cria/ativa o plano "Sevenzin" (não "honestzin") |
-| `Get-Service lfsvc` | Running / Manual | padrão de fábrica (não desativado) |
-| `reg query …\Control\Power /v HibernateEnabled` | (ausente) | hibernação no padrão |
-| `reg query …\Policies\System /v EnableLUA` | (ausente) | UAC no padrão (não alterado) |
-| `reg query …\GraphicsDrivers /v HwSchMode` | (ausente) | HAGS no padrão |
-| `reg query …\SystemProfile /v SystemResponsiveness` | (ausente) | MMCSS no padrão |
+| `powercfg /getactivescheme` | GUID `00000000-…` (`@honestzin`) | resíduo do **geandre.exe** (o plano do SevenzinTwks é **"SevenzinTwks"**) |
+| `EnableLUA` | `0x0` | UAC DESLIGADO (resíduo; não é fábrica) |
+| `HwSchMode` | `0x2` | HAGS LIGADO (resíduo) |
+| `TdrDelay` | `0x8` | TDR 8 s (resíduo, igual ao alvo) |
+| `SystemResponsiveness` | `0xA` (10) | presente (resíduo, igual ao alvo) |
+| `HibernateEnabled` | `0` | hibernação desligada |
+| `Win32PrioritySeparation` | `0x1A` (26) | ground truth: original usa valor dinâmico ≠ 38 |
+| `MMCSS Games` | Priority=8, SFIO=High, Scheduling=High | pré-existente ≠ catálogo (catálogo 2/Normal/Medium está CORRETO, cf. `01_registro_setvalues.txt` 224/254/256) |
+| `TcpAckFrequency`/`TCPNoDelay`/`TcpDelAckTicks`/`NetbiosOptions` | 1 / 1 / 0 / 2 | resíduos, iguais ao alvo |
+| `DisableRealtimeMonitoring` / `HVCI` / `FeatureSettingsOverride` / `NoAutoUpdate` | 1 / 0 / `0x2000003` / 1 | resíduos (segurança já desligada por execução anterior) |
+| `lfsvc` | Running / Manual | **não** desativado (o original não desativou, ou foi religado) |
 
-Conclusão `[CONFIRMADO]`: os tweaks do Sevenzin **não foram aplicados** nesta máquina (estado de fábrica), exceto o plano
-de energia, que já reflete o efeito do original (execução prévia). A validação pós-aplicação continua pendente de
-execução em máquina controlada com confirmação explícita.
+**Resultado P0:** 31 itens **CONFIRMADO** (G7/G6/G5/G3 + hibernação); G2 **DIVERGENTE** (corrigido para
+`set supplemental`); G4/G1-plano em **LACUNA** (só leitura). Nenhum valor permaneceu aplicado ao final — cada
+item teve a restauração confirmada.
 
 ## 10. Pendências de validação manual
 
@@ -156,12 +173,13 @@ estados terminais (mesma regra do roteiro P0):
 
 | estado | significado | itens |
 |---|---|---|
-| **① Reproduzido + validado** | valor literal do original, releitura real confirmada | 34 `Idêntico` + 2 `Parcial` + 2 `Divergente`-implementado (Win32PrioritySeparation=38, AllowTelemetry=1) + Rede Global = **39** |
-| **② Excluído por decisão do dono** | o Sevenzin deliberadamente não faz (segurança/estabilidade) | KMS, ISO/USB, DPC, MSI/IRQ, overclock/fan/voltagem = **5** |
-| **③ Não aplicável** | não existe no original ou é irrecuperável | IFEO PerfOptions, VisualFX/FeatureSettingsOverrideMask/MitigationOptions (binário), extensões de arquivo, demais serviços/tarefas (`#US`), FPS/temp, otimizações por jogo, flash BIOS, nomes de instaladores inferidos = **9** |
+| **① Reproduzido + validado** | valor literal do original, releitura real confirmada | 37 `Idêntico` + 2 `Parcial` + 2 `Divergente`-implementado (Win32PrioritySeparation=38, AllowTelemetry=1) = **41** |
+| **② Excluído por decisão do dono** | o Sevenzin deliberadamente não faz (segurança/estabilidade) | KMS, DPC, MSI/IRQ, overclock/fan/voltagem (na matriz) + ISO/USB (removido do escopo) = **5** |
+| **③ Não aplicável** | não existe no original ou é irrecuperável | IFEO PerfOptions, VisualFX/FeatureSettingsOverrideMask/MitigationOptions (binário), extensões de arquivo, demais serviços/tarefas (`#US`), FPS/temp, otimizações por jogo, flash BIOS = **7** |
 
-**Fórmula:** `paridade contábil = (① + ② + ③) / total = 53 / 53 = 100,0%` quando ① é validado (P0) e ②/③
-são assinados/classificados. Hoje o número **confirmado** é **75,6%** (34/45 itens verificáveis); o caminho
+**Fórmula:** `paridade contábil = (① + ② + ③) / total`. Matriz: 52 itens (41 + 4 + 7); somando ISO/USB
+(removido, fora da matriz) = 53 itens de catálogo. Quando ① é validado (P0) e ②/③ assinados/classificados,
+não resta nenhum item pendente. Hoje o número **confirmado** é **82,2%** (37/45 itens verificáveis); o caminho
 até 100,0% é: **executar P0** (fecha ①) + **assinatura do dono** (fecha ②) + **classificação** (fecha ③).
 
 > A paridade literal byte-a-byte **não é o alvo nem é alcançável**: parte do original está cifrada no `#US`
