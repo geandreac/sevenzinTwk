@@ -8,7 +8,8 @@ public class AutenticacaoTests
     static (ServicoContas contas, IRepositorioUsuarios repo) NovoRepo()
     {
         var repo = new RepositorioUsuariosMemoria();
-        return (new ServicoContas(repo), repo);
+        // ADMINISTRADOR ÚNICO: identidade provisionada dos testes = admin@escola.edu
+        return (new ServicoContas(repo, _ => "admin@escola.edu"), repo);
     }
 
     [Fact]
@@ -117,10 +118,15 @@ public class AutenticacaoTests
         var comum = new Sessao("t", new Usuario("u@e.edu", "Usuario", PapelUsuario.Usuario, "h", agora), agora.AddMinutes(30));
         var expirada = admin with { ExpiraUtc = agora.AddMinutes(-1) };
 
-        Assert.True(Autorizacao.PodeAcessarAdmin(admin, agora));
-        Assert.False(Autorizacao.PodeAcessarAdmin(comum, agora));   // sem permissão
-        Assert.False(Autorizacao.PodeAcessarAdmin(expirada, agora)); // sessão expirada
-        Assert.False(Autorizacao.PodeAcessarAdmin(null, agora));
+        Assert.True(Autorizacao.PodeAcessarAdmin(admin, agora, "a@e.edu"));
+        Assert.False(Autorizacao.PodeAcessarAdmin(comum, agora, "a@e.edu"));   // sem permissão
+        Assert.False(Autorizacao.PodeAcessarAdmin(expirada, agora, "a@e.edu")); // sessão expirada
+        Assert.False(Autorizacao.PodeAcessarAdmin(null, agora, "a@e.edu"));
+        // ADMINISTRADOR ÚNICO: papel Administrador com OUTRO e-mail não tem acesso.
+        var impostor = new Sessao("t", new Usuario("outro@e.edu", "Outro", PapelUsuario.Administrador, "h", agora), agora.AddMinutes(30));
+        Assert.False(Autorizacao.PodeAcessarAdmin(impostor, agora, "a@e.edu"));
+        // Sem identidade configurada, ninguém tem acesso (falha segura).
+        Assert.False(Autorizacao.PodeAcessarAdmin(admin, agora, null));
     }
 
     [Fact]
@@ -136,13 +142,15 @@ public class AutenticacaoTests
     [Fact]
     public void Seed_cria_admin_das_variaveis_de_ambiente_sem_duplicar()
     {
-        var (contas, _) = NovoRepo();
+        var repo = new RepositorioUsuariosMemoria();
         var env = new Dictionary<string, string?>
         {
             [SemeadorAdmin.VarEmail] = "chefe@escola.edu",
             [SemeadorAdmin.VarSenha] = "Sevenzin#2026",
         };
         string? Ler(string k) => env.TryGetValue(k, out var v) ? v : null;
+        // identidade provisionada = a MESMA do seed (única forma de criar admin)
+        var contas = new ServicoContas(repo, Ler);
 
         Assert.Equal("chefe@escola.edu", SemeadorAdmin.Semear(contas, Ler));
         Assert.True(contas.Existe("chefe@escola.edu"));

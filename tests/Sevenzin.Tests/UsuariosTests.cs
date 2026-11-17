@@ -64,7 +64,7 @@ public class UsuariosTests
         var arq = ArqTemp();
         try
         {
-            var contas = new ServicoContas(new RepositorioUsuariosArquivo(arq));
+            var contas = new ServicoContas(new RepositorioUsuariosArquivo(arq), _ => "professor@escola.edu");
             contas.Criar("professor@escola.edu", "Sevenzin#2026", PapelUsuario.Administrador);
             Assert.True(contas.Existe("PROFESSOR@Escola.edu"));                          // case-insensitive
 
@@ -74,11 +74,11 @@ public class UsuariosTests
             Assert.Throws<ArgumentException>(() => contas.Criar("professor@escola.edu", "Sevenzin#2026", PapelUsuario.Usuario)); // duplicado
             Assert.Throws<ArgumentException>(() => contas.Criar("x", "123", PapelUsuario.Usuario));                           // inválido
 
-            var recarregado = new ServicoContas(new RepositorioUsuariosArquivo(arq));    // persistiu
+            var recarregado = new ServicoContas(new RepositorioUsuariosArquivo(arq), _ => "professor@escola.edu");    // persistiu
             Assert.Single(recarregado.Todos);
             Assert.Equal(PapelUsuario.Administrador, recarregado.Todos[0].Papel);
             Assert.True(recarregado.Remover("professor@escola.edu"));
-            Assert.Empty(new ServicoContas(new RepositorioUsuariosArquivo(arq)).Todos);
+            Assert.Empty(new ServicoContas(new RepositorioUsuariosArquivo(arq), _ => "professor@escola.edu").Todos);
         }
         finally { File.Delete(arq); }
     }

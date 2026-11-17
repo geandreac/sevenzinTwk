@@ -243,11 +243,26 @@
                 <PasswordBox x:Name="Confirmar" Style="{StaticResource CampoLoginSenha}" KeyDown="Campo_KeyDown"/>
             </StackPanel>
 
+            <!-- Criar conta com convite (usuário comum; o convite é gerado pelo administrador único) -->
+            <StackPanel x:Name="CadastroBloco" Visibility="Collapsed">
+                <TextBlock Text="Nome" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
+                <TextBox x:Name="NomeCadastro" Style="{StaticResource CampoLogin}"/>
+                <TextBlock Text="Código de convite" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
+                <TextBox x:Name="Convite" Style="{StaticResource CampoLogin}" MaxLength="12" CharacterCasing="Upper" Tag="ABCDEFGHJKLM"/>
+                <TextBlock Text="Peça o código ao administrador (Geandre). A conta criada é de USUÁRIO — nunca administrador."
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="2,6,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+
             <Grid x:Name="LinhaOpcoes" Margin="0,18,0,0">
                 <CheckBox x:Name="Lembrar" Content="Lembrar de mim" Foreground="#A9B6C8" VerticalAlignment="Center"/>
-                <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Hyperlink x:Name="EsqueciLink" Click="Esqueci_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Esqueci minha senha</Hyperlink>
-                </TextBlock>
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Margin="0,0,14,0" VerticalAlignment="Center">
+                        <Hyperlink x:Name="CriarContaLink" Click="CriarConta_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Criar conta</Hyperlink>
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center">
+                        <Hyperlink x:Name="EsqueciLink" Click="Esqueci_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Esqueci minha senha</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
             </Grid>
 
             <Button x:Name="EntrarBtn" Style="{StaticResource BotaoEntrar}" Content="Entrar" Margin="0,24,0,0" Click="Entrar_Click"/>

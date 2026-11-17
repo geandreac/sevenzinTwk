@@ -62,7 +62,7 @@ public class TotpELicencaTests
     public void Autenticacao_exige_2fa_quando_ativo_e_aceita_o_codigo_correto()
     {
         var repo = new RepositorioUsuariosMemoria();
-        var contas = new ServicoContas(repo);
+        var contas = new ServicoContas(repo, _ => "eu@exemplo.com");
         var auth = new ServicoAutenticacao(repo);
 
         contas.Criar("eu@exemplo.com", "SenhaForte#123", PapelUsuario.Administrador);

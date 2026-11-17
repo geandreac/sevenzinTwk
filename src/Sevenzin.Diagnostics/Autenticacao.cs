@@ -99,16 +99,19 @@ public sealed class ServicoAutenticacao
 /// <summary>Sessão autenticada com token opaco e validade (expiração absoluta, renovável).</summary>
 public sealed record Sessao(string Token, Usuario Usuario, DateTime ExpiraUtc);
 
-/// <summary>Cria, valida, renova e encerra a sessão atual. Expiração deslizante (renova a cada atividade).</summary>
+/// <summary>Cria, valida, renova e encerra a sessão atual. Expiração deslizante (renova a cada atividade).
+/// ADMINISTRADOR ÚNICO: <see cref="PodeAcessarAdmin"/> exige o papel E a identidade provisionada.</summary>
 public sealed class ServicoSessao
 {
     readonly Func<DateTime> _agora;
     readonly TimeSpan _duracao;
+    readonly Func<string, string?> _lerEnv;
 
-    public ServicoSessao(Func<DateTime>? agora = null, TimeSpan? duracao = null)
+    public ServicoSessao(Func<DateTime>? agora = null, TimeSpan? duracao = null, Func<string, string?>? lerEnv = null)
     {
         _agora = agora ?? (() => DateTime.UtcNow);
         _duracao = duracao ?? TimeSpan.FromMinutes(30);
+        _lerEnv = lerEnv ?? Environment.GetEnvironmentVariable;
     }
 
     public Sessao? Atual { get; private set; }
@@ -132,14 +135,23 @@ public sealed class ServicoSessao
 
     public void Encerrar() => Atual = null;
 
-    public bool PodeAcessarAdmin => Valida && Atual!.Usuario.Papel == PapelUsuario.Administrador;
+    /// <summary>Administrador = papel Administrador E e-mail idêntico à identidade provisionada.
+    /// Sem identidade configurada, ninguém tem acesso administrativo (falha segura).</summary>
+    public bool PodeAcessarAdmin =>
+        Valida
+        && Atual!.Usuario.Papel == PapelUsuario.Administrador
+        && IdentidadeAdmin.EhAdminProtegido(Atual.Usuario.Email, IdentidadeAdmin.EmailConfigurado(_lerEnv));
 }
 
-/// <summary>Autorização por papel (função pura — facilita teste de "sem permissão").</summary>
+/// <summary>Autorização por papel (função pura — facilita teste de "sem permissão"). ADMINISTRADOR ÚNICO:
+/// exige também o e-mail idêntico à identidade provisionada.</summary>
 public static class Autorizacao
 {
-    public static bool PodeAcessarAdmin(Sessao? s, DateTime agora)
-        => s is not null && agora < s.ExpiraUtc && s.Usuario.Papel == PapelUsuario.Administrador;
+    public static bool PodeAcessarAdmin(Sessao? s, DateTime agora, string? adminConfigurado)
+        => s is not null
+        && agora < s.ExpiraUtc
+        && s.Usuario.Papel == PapelUsuario.Administrador
+        && IdentidadeAdmin.EhAdminProtegido(s.Usuario.Email, adminConfigurado);
 }
 
 /// <summary>Semeia o administrador inicial a partir de variáveis de ambiente — nunca de credenciais no código.</summary>

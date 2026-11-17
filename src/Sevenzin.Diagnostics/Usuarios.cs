@@ -202,11 +202,21 @@ public sealed class RepositorioUsuariosMemoria : IRepositorioUsuarios
     public bool Remover(string email) => _usuarios.RemoveAll(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)) > 0;
 }
 
-/// <summary>Criação/remoção de contas com validação e hash. Não autentica (ver <see cref="ServicoAutenticacao"/>).</summary>
+/// <summary>Criação/remoção de contas com validação e hash. Não autentica (ver <see cref="ServicoAutenticacao"/>).
+/// REGRA DO ADMINISTRADOR ÚNICO: só a identidade provisionada (SEVENZIN_ADMIN_EMAIL) pode ser administrador —
+/// qualquer outra criação com papel Administrador é recusada no DOMÍNIO (não é proteção só de UI).</summary>
 public sealed class ServicoContas
 {
     readonly IRepositorioUsuarios _repo;
-    public ServicoContas(IRepositorioUsuarios repo) => _repo = repo;
+    readonly Func<string, string?> _lerEnv;
+    readonly RepositorioConvites _convites;
+
+    public ServicoContas(IRepositorioUsuarios repo, Func<string, string?>? lerEnv = null, RepositorioConvites? convites = null)
+    {
+        _repo = repo;
+        _lerEnv = lerEnv ?? Environment.GetEnvironmentVariable;
+        _convites = convites ?? new RepositorioConvites();
+    }
 
     public IReadOnlyList<Usuario> Todos => _repo.Todos;
     public bool Existe(string email) => _repo.PorEmail(ValidacaoCredenciais.NormalizarEmail(email)) is not null;
@@ -221,9 +231,44 @@ public sealed class ServicoContas
         if (erros.Count > 0) throw new ArgumentException(string.Join(" ", erros));
         if (Existe(e)) throw new ArgumentException("Já existe uma conta com esse e-mail.");
 
+        // ADMINISTRADOR ÚNICO: só a identidade provisionada pode ser administradora.
+        if (papel == PapelUsuario.Administrador && !IdentidadeAdmin.EhAdminProtegido(e, IdentidadeAdmin.EmailConfigurado(_lerEnv)))
+            throw new ArgumentException("Apenas o administrador provisionado (SEVENZIN_ADMIN_EMAIL) pode ser administrador.");
+
         var u = new Usuario(e, n, papel, SegurancaSenha.Gerar(senha), DateTime.UtcNow);
         _repo.Adicionar(u);
         return u;
+    }
+
+    /// <summary>Cadastro público COM convite (gerado pelo administrador único). O convite é de uso único;
+    /// a conta criada é SEMPRE do papel Usuario — nunca administrador.</summary>
+    public Usuario RegistrarComConvite(string email, string senha, string codigoConvite, string? nome = null)
+    {
+        if (!_convites.Consumir(codigoConvite))
+            throw new ArgumentException("Código de convite inválido ou já utilizado.");
+        return Criar(email, senha, PapelUsuario.Usuario, nome);
+    }
+
+    public int ConvitesDisponiveis => _convites.Disponiveis;
+
+    /// <summary>Gera um convite (a UI só permite ao administrador único).</summary>
+    public string GerarConvite() => _convites.Gerar();
+
+    /// <summary>Reconciliação na inicialização: rebaixa QUALQUER conta administradora que não seja a
+    /// identidade provisionada (defesa em profundidade no dado, não só na UI). Devolve quantas rebaixou.</summary>
+    public int GarantirAdminUnico()
+    {
+        var identidade = IdentidadeAdmin.EmailConfigurado(_lerEnv);
+        int rebaixadas = 0;
+        foreach (var u in _repo.Todos.ToList())
+        {
+            if (u.Papel == PapelUsuario.Administrador && !IdentidadeAdmin.EhAdminProtegido(u.Email, identidade))
+            {
+                _repo.Atualizar(u with { Papel = PapelUsuario.Usuario });
+                rebaixadas++;
+            }
+        }
+        return rebaixadas;
     }
 
     public bool Remover(string email) => _repo.Remover(ValidacaoCredenciais.NormalizarEmail(email));

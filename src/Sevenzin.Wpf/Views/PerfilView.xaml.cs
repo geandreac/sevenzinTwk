@@ -118,6 +118,27 @@ public partial class PerfilView : UserControl
         li.Children.Add(linha);
         Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = li });
 
+        // CONVITES (só o ADMINISTRADOR ÚNICO — Geandre — vê e gera códigos)
+        if (Servicos.Sessao.PodeAcessarAdmin)
+        {
+            Lista.Children.Add(new TextBlock { Text = "CONVITES (ADMINISTRADOR ÚNICO)", Style = SectionStyle });
+            var conv = new StackPanel();
+            conv.Children.Add(new TextBlock
+            {
+                Text = $"Códigos disponíveis: {Servicos.Contas.ConvitesDisponiveis}. Cada código é de uso único e cria uma conta de USUÁRIO — nunca administrador.",
+                Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap,
+            });
+            var gerar = Botao(Primario, "Gerar código de convite", () =>
+            {
+                var codigo = Servicos.Contas.GerarConvite();
+                MessageBox.Show($"Código de convite (use uma única vez):\n\n{codigo}\n\nRepasse para quem for criar a conta. O código não fica gravado em texto — só o hash.", "Convite gerado", MessageBoxButton.OK, MessageBoxImage.Information);
+                Montar();
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Convite gerado", "O código foi exibido uma única vez.");
+            });
+            conv.Children.Add(gerar);
+            Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = conv });
+        }
+
         // RESUMO LOCAL
         Lista.Children.Add(new TextBlock { Text = "RESUMO LOCAL", Style = SectionStyle });
         var res = new StackPanel();

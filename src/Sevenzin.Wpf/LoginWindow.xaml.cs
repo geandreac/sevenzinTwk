@@ -23,7 +23,8 @@ public partial class LoginWindow : Window
     public static bool ModoAdmin;
 
     readonly bool _bootstrap;
-    string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA (modo local)
+    string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA
+    bool _modoCadastro;
     ClienteSupabase? _clienteMfa;  // sessão Supabase aguardando o código MFA
     string? _fatorMfa, _emailMfa, _senhaMfa;
 
@@ -82,6 +83,7 @@ public partial class LoginWindow : Window
         var email = Email.Text;
         var senha = SenhaAtual();
         if (_bootstrap) { CriarPrimeiroAdmin(email, senha); return; }
+        if (_modoCadastro) { CriarContaComConvite(email, senha); return; }
 
         // Modo Supabase: autentica no backend; o papel (admin/usuário) vem da tabela perfis (RLS).
         if (Servicos.UsaSupabase)
@@ -193,8 +195,47 @@ public partial class LoginWindow : Window
         DialogResult = true;
     }
 
-    void CriarPrimeiroAdmin(string email, string senha)
+    void CriarConta_Click(object sender, RoutedEventArgs e)
     {
+        _modoCadastro = !_modoCadastro;
+        CadastroBloco.Visibility = _modoCadastro ? Visibility.Visible : Visibility.Collapsed;
+        EntrarBtn.Content = _modoCadastro ? "Criar conta" : "Entrar";
+        Subtitulo.Text = _modoCadastro ? "Crie sua conta com o código de convite" : "Acesse sua conta";
+        Mensagem.Visibility = Visibility.Collapsed;
+    }
+
+    void CriarContaComConvite(string email, string senha)
+    {
+        var erros = ValidacaoCredenciais.ValidarEmail(email).Concat(ValidacaoCredenciais.ValidarSenha(senha, email, NomeCadastro.Text)).ToList();
+        if (!IdentidadeAdmin.CodigoConviteValido(Convite.Text)) erros.Add("Informe o código de convite de 12 caracteres (peça ao administrador).");
+        if (erros.Count > 0) { Erro("• " + string.Join("\n• ", erros.Distinct())); return; }
+        try
+        {
+            var u = Servicos.Contas.RegistrarComConvite(email, senha, Convite.Text, NomeCadastro.Text);
+            Servicos.Sessao.Abrir(u);
+            DialogResult = true;
+        }
+        catch (Exception ex) { Erro(ex.Message); }
+    }
+
+    void CriarPrimeiroAdmin(string email, string senha)    {
+        // ADMINISTRADOR ÚNICO: o bootstrap só cria o administrador se o e-mail for EXATAMENTE a
+        // identidade provisionada. Sem identidade configurada, nega e instrui — nunca concede ADM.
+        var identidade = IdentidadeAdmin.EmailConfigurado();
+        if (identidade is null)
+        {
+            Erro("Administrador único não configurado.\n\nDefina as variáveis SEVENZIN_ADMIN_EMAIL e " +
+                 "SEVENZIN_ADMIN_SENHA (e-mail do Geandre + senha forte) e abra o app de novo. " +
+                 "Nenhum administrador é criado sem isso.");
+            return;
+        }
+        if (!IdentidadeAdmin.EhAdminProtegido(email, identidade))
+        {
+            Erro("Somente o administrador provisionado pode criar a primeira conta de administrador.\n" +
+                 "Use o e-mail configurado em SEVENZIN_ADMIN_EMAIL.");
+            return;
+        }
+
         var nome = ValidacaoCredenciais.NomeDeEmail(email);
         var erros = ValidacaoCredenciais.ValidarEmail(email).Concat(ValidacaoCredenciais.ValidarSenha(senha, email, nome)).ToList();
         if (senha != Confirmar.Password) erros.Add("As senhas não conferem.");
