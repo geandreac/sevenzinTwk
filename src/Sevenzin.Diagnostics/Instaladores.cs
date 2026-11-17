@@ -7,7 +7,7 @@ namespace Sevenzin.Diagnostics;
 /// Sha256Esperado e PublisherEsperado são opcionais, mas a assinatura é sempre exigida.</summary>
 public sealed record Utilitario(
     string Nome, string Descricao, string UrlOficial, string? UrlDownload,
-    string? PublisherEsperado, string? Sha256Esperado);
+    string? PublisherEsperado, string? Sha256Esperado, string Categoria = "Sistema");
 
 public enum ResultadoVerificacao { Ok, HashNaoConfere, SemAssinatura, PublisherDiferente }
 
@@ -115,81 +115,94 @@ public static class CatalogoUtilitarios
     public static readonly IReadOnlyList<Utilitario> Todos = new[]
     {
         new Utilitario("Coreinfo (Sysinternals)", "Mostra o mapeamento de núcleos lógicos/físicos, cache e topologia (Microsoft).",
-            "https://learn.microsoft.com/sysinternals/downloads/coreinfo", "https://live.sysinternals.com/Coreinfo.exe", "Microsoft", null),
+            "https://learn.microsoft.com/sysinternals/downloads/coreinfo", "https://live.sysinternals.com/Coreinfo.exe", "Microsoft", null, "Monitoramento"),
         new Utilitario("CPU-Z", "Informações detalhadas de CPU, placa-mãe e memória (CPUID).",
-            "https://www.cpuid.com/softwares/cpu-z.html", null, "CPUID", null),
+            "https://www.cpuid.com/softwares/cpu-z.html", null, "CPUID", null, "Monitoramento"),
         new Utilitario("CrystalDiskInfo", "Saúde e S.M.A.R.T. dos discos (Crystal Dew World).",
-            "https://crystalmark.info/en/software/crystaldiskinfo/", null, null, null),
+            "https://crystalmark.info/en/software/crystaldiskinfo/", null, null, null, "Monitoramento"),
         new Utilitario("HWiNFO", "Monitoramento de sensores (temperatura, clock, uso) de CPU/GPU/placa (REALiX).",
-            "https://www.hwinfo.com/download/", null, null, null),
+            "https://www.hwinfo.com/download/", null, null, null, "Monitoramento"),
         new Utilitario("GPU-Z", "Informações e sensores da placa de vídeo (TechPowerUp).",
-            "https://www.techpowerup.com/gpuz/", null, null, null),
+            "https://www.techpowerup.com/gpuz/", null, null, null, "Monitoramento"),
         new Utilitario("Process Explorer (Sysinternals)", "Gerenciador de processos avançado da Microsoft (handles, árvore, CPU por thread).",
-            "https://learn.microsoft.com/sysinternals/downloads/process-explorer", "https://live.sysinternals.com/procexp64.exe", "Microsoft", null),
+            "https://learn.microsoft.com/sysinternals/downloads/process-explorer", "https://live.sysinternals.com/procexp64.exe", "Microsoft", null, "Monitoramento"),
         new Utilitario("Autoruns (Sysinternals)", "Lista tudo que inicia com o Windows, para revisar e desligar itens de inicialização (Microsoft).",
-            "https://learn.microsoft.com/sysinternals/downloads/autoruns", "https://live.sysinternals.com/Autoruns64.exe", "Microsoft", null),
+            "https://learn.microsoft.com/sysinternals/downloads/autoruns", "https://live.sysinternals.com/Autoruns64.exe", "Microsoft", null, "Sistema"),
 
         // ── Ampliação F3: nomes confirmados na engenharia reversa (05_metricas §6, 35 logos) ──
         // Política: sempre fonte OFICIAL; download direto só quando a URL é estável e assinável.
         new Utilitario("7-Zip", "Compactador de arquivos leve e aberto (Igor Pavlov).",
-            "https://www.7-zip.org/", null, null, null),
+            "https://www.7-zip.org/", null, null, null, "Sistema"),
         new Utilitario("Brave Browser", "Navegador com bloqueio de anúncios e rastreadores embutido.",
-            "https://brave.com/", "https://laptop-updates.brave.com/latest/winx64", null, null),
+            "https://brave.com/", "https://laptop-updates.brave.com/latest/winx64", null, null, "Sistema"),
         new Utilitario("Google Chrome", "Navegador do Google.",
-            "https://www.google.com/chrome/", "https://dl.google.com/chrome/install/latest/chrome_installer.exe", null, null),
+            "https://www.google.com/chrome/", "https://dl.google.com/chrome/install/latest/chrome_installer.exe", null, null, "Sistema"),
         new Utilitario("Visual Studio Code", "Editor de código da Microsoft.",
-            "https://code.visualstudio.com/", "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user", null, null),
+            "https://code.visualstudio.com/", "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user", null, null, "Sistema"),
         new Utilitario("Microsoft Edge", "Navegador da Microsoft.",
-            "https://www.microsoft.com/edge", null, null, null),
+            "https://www.microsoft.com/edge", null, null, null, "Sistema"),
         new Utilitario("DirectX End-User Runtime", "Bibliotecas DirectX legadas para jogos antigos (Microsoft).",
-            "https://www.microsoft.com/en-us/download/details.aspx?id=35", null, null, null),
+            "https://www.microsoft.com/en-us/download/details.aspx?id=35", null, null, null, "Sistema"),
         new Utilitario("Epic Games Launcher", "Loja e launcher de jogos da Epic.",
-            "https://store.epicgames.com/", null, null, null),
+            "https://store.epicgames.com/", null, null, null, "Plataformas"),
         new Utilitario("Rockstar Games Launcher", "Launcher da Rockstar Games.",
-            "https://socialclub.rockstargames.com/rockstar-games-launcher", null, null, null),
+            "https://socialclub.rockstargames.com/rockstar-games-launcher", null, null, null, "Plataformas"),
         new Utilitario("Ubisoft Connect", "Launcher da Ubisoft.",
-            "https://ubisoftconnect.com/", null, null, null),
+            "https://ubisoftconnect.com/", null, null, null, "Plataformas"),
         new Utilitario("VALORANT", "Jogo de tiro tático da Riot (com anti-cheat Vanguard).",
-            "https://playvalorant.com/", null, null, null),
+            "https://playvalorant.com/", null, null, null, "Jogos"),
         new Utilitario("FACEIT", "Plataforma competitiva de partidas e anti-cheat.",
-            "https://www.faceit.com/", null, null, null),
+            "https://www.faceit.com/", null, null, null, "Plataformas"),
         new Utilitario("Gamers Club", "Plataforma brasileira de partidas competitivas.",
-            "https://gamersclub.com.br/", null, null, null),
+            "https://gamersclub.com.br/", null, null, null, "Plataformas"),
         new Utilitario("TeamSpeak", "Comunicação por voz com servidores próprios.",
-            "https://teamspeak.com/en/downloads/", null, null, null),
+            "https://teamspeak.com/en/downloads/", null, null, null, "Sistema"),
         new Utilitario("LatencyMon", "Mede a latência DPC/ISR do sistema (Resplendence).",
-            "https://www.resplendence.com/latencymon", null, null, null),
+            "https://www.resplendence.com/latencymon", null, null, null, "Monitoramento"),
         new Utilitario("MSI Afterburner", "Overclock e monitoramento de GPU (MSI).",
-            "https://www.msi.com/Landing/afterburner/graphics-cards", null, null, null),
+            "https://www.msi.com/Landing/afterburner/graphics-cards", null, null, null, "Monitoramento"),
         new Utilitario("Logitech G HUB", "Periféricos Logitech G (RGB, perfis).",
-            "https://www.logitechg.com/en-us/innovation/g-hub.html", null, null, null),
+            "https://www.logitechg.com/en-us/innovation/g-hub.html", null, null, null, "Sistema"),
         new Utilitario("NVCleanstall", "Instalação limpa do driver NVIDIA (TechPowerUp).",
-            "https://www.techpowerup.com/download/techpowerup-nvcleanstall/", null, null, null),
+            "https://www.techpowerup.com/download/techpowerup-nvcleanstall/", null, null, null, "Drivers"),
         new Utilitario("OCAT", "Captura de FPS por PresentMon (GPUOpen/AMD).",
-            "https://gpuopen.com/ocat/", null, null, null),
+            "https://gpuopen.com/ocat/", null, null, null, "Monitoramento"),
         new Utilitario("Open-Shell", "Menu Iniciar clássico do Windows (open source).",
-            "https://open-shell.github.io/Open-Shell-Menu/", null, null, null),
+            "https://open-shell.github.io/Open-Shell-Menu/", null, null, null, "Sistema"),
         new Utilitario("StartAllBack", "Restaura a barra de tarefas/Explorer clássicos (pago).",
-            "https://www.startallback.com/", null, null, null),
+            "https://www.startallback.com/", null, null, null, "Sistema"),
         new Utilitario("Visual Studio", "IDE da Microsoft.",
-            "https://visualstudio.microsoft.com/", null, null, null),
+            "https://visualstudio.microsoft.com/", null, null, null, "Sistema"),
         new Utilitario("DDU (Display Driver Uninstaller)", "Remove drivers de vídeo de forma limpa (Wagnardsoft).",
-            "https://www.wagnardsoft.com/forums/viewforum.php?f=5", null, null, null),
+            "https://www.wagnardsoft.com/forums/viewforum.php?f=5", null, null, null, "Drivers"),
         new Utilitario("Radeon Software Slimmer", "Instalação enxuta do driver AMD (open source).",
-            "https://github.com/GSDragoon/RadeonSoftwareSlimmer", null, null, null),
+            "https://github.com/GSDragoon/RadeonSoftwareSlimmer", null, null, null, "Drivers"),
         new Utilitario("ZenTimings", "Tempos de memória em placas AMD (open source).",
-            "https://zentimings.protonrom.com/", null, null, null),
+            "https://zentimings.protonrom.com/", null, null, null, "Monitoramento"),
         new Utilitario("Prime95", "Teste de estabilidade de CPU/memória (GIMPS).",
-            "https://www.mersenne.org/download/", null, null, null),
+            "https://www.mersenne.org/download/", null, null, null, "Monitoramento"),
         new Utilitario("Geekbench", "Benchmark de CPU/GPU multiplataforma (Primate Labs).",
-            "https://www.geekbench.com/download/", null, null, null),
+            "https://www.geekbench.com/download/", null, null, null, "Monitoramento"),
         new Utilitario("OCCT", "Teste de estabilidade e sensores (Ocbase).",
-            "https://www.ocbase.com/", null, null, null),
+            "https://www.ocbase.com/", null, null, null, "Monitoramento"),
         new Utilitario("DriverStore Explorer", "Gerencia drivers instalados (open source, GitHub).",
-            "https://github.com/lostindark/DriverStoreExplorer", null, null, null),
+            "https://github.com/lostindark/DriverStoreExplorer", null, null, null, "Drivers"),
         new Utilitario("Internet / Wi-Fi driver", "Página oficial de drivers de rede (Intel).",
-            "https://www.intel.com/content/www/us/en/download-center/home.html", null, null, null),
+            "https://www.intel.com/content/www/us/en/download-center/home.html", null, null, null, "Drivers"),
     };
+
+    // Ordem de exibição das categorias (como no original); categorias fora desta lista vão ao fim, em ordem alfabética.
+    static readonly string[] OrdemCategorias = { "Sistema", "Drivers", "Plataformas", "Jogos", "Monitoramento" };
+
+    /// <summary>Categorias presentes no catálogo e quantos utilitários cada uma tem, na ordem de exibição.
+    /// Usado pelas "pills" de filtro. Puro/testável.</summary>
+    public static IReadOnlyList<(string Categoria, int Qtd)> ContagemPorCategoria()
+    {
+        var por = Todos.GroupBy(u => u.Categoria).ToDictionary(g => g.Key, g => g.Count());
+        var ordem = OrdemCategorias.Where(por.ContainsKey)
+            .Concat(por.Keys.Where(k => !OrdemCategorias.Contains(k)).OrderBy(k => k));
+        return ordem.Select(c => (c, por[c])).ToList();
+    }
 
     /// <summary>Nomes do original que NÃO entram no catálogo por decisão registrada:
     /// KMS Activator (ativador de licença não-oficial — risco de malware e violação de licença).</summary>

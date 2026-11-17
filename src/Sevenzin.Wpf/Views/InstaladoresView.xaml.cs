@@ -16,6 +16,9 @@ public partial class InstaladoresView : UserControl
 
     readonly FilaInstaladores _fila = new();
     StackPanel? _filaLista;
+    StackPanel _catalogoHost = null!;
+    string? _filtro; // categoria selecionada; null = Todos
+    readonly List<Button> _pills = new();
 
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style Primario => (Style)Application.Current.Resources["PrimaryButton"];
@@ -28,9 +31,43 @@ public partial class InstaladoresView : UserControl
     public InstaladoresView()
     {
         InitializeComponent();
-        foreach (var u in CatalogoUtilitarios.Todos) Lista.Children.Add(Cartao(u));
+        Lista.Children.Add(Pills());
+        _catalogoHost = new StackPanel();
+        Lista.Children.Add(_catalogoHost);
+        RenderCatalogo();
         Lista.Children.Add(CartaoWinget());
         Lista.Children.Add(CartaoFila());
+    }
+
+    // Pills de categoria com contagem (inspirado no original): filtram o catálogo. "Todos" + uma por categoria.
+    WrapPanel Pills()
+    {
+        var wrap = new WrapPanel { Margin = new Thickness(0, 0, 0, 14) };
+        void Add(string? cat, string texto)
+        {
+            var b = new Button { Content = texto, Tag = cat, Margin = new Thickness(0, 0, 8, 8), Padding = new Thickness(13, 6, 13, 6),
+                Style = cat == _filtro ? Primario : Secundario };
+            b.Click += (_, _) => SelecionarFiltro(cat);
+            _pills.Add(b);
+            wrap.Children.Add(b);
+        }
+        Add(null, $"Todos  {CatalogoUtilitarios.Todos.Count}");
+        foreach (var (cat, qtd) in CatalogoUtilitarios.ContagemPorCategoria()) Add(cat, $"{cat}  {qtd}");
+        return wrap;
+    }
+
+    void SelecionarFiltro(string? cat)
+    {
+        _filtro = cat;
+        foreach (var p in _pills) p.Style = (string?)p.Tag == _filtro ? Primario : Secundario;
+        RenderCatalogo();
+    }
+
+    void RenderCatalogo()
+    {
+        _catalogoHost.Children.Clear();
+        var itens = _filtro is null ? CatalogoUtilitarios.Todos : CatalogoUtilitarios.Todos.Where(u => u.Categoria == _filtro);
+        foreach (var u in itens) _catalogoHost.Children.Add(Cartao(u));
     }
 
     Border Cartao(Utilitario u)
