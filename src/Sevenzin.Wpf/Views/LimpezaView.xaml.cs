@@ -13,6 +13,7 @@ public partial class LimpezaView : UserControl
 {
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Secondary => (Brush)Application.Current.Resources["TextSecondaryBrush"];
+    static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style SecButton => (Style)Application.Current.Resources["SecondaryButton"];
 
@@ -24,7 +25,12 @@ public partial class LimpezaView : UserControl
     {
         InitializeComponent();
         foreach (var a in Limpeza.Alvos) Lista.Children.Add(Cartao(a));
+        // Mostra "Reabrir como administrador" só quando há alvo de sistema e ainda não estamos elevados.
+        if (!Elevacao.EhAdmin() && Limpeza.Alvos.Any(a => a.ExigeAdmin))
+            AdminBtn.Visibility = Visibility.Visible;
     }
+
+    void Admin_Click(object sender, RoutedEventArgs e) => Elevacao.ReabrirComoAdmin();
 
     Border Cartao(AlvoLimpeza a)
     {
@@ -32,10 +38,20 @@ public partial class LimpezaView : UserControl
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
+        bool bloqueadoPorAdmin = a.ExigeAdmin && !Elevacao.EhAdmin();
+
         var esq = new StackPanel { Margin = new Thickness(0, 0, 16, 0) };
-        esq.Children.Add(new TextBlock { Text = a.Nome, FontSize = 14, FontWeight = FontWeights.SemiBold });
+        var titulo = new StackPanel { Orientation = Orientation.Horizontal };
+        titulo.Children.Add(new TextBlock { Text = a.Nome, FontSize = 14, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
+        if (a.ExigeAdmin)
+        {
+            var tag = new Border { Background = Surface2, CornerRadius = new CornerRadius(6), Padding = new Thickness(7, 1, 7, 1), Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            tag.Child = new TextBlock { Text = "requer admin", Foreground = Muted, FontSize = 10, FontWeight = FontWeights.SemiBold };
+            titulo.Children.Add(tag);
+        }
+        esq.Children.Add(titulo);
         esq.Children.Add(new TextBlock { Text = a.Descricao, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap });
-        var tam = new TextBlock { Text = "—", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) };
+        var tam = new TextBlock { Text = bloqueadoPorAdmin ? "Reabra como administrador para medir e limpar." : "—", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) };
         esq.Children.Add(tam);
         Grid.SetColumn(esq, 0);
         g.Children.Add(esq);
@@ -50,7 +66,8 @@ public partial class LimpezaView : UserControl
         }
         else
         {
-            chk = new CheckBox { IsChecked = true, VerticalAlignment = VerticalAlignment.Center };
+            // Alvos de sistema começam desmarcados (opt-in) e ficam desabilitados sem admin.
+            chk = new CheckBox { IsChecked = !a.ExigeAdmin, IsEnabled = !bloqueadoPorAdmin, VerticalAlignment = VerticalAlignment.Center };
             chk.Checked += (_, _) => AtualizarResumo();
             chk.Unchecked += (_, _) => AtualizarResumo();
             Grid.SetColumn(chk, 1);
@@ -67,6 +84,11 @@ public partial class LimpezaView : UserControl
         ResumoTxt.Text = "Analisando…";
         foreach (var a in Limpeza.Alvos)
         {
+            if (a.ExigeAdmin && !Elevacao.EhAdmin())
+            {
+                _ctrl[a.Id].Tamanho.Text = "Reabra como administrador para medir e limpar.";
+                continue; // sem admin a varredura daria 0 enganoso; não conta no resumo
+            }
             var r = await System.Threading.Tasks.Task.Run(() => Limpeza.Analisar(a.Id));
             _ultima[a.Id] = r;
             _ctrl[a.Id].Tamanho.Text = $"{Tam(r.Bytes)} · {r.Itens} item(ns)";

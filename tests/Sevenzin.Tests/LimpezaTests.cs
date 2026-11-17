@@ -11,8 +11,15 @@ public class LimpezaTests
     [Fact]
     public void So_a_Lixeira_e_permanente()
     {
-        Assert.Equal(3, Limpeza.Alvos.Count);
+        Assert.Equal(6, Limpeza.Alvos.Count);
         Assert.All(Limpeza.Alvos, a => Assert.Equal(a.Id == CategoriaLimpeza.Lixeira, a.Permanente));
+    }
+
+    [Fact]
+    public void So_os_alvos_de_sistema_exigem_admin()
+    {
+        var comAdmin = new[] { CategoriaLimpeza.TempSistema, CategoriaLimpeza.CacheWindowsUpdate, CategoriaLimpeza.Prefetch };
+        Assert.All(Limpeza.Alvos, a => Assert.Equal(comAdmin.Contains(a.Id), a.ExigeAdmin));
     }
 
     [Fact]

@@ -3,11 +3,12 @@ using System.Runtime.InteropServices;
 
 namespace Sevenzin.Diagnostics;
 
-public enum CategoriaLimpeza { TempUsuario, CacheMiniaturas, Lixeira }
+public enum CategoriaLimpeza { TempUsuario, CacheMiniaturas, Lixeira, TempSistema, CacheWindowsUpdate, Prefetch }
 
 /// <summary>Uma categoria de limpeza. <see cref="Permanente"/> só é verdadeiro para a Lixeira (esvaziar é
-/// irreversível); as demais vão PARA a Lixeira e podem ser restauradas.</summary>
-public sealed record AlvoLimpeza(CategoriaLimpeza Id, string Nome, string Descricao, bool Permanente);
+/// irreversível); as demais vão PARA a Lixeira e podem ser restauradas. <see cref="ExigeAdmin"/> marca os
+/// alvos de sistema (HKLM-equivalente em disco): pastas de <c>%SystemRoot%</c> que só limpam como admin.</summary>
+public sealed record AlvoLimpeza(CategoriaLimpeza Id, string Nome, string Descricao, bool Permanente, bool ExigeAdmin = false);
 
 public sealed record ResultadoAnalise(long Bytes, int Itens);
 public sealed record ResultadoLimpeza(int Itens, long Bytes, int Erros, string Mensagem);
@@ -27,6 +28,12 @@ public static class Limpeza
             "thumbcache_*.db / iconcache_*.db do Explorer. O Windows regenera sozinho quando precisar.", false),
         new AlvoLimpeza(CategoriaLimpeza.Lixeira, "Lixeira (Reciclagem)",
             "Esvaziar remove de vez o que está na Lixeira. PERMANENTE — não dá para desfazer.", true),
+        new AlvoLimpeza(CategoriaLimpeza.TempSistema, "Arquivos temporários do sistema",
+            "Conteúdo de %SystemRoot%\\Temp. Vai para a Lixeira; arquivos em uso são pulados.", false, ExigeAdmin: true),
+        new AlvoLimpeza(CategoriaLimpeza.CacheWindowsUpdate, "Cache do Windows Update",
+            "Downloads antigos em SoftwareDistribution\\Download. O Windows Update rebaixa o que precisar.", false, ExigeAdmin: true),
+        new AlvoLimpeza(CategoriaLimpeza.Prefetch, "Prefetch",
+            "Arquivos *.pf de %SystemRoot%\\Prefetch. O Windows regenera; os primeiros inícios podem ficar um pouco mais lentos.", false, ExigeAdmin: true),
     };
 
     // ---- Análise (somente leitura) ----
@@ -35,8 +42,19 @@ public static class Limpeza
     {
         CategoriaLimpeza.Lixeira => LixeiraInfo(),
         CategoriaLimpeza.CacheMiniaturas => AnalisarArquivos(ArquivosCache()),
-        _ => AnalisarPasta(Path.GetTempPath()),
+        _ => AnalisarPasta(PastaDe(cat)),
     };
+
+    /// <summary>Pasta resolvida de uma categoria baseada em diretório (todas menos Lixeira e miniaturas).</summary>
+    static string PastaDe(CategoriaLimpeza cat) => cat switch
+    {
+        CategoriaLimpeza.TempSistema => Path.Combine(WindowsDir(), "Temp"),
+        CategoriaLimpeza.CacheWindowsUpdate => Path.Combine(WindowsDir(), "SoftwareDistribution", "Download"),
+        CategoriaLimpeza.Prefetch => Path.Combine(WindowsDir(), "Prefetch"),
+        _ => Path.GetTempPath(),
+    };
+
+    static string WindowsDir() => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
 
     static ResultadoAnalise AnalisarPasta(string dir)
     {
@@ -59,7 +77,7 @@ public static class Limpeza
     {
         CategoriaLimpeza.Lixeira => EsvaziarLixeira(),
         CategoriaLimpeza.CacheMiniaturas => MoverParaLixeira(ArquivosCache().ToList()),
-        _ => MoverParaLixeira(EntradasTopo(Path.GetTempPath())),
+        _ => MoverParaLixeira(EntradasTopo(PastaDe(cat))),
     };
 
     static ResultadoLimpeza MoverParaLixeira(List<string> alvos)
@@ -110,7 +128,13 @@ public static class Limpeza
     }
 
     static bool DentroDeRaizPermitida(string caminho) => DentroDe(caminho, RaizesPermitidas());
-    static string[] RaizesPermitidas() => new[] { Path.GetTempPath(), ExplorerDir() };
+    static string[] RaizesPermitidas() => new[]
+    {
+        Path.GetTempPath(), ExplorerDir(),
+        Path.Combine(WindowsDir(), "Temp"),
+        Path.Combine(WindowsDir(), "SoftwareDistribution", "Download"),
+        Path.Combine(WindowsDir(), "Prefetch"),
+    };
 
     static string NormPath(string p)
     {

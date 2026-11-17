@@ -21,7 +21,8 @@
         </ScrollViewer>
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,16">
             <Button x:Name="AnalisarBtn" Style="{StaticResource PrimaryButton}" Content="Analisar" Padding="14,8" Margin="0,0,10,0" Click="Analisar_Click"/>
-            <Button x:Name="LimparBtn" Style="{StaticResource SecondaryButton}" Content="Enviar à Lixeira os selecionados" Padding="14,8" Click="Limpar_Click" IsEnabled="False"/>
+            <Button x:Name="LimparBtn" Style="{StaticResource SecondaryButton}" Content="Enviar à Lixeira os selecionados" Padding="14,8" Margin="0,0,10,0" Click="Limpar_Click" IsEnabled="False"/>
+            <Button x:Name="AdminBtn" Style="{StaticResource SecondaryButton}" Content="Reabrir como administrador" Padding="14,8" Click="Admin_Click" Visibility="Collapsed"/>
         </StackPanel>
     </Grid>
 </UserControl>
