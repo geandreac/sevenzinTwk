@@ -25,6 +25,7 @@ public partial class MainWindow : Window
         // Sistema (Windows e apps; ações de risco — Proteção/BIOS/Mídia — ao fim do bloco)
         ("windows", "", "Windows"),
         ("instaladores", "", "Instaladores"),
+        ("limpeza", "", "Limpeza"),
         ("protecao", "", "Proteção"),
         ("bios", "", "BIOS"),
         // Ferramentas (uso pontual)
@@ -163,6 +164,7 @@ public partial class MainWindow : Window
             "ajustes" => new AjustesView(),
             "gpu" => new GpuView(),
             "instaladores" => new InstaladoresView(),
+            "limpeza" => new LimpezaView(),
             "jogos" => new JogosView(),
             "guias" => new GuiasView(),
             "notificacoes" => new NotificacoesView(),
