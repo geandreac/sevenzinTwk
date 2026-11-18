@@ -5,6 +5,20 @@ using Xunit;
 
 namespace Sevenzin.Tests;
 
+public class NvidiaPainelControleTests
+{
+    [Fact]
+    public void Prefere_o_classico_depois_o_da_loja_e_null_sem_nenhum()
+    {
+        Assert.EndsWith("nvcplui.exe", Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(true, true)!.Value.Exe);
+        var loja = Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(false, true)!.Value;
+        Assert.Equal("explorer.exe", loja.Exe);
+        Assert.StartsWith(@"shell:AppsFolder\NVIDIACorp.NVIDIAControlPanel_", loja.Args);
+        Assert.Null(Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(false, false));
+    }
+}
+
+
 public class NvidiaRedeTests
 {
     static HttpRequestException SemNome() => new(HttpRequestError.NameResolutionError, "Este host não é reconhecido. (www.nvidia.com:443)");
