@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Emblema SevenzinTwks — vetorizado de "Emblema Futurista Azul e Prateado.png".
+     Fundo 100% transparente (sem preto, sem brilho embutido). Geometria redesenhada a partir das bordas medidas
+     no PNG, com simetria EXATA de rotação de 180° em torno de (800,478): cada par de peças (barras, ombros
+     prateados, chevrons) foi tirado da média das duas metades do original, que era levemente assimétrico.
+     O brilho ("glow") fica a cargo de quem usa a logo (CSS drop-shadow / DropShadowEffect). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="222 90 1156 776" width="1156" height="776" role="img" aria-label="SevenzinTwks">
+  <defs>
+    <!-- Fita do "S" (barra de cima + diagonal + barra de baixo): ciano nas pontas, azul profundo no miolo -->
+    <linearGradient id="fita" gradientUnits="userSpaceOnUse" x1="234" y1="0" x2="1366" y2="0">
+      <stop offset="0" stop-color="#22E8FF"/>
+      <stop offset=".18" stop-color="#0A8CFF"/>
+      <stop offset=".36" stop-color="#0657F2"/>
+      <stop offset=".5" stop-color="#0846D8"/>
+      <stop offset=".64" stop-color="#0657F2"/>
+      <stop offset=".82" stop-color="#0A8CFF"/>
+      <stop offset="1" stop-color="#22E8FF"/>
+    </linearGradient>
+    <!-- Ombros prateados: faixa de brilho perpendicular à peça -->
+    <linearGradient id="prataS" gradientUnits="userSpaceOnUse" x1="597" y1="190" x2="702.5" y2="308.6">
+      <stop offset="0" stop-color="#7D8798"/>
+      <stop offset=".18" stop-color="#C8D0DB"/>
+      <stop offset=".42" stop-color="#FFFFFF"/>
+      <stop offset=".55" stop-color="#EEF2F7"/>
+      <stop offset=".8" stop-color="#A6B0BF"/>
+      <stop offset="1" stop-color="#6E788A"/>
+    </linearGradient>
+    <linearGradient id="prataI" gradientUnits="userSpaceOnUse" x1="1003" y1="766" x2="897.5" y2="647.4" href="#prataS"/>
+    <!-- Chevrons laterais: veio ciano no meio -->
+    <linearGradient id="chevE" gradientUnits="userSpaceOnUse" x1="381.3" y1="525" x2="528.5" y2="379.8">
+      <stop offset="0" stop-color="#0A5BF5"/>
+      <stop offset=".28" stop-color="#0E9BFF"/>
+      <stop offset=".5" stop-color="#2AE6FF"/>
+      <stop offset=".72" stop-color="#0E9BFF"/>
+      <stop offset="1" stop-color="#0A4FE6"/>
+    </linearGradient>
+    <linearGradient id="chevD" gradientUnits="userSpaceOnUse" x1="1218.7" y1="431" x2="1071.5" y2="576.2" href="#chevE"/>
+    <clipPath id="recorteFita">
+      <path d="M696,102 L1366,102 L1161,284 L782,284 C764,284 730,306 746,322 L1104.9,675.4 L904,854 L234,854 L439,672 L818,672 C836,672 870,650 854,634 L495.1,280.6 Z"/>
+    </clipPath>
+    <path id="ombroS" d="M696,102 L935,102 L723.5,290 C627.9,375 698.6,445 722.6,505 L495.1,280.6 Z"/>
+    <path id="ombroI" d="M904,854 L665,854 L876.5,666 C972.1,581 901.4,511 877.4,451 L1104.9,675.4 Z"/>
+  </defs>
+
+  <!-- Chevrons -->
+  <path d="M402,255 L769,617 L474.5,617 L253,398.5 Z" fill="url(#chevE)" stroke="#3BE8FF" stroke-opacity=".85" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M1198,701 L831,339 L1125.5,339 L1347,557.5 Z" fill="url(#chevD)" stroke="#3BE8FF" stroke-opacity=".85" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Fita do S + sombra macia junto aos ombros prateados (traços largos recortados pela fita) -->
+  <g clip-path="url(#recorteFita)">
+    <path d="M696,102 L1366,102 L1161,284 L782,284 C764,284 730,306 746,322 L1104.9,675.4 L904,854 L234,854 L439,672 L818,672 C836,672 870,650 854,634 L495.1,280.6 Z" fill="url(#fita)"/>
+    <!-- 8 camadas finas (16px de passo, 11% cada) em vez de 3 grossas: degradê macio, sem "degraus" -->
+    <g fill="none" stroke="#020B3A" stroke-opacity=".11" stroke-linejoin="round">
+      <use href="#ombroS" stroke-width="128"/><use href="#ombroS" stroke-width="112"/><use href="#ombroS" stroke-width="96"/><use href="#ombroS" stroke-width="80"/>
+      <use href="#ombroS" stroke-width="64"/><use href="#ombroS" stroke-width="48"/><use href="#ombroS" stroke-width="32"/><use href="#ombroS" stroke-width="16"/>
+      <use href="#ombroI" stroke-width="128"/><use href="#ombroI" stroke-width="112"/><use href="#ombroI" stroke-width="96"/><use href="#ombroI" stroke-width="80"/>
+      <use href="#ombroI" stroke-width="64"/><use href="#ombroI" stroke-width="48"/><use href="#ombroI" stroke-width="32"/><use href="#ombroI" stroke-width="16"/>
+    </g>
+  </g>
+  <path d="M696,102 L1366,102 L1161,284 L782,284 C764,284 730,306 746,322 L1104.9,675.4 L904,854 L234,854 L439,672 L818,672 C836,672 870,650 854,634 L495.1,280.6 Z"
+        fill="none" stroke="#3BE8FF" stroke-opacity=".8" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Ombros prateados por cima -->
+  <use href="#ombroS" fill="url(#prataS)" stroke="#F5F8FF" stroke-width="2.5" stroke-linejoin="round"/>
+  <use href="#ombroI" fill="url(#prataI)" stroke="#F5F8FF" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>

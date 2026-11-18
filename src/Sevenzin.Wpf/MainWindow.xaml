@@ -21,7 +21,7 @@
         <Border x:Name="Sidebar" Width="66" Grid.Column="0" Background="{StaticResource BgSidebarBrush}" BorderBrush="{StaticResource BorderDefaultBrush}" BorderThickness="0,0,1,0">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top">
-                    <Image Source="{StaticResource LogoSimbolo}" Height="26" HorizontalAlignment="Center" Margin="0,14,0,8"
+                    <Image Source="{StaticResource LogoSimbolo}" Height="22" HorizontalAlignment="Center" Margin="0,16,0,10"
                            RenderOptions.BitmapScalingMode="HighQuality" ToolTip="SevenzinTwks" AutomationProperties.Name="SevenzinTwks"/>
                     <Button x:Name="MenuBtn" Height="40" Background="Transparent" BorderThickness="0" Cursor="Hand"
                             Click="Menu_Click" ToolTip="Expandir/recolher menu" AutomationProperties.Name="Expandir ou recolher o menu">
