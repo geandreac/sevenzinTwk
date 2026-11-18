@@ -6,6 +6,17 @@ $env:PATH = "C:\re\geandre\dotnet;$env:PATH"
 $raiz = Split-Path $PSScriptRoot -Parent
 $dist = Join-Path $raiz 'dist'
 
+# O otimizador distribuido leva o servidor de contas embutido (Sevenzin.Wpf.csproj le estas variaveis no build).
+# Sem elas, em outro PC o app cairia no modo de contas locais ("Crie o primeiro administrador"): entao nao gera.
+foreach ($v in 'SEVENZIN_SUPABASE_URL','SEVENZIN_SUPABASE_ANON') {
+    if (-not [Environment]::GetEnvironmentVariable($v)) {
+        $x = [Environment]::GetEnvironmentVariable($v, 'User')
+        if (-not $x) { $x = [Environment]::GetEnvironmentVariable($v, 'Machine') }
+        if (-not $x) { throw "$v nao definida: o portatil sairia sem servidor de contas. Defina-a e rode de novo." }
+        Set-Item "env:$v" $x
+    }
+}
+
 # WPF não suporta trimming; single-file + self-contained basta. Compressão reduz o tamanho do exe.
 $comum = @(
     '-c','Release','-r','win-x64','--self-contained','true',

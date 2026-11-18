@@ -97,20 +97,26 @@ public static class GestorEnergia
                 Rodar($"-changename {alvo} \"{Nome}\" \"Plano de energia do SevenzinTwks, baseado no seu plano ativo. Reversível.\"");
             }
 
-            // Aplica os índices do ORIGINAL à cópia (paridade total; só o plano "Sevenzin" é tocado).
+            // Aplica os 134 índices AC e os 134 índices DC do ORIGINAL à cópia (paridade total; só o plano "SevenzinTwks" é tocado).
             int falhas = 0;
             foreach (var (sub, conf, valor) in IndicesEnergiaOriginal.Todos)
             {
                 var saida = Rodar($"-setacvalueindex {alvo} {sub} {conf} {valor}");
                 if (saida.Trim().Length > 0) falhas++;
             }
+            foreach (var (sub, conf, valor) in IndicesEnergiaOriginal.TodosDc)
+            {
+                var saida = Rodar($"-setdcvalueindex {alvo} {sub} {conf} {valor}");
+                if (saida.Trim().Length > 0) falhas++;
+            }
 
             Rodar($"-setactive {alvo}");
             bool ativoOk = GuidAtivo() == alvo;
             if (!ativoOk) return new(false, "O plano foi criado, mas não ficou ativo. É preciso executar como administrador.");
+            int totalIndices = IndicesEnergiaOriginal.Todos.Count + IndicesEnergiaOriginal.TodosDc.Count;
             return falhas == 0
-                ? new(true, $"Plano \"{Nome}\" criado e ativado com os {IndicesEnergiaOriginal.Todos.Count} índices do original. Os planos de fábrica continuam intactos.")
-                : new(true, $"Plano \"{Nome}\" ativado, mas {falhas} de {IndicesEnergiaOriginal.Todos.Count} índices falharam (verifique administrador).");
+                ? new(true, $"Plano \"{Nome}\" criado e ativado com os {IndicesEnergiaOriginal.Todos.Count} índices AC + {IndicesEnergiaOriginal.TodosDc.Count} índices DC do original. Os planos de fábrica continuam intactos.")
+                : new(true, $"Plano \"{Nome}\" ativado, mas {falhas} de {totalIndices} índices falharam (verifique administrador).");
         }
         catch (Exception e) { return new(false, e.Message); }
     }

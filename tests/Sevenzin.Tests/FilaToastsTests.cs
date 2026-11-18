@@ -54,7 +54,7 @@ public class FilaToastsTests
         var pausados = new[] { a.Id };
         var expirados = fila.RemoverExpirados(Agora.AddSeconds(4), FilaToasts.DuracaoPadrao, pausados);
         Assert.Single(expirados);              // só o B expirou
-        Assert.True(fila.Itens.Any(i => i.Id == a.Id)); // A continua (pausado)
+        Assert.Contains(fila.Itens, i => i.Id == a.Id); // A continua (pausado)
 
         Assert.True(fila.Remover(a.Id));       // dismiss manual
         Assert.Empty(fila.Itens);

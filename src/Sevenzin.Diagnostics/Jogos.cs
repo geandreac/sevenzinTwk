@@ -9,15 +9,23 @@ namespace Sevenzin.Diagnostics;
 /// Realtime pode travar áudio, captura e o próprio SO.</summary>
 public enum PrioridadeJogo { Normal, AcimaDoNormal, Alta }
 
-/// <summary>Perfil reversível por jogo: afinidade de CPU (máscara de bits; 0 = todos os núcleos), prioridade e
-/// três otimizações OPT-IN com aviso (§5.3 do roadmap): <paramref name="TrimWorkingSet"/> libera as páginas
-/// residentes ao aplicar (ação pontual, sem estado a reverter), <paramref name="TimerAltaResolucao"/> sobe a
-/// resolução do timer do sistema (1 ms) enquanto o jogo estiver aplicado — revertida ao fechar —,
-/// <paramref name="PrefereGpuAlta"/> marca o .exe como "alto desempenho" no UserGpuPreferences (HKCU, removido
-/// ao reverter) e <paramref name="PriorityBoost"/> ativa o boost de prioridade do processo enquanto aplicado.</summary>
-public sealed record PerfilJogo(string Nome, string Executavel, long MascaraAfinidade, PrioridadeJogo Prioridade,
-    bool TrimWorkingSet = false, bool TimerAltaResolucao = false, bool PrefereGpuAlta = false, bool PriorityBoost = false,
-    bool CpuSetsPCores = false);
+/// <summary>Perfil reversível por jogo: afinidade de CPU (máscara de bits; 0 = todos os núcleos), prioridade,
+/// filtros de topologia (<paramref name="ExcluirCore0"/>, <paramref name="DesativarSmt"/>, <paramref name="ApenasUmCcd"/>),
+/// modo de compatibilidade FSE/HighDPI (<paramref name="ModoCompatibilidade"/>) e otimizações opt-in reversíveis.</summary>
+public sealed record PerfilJogo(
+    string Nome,
+    string Executavel,
+    long MascaraAfinidade,
+    PrioridadeJogo Prioridade,
+    bool TrimWorkingSet = false,
+    bool TimerAltaResolucao = false,
+    bool PrefereGpuAlta = false,
+    bool PriorityBoost = false,
+    bool CpuSetsPCores = false,
+    bool ExcluirCore0 = false,
+    bool DesativarSmt = false,
+    bool ApenasUmCcd = false,
+    bool ModoCompatibilidade = false);
 
 /// <summary>Estado de afinidade/prioridade/CPU Sets de um processo, guardado para restaurar depois.</summary>
 public sealed record EstadoProcesso(long Afinidade, ProcessPriorityClass Prioridade, bool Boost, uint[]? CpuSetsAnteriores);
@@ -26,6 +34,9 @@ public sealed record EstadoProcesso(long Afinidade, ProcessPriorityClass Priorid
 /// <see cref="Aplicar"/> para que <see cref="Reverter"/> restaure exatamente (§21.4: temporário e reversível).</summary>
 public static class AplicadorPerfil
 {
+    public const string ChaveCompatFlags = @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
+    public const string ValorCompatFseDpi = "~ DISABLEDXMAXIMIZEDWINDOWEDMODE HIGHDPIAWARE";
+
     public static long MascaraTodosNucleos =>
         Environment.ProcessorCount >= 64 ? -1L : (1L << Environment.ProcessorCount) - 1;
 
@@ -66,6 +77,32 @@ public static class AplicadorPerfil
     /// Ação pontual e reversível por natureza — a memória volta a crescer conforme o jogo trabalha. Opt-in.</summary>
     public static bool TrimWorkingSet(Process p) =>
         SetProcessWorkingSetSize(p.Handle, unchecked((IntPtr)(-1)), unchecked((IntPtr)(-1)));
+
+    /// <summary>Inicia o executável do jogo a partir de sua pasta de instalação, quando existente no disco.</summary>
+    public static bool IniciarExecutavelJogo(string executavel, out string mensagem)
+    {
+        if (string.IsNullOrWhiteSpace(executavel) || !File.Exists(executavel))
+        {
+            mensagem = "Executável não encontrado no disco. Verifique o caminho cadastrado.";
+            return false;
+        }
+        try
+        {
+            var pasta = Path.GetDirectoryName(executavel) ?? "";
+            Process.Start(new ProcessStartInfo(executavel)
+            {
+                WorkingDirectory = pasta,
+                UseShellExecute = true,
+            });
+            mensagem = $"'{Path.GetFileName(executavel)}' iniciado.";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            mensagem = ex.Message;
+            return false;
+        }
+    }
 
     [DllImport("kernel32.dll")]
     static extern bool SetProcessWorkingSetSize(IntPtr hProcess, IntPtr minimo, IntPtr maximo);
@@ -124,14 +161,14 @@ public interface IControleProcesso
 }
 
 /// <summary>Implementação real: localiza o processo pelo nome do executável e aplica/reverte o perfil,
-/// guardando o estado anterior por jogo. Trim de working set é aplicado uma vez (opt-in) e o timer de alta
-/// resolução sobe enquanto houver jogo usando e baixa quando o último for revertido. A preferência de GPU
-/// (HKCU UserGpuPreferences) é gravada ao aplicar e REMOVIDA ao reverter.</summary>
+/// guardando o estado anterior por jogo. Preferência de GPU (UserGpuPreferences) e flags de compatibilidade
+/// (AppCompatFlags\Layers) em HKCU são salvas e restauradas ao reverter.</summary>
 public sealed class ControleProcessoWindows : IControleProcesso
 {
     readonly Dictionary<string, (Process proc, EstadoProcesso estado)> _estados = new(StringComparer.OrdinalIgnoreCase);
     readonly HashSet<string> _usandoTimer = new(StringComparer.OrdinalIgnoreCase);
-    readonly HashSet<string> _gpuPref = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<string, string?> _gpuPrefAnterior = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<string, string?> _compatAnterior = new(StringComparer.OrdinalIgnoreCase);
     readonly TimerAltaResolucao _timer;
     readonly IRegistro _registro;
 
@@ -158,17 +195,32 @@ public sealed class ControleProcessoWindows : IControleProcesso
         try
         {
             uint[]? cpuSets = null;
-            if (jogo.CpuSetsPCores) cpuSets = CpuSets.IdsDePerformance(CpuSets.Listar()); // null em CPU homogênea
-            var estado = AplicadorPerfil.Aplicar(procs[0], jogo.MascaraAfinidade, jogo.Prioridade, jogo.PriorityBoost, cpuSets);
+            if (jogo.CpuSetsPCores) cpuSets = CpuSets.IdsDePerformance(CpuSets.Listar());
+
+            long mascaraFinal = (jogo.ExcluirCore0 || jogo.DesativarSmt || jogo.ApenasUmCcd)
+                ? TopologiaCpu.CombinarMascaraJogo(jogo.MascaraAfinidade, TopologiaCpu.Ler(), jogo.ExcluirCore0, jogo.DesativarSmt, jogo.ApenasUmCcd)
+                : jogo.MascaraAfinidade;
+
+            var estado = AplicadorPerfil.Aplicar(procs[0], mascaraFinal, jogo.Prioridade, jogo.PriorityBoost, cpuSets);
             if (jogo.TrimWorkingSet) { try { AplicadorPerfil.TrimWorkingSet(procs[0]); } catch { } }
             _estados[jogo.Executavel] = (procs[0], estado);
             if (jogo.TimerAltaResolucao) { _usandoTimer.Add(jogo.Executavel); _timer.Iniciar(); }
+
             if (jogo.PrefereGpuAlta)
             {
-                _registro.EscreverString(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences",
-                    Path.GetFileName(jogo.Executavel), "GpuPreference=2;");
-                _gpuPref.Add(jogo.Executavel);
+                var nomeVal = Path.GetFileName(jogo.Executavel);
+                if (!_gpuPrefAnterior.ContainsKey(jogo.Executavel))
+                    _gpuPrefAnterior[jogo.Executavel] = _registro.LerString(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences", nomeVal);
+                _registro.EscreverString(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences", nomeVal, "GpuPreference=2;");
             }
+
+            if (jogo.ModoCompatibilidade)
+            {
+                if (!_compatAnterior.ContainsKey(jogo.Executavel))
+                    _compatAnterior[jogo.Executavel] = _registro.LerString(Colmeia.UsuarioAtual, AplicadorPerfil.ChaveCompatFlags, jogo.Executavel);
+                _registro.EscreverString(Colmeia.UsuarioAtual, AplicadorPerfil.ChaveCompatFlags, jogo.Executavel, AplicadorPerfil.ValorCompatFseDpi);
+            }
+
             return true;
         }
         catch { return false; } // acesso negado / anti-cheat / exige admin
@@ -180,11 +232,28 @@ public sealed class ControleProcessoWindows : IControleProcesso
         try { if (!e.proc.HasExited) AplicadorPerfil.Reverter(e.proc, e.estado); } catch { }
         _estados.Remove(executavel);
         if (_usandoTimer.Remove(executavel)) _timer.Parar();
-        if (_gpuPref.Remove(executavel))
+
+        if (_gpuPrefAnterior.Remove(executavel, out var gpuAnt))
         {
-            try { _registro.ApagarValor(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences", Path.GetFileName(executavel)); }
+            try
+            {
+                var nomeVal = Path.GetFileName(executavel);
+                if (gpuAnt is null) _registro.ApagarValor(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences", nomeVal);
+                else _registro.EscreverString(Colmeia.UsuarioAtual, @"Software\Microsoft\DirectX\UserGpuPreferences", nomeVal, gpuAnt);
+            }
             catch { }
         }
+
+        if (_compatAnterior.Remove(executavel, out var compatAnt))
+        {
+            try
+            {
+                if (compatAnt is null) _registro.ApagarValor(Colmeia.UsuarioAtual, AplicadorPerfil.ChaveCompatFlags, executavel);
+                else _registro.EscreverString(Colmeia.UsuarioAtual, AplicadorPerfil.ChaveCompatFlags, executavel, compatAnt);
+            }
+            catch { }
+        }
+
         return true;
     }
 }

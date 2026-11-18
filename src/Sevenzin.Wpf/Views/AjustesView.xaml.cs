@@ -38,7 +38,120 @@ public partial class AjustesView : UserControl
         // Rede global (TCP): autotuning normal + CTCP, valores do original (netsh), reversível.
         Lista.Children.Add(new TextBlock { Text = "REDE GLOBAL (TCP)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
         Lista.Children.Add(CartaoRedeGlobal());
+        // Memória do sistema (MMAgent: Compressão de memória + Application PreLaunch) — reversível.
+        Lista.Children.Add(new TextBlock { Text = "MEMÓRIA DO SISTEMA (MMAGENT)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(CartaoMmAgent());
+        // Offloads e economia de energia da placa de rede (NetAdapter cmdlets) — reversível.
+        Lista.Children.Add(new TextBlock { Text = "REDE AVANÇADA (OFFLOADS E ECONOMIA DO ADAPTADOR)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(CartaoOffloadsRede());
         AtualizarContador();
+    }
+
+    Border CartaoMmAgent()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Controle de Compressão de Memória e Application PreLaunch do Windows (MMAgent, comando literal em 03_comandos_sistema.txt). Em PCs com ≥16 GB de RAM pode reduzir micro-uso de CPU; em pouca RAM pode aumentar paginação em disco. Exige administrador e é reversível.",
+            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+        });
+        var status = new TextBlock { Text = "Lendo estado do MMAgent…", Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap };
+        sp.Children.Add(status);
+
+        async Task AtualizarAsync()
+        {
+            var est = await Task.Run(OtimizacoesSistema.LerMmAgent);
+            string S(bool? b) => b switch { true => "Ligado", false => "Desligado", _ => "—" };
+            status.Text = $"Estado atual: Compressão de memória {S(est.CompressaoMemoria)} · Application PreLaunch {S(est.PreLaunch)}.";
+        }
+        _ = AtualizarAsync();
+
+        var botoes = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
+        var desativar = new Button { Style = (Style)Application.Current.Resources["PrimaryButton"], Content = "Desativar compressão e PreLaunch", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        desativar.Click += async (_, _) =>
+        {
+            if (!Elevacao.EhAdmin())
+            {
+                if (MessageBox.Show("Alterar o MMAgent exige administrador.\n\nReabrir o Sevenzin como administrador?", "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                    Elevacao.ReabrirComoAdmin();
+                return;
+            }
+            if (MessageBox.Show("Desativar Compressão de Memória e Application PreLaunch do Windows?\n\nEfeito: libera ciclos de CPU usados na compactação de RAM, mas aumenta o uso direto de memória física.\nReversão: clique em 'Restaurar padrão do Windows'.",
+                    "Confirmação — MMAgent", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes) return;
+            var r = await Task.Run(OtimizacoesSistema.DesativarMmAgent);
+            await AtualizarAsync();
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("Ajustes", "MMAgent desativado", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "MMAgent atualizado" : "Falha", r.Mensagem);
+        };
+        var restaurar = new Button { Style = (Style)Application.Current.Resources["SecondaryButton"], Content = "Restaurar padrão do Windows", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        restaurar.Click += async (_, _) =>
+        {
+            if (!Elevacao.EhAdmin()) { MessageBox.Show("Execute como administrador para restaurar o MMAgent.", "Elevação", MessageBoxButton.OK, MessageBoxImage.Information); return; }
+            var r = await Task.Run(OtimizacoesSistema.RestaurarMmAgent);
+            await AtualizarAsync();
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("Ajustes", "MMAgent restaurado", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "MMAgent restaurado" : "Falha", r.Mensagem);
+        };
+        botoes.Children.Add(desativar);
+        botoes.Children.Add(restaurar);
+        sp.Children.Add(botoes);
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 20), Child = sp };
+    }
+
+    Border CartaoOffloadsRede()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Desativa offloads de pacote (LSO, RSC, Checksum, IPsec) e economia de energia no adaptador ativo (cmdlets literais do original). Pode reduzir variação de latência em jogos competitivos, mas eleva levemente o uso de CPU em downloads pesados. Reversível.",
+            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10),
+        });
+
+        var combo = new ComboBox { Style = (Style)Application.Current.Resources["DarkCombo"], MinWidth = 240, Margin = new Thickness(0, 0, 8, 6) };
+        async Task CarregarAdaptadoresAsync()
+        {
+            var nomes = await Task.Run(OtimizacoesSistema.ListarNomesAdaptadoresAtivos);
+            combo.Items.Clear();
+            foreach (var n in nomes) combo.Items.Add(n);
+            if (combo.Items.Count > 0) combo.SelectedIndex = 0;
+        }
+        _ = CarregarAdaptadoresAsync();
+
+        var linha = new WrapPanel();
+        linha.Children.Add(combo);
+        var aplicar = new Button { Style = (Style)Application.Current.Resources["PrimaryButton"], Content = "Desativar offloads e economia", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        aplicar.Click += async (_, _) =>
+        {
+            if (combo.SelectedItem is not string nome || !OtimizacoesSistema.NomeAdaptadorValido(nome))
+            {
+                Toasts.Mostrar(this, TipoToast.Aviso, "Adaptador ausente", "Selecione um adaptador de rede ativo.");
+                return;
+            }
+            if (!Elevacao.EhAdmin())
+            {
+                if (MessageBox.Show("Alterar propriedades avançadas do adaptador exige administrador.\n\nReabrir como administrador?", "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                    Elevacao.ReabrirComoAdmin();
+                return;
+            }
+            if (MessageBox.Show($"Desativar LSO, RSC, Checksum/IPsec Offload e Economia de Energia no adaptador '{nome}'?\n\nA conexão pode reconectar por 1–2 segundos. Reversível clicando em 'Restaurar offloads'.",
+                    "Confirmação — Offloads de Rede", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            var r = await Task.Run(() => OtimizacoesSistema.DesativarOffloadsRede(nome));
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("Rede", $"Offloads desativados ({nome})", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Offloads desativados" : "Falha", r.Mensagem);
+        };
+        var restaurar = new Button { Style = (Style)Application.Current.Resources["SecondaryButton"], Content = "Restaurar offloads", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        restaurar.Click += async (_, _) =>
+        {
+            if (combo.SelectedItem is not string nome || !OtimizacoesSistema.NomeAdaptadorValido(nome)) return;
+            if (!Elevacao.EhAdmin()) { MessageBox.Show("Execute como administrador para restaurar os offloads.", "Elevação", MessageBoxButton.OK, MessageBoxImage.Information); return; }
+            var r = await Task.Run(() => OtimizacoesSistema.RestaurarOffloadsRede(nome));
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("Rede", $"Offloads restaurados ({nome})", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Offloads restaurados" : "Falha", r.Mensagem);
+        };
+        linha.Children.Add(aplicar);
+        linha.Children.Add(restaurar);
+        sp.Children.Add(linha);
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 20), Child = sp };
     }
 
     Border CartaoRedeGlobal()
@@ -132,7 +245,12 @@ public partial class AjustesView : UserControl
             var desfazer = new Button { Style = (Style)Application.Current.Resources["SecondaryButton"], Content = "Desfazer", Padding = new Thickness(12, 7, 12, 7) };
             desfazer.Click += (_, _) =>
             {
-                foreach (var t in tweaks) _motor.Desfazer(t);
+                try
+                {
+                    foreach (var t in tweaks) _motor.Desativar(t);
+                    Toasts.Mostrar(this, TipoToast.Sucesso, "Rede restaurada", $"Ajustes desativados em {i.Descricao}.");
+                }
+                catch (Exception ex) { Toasts.Mostrar(this, TipoToast.Erro, "Falha ao restaurar rede", ex.Message); }
                 MontarRede(host);
             };
             botoes.Children.Add(aplicar);
@@ -232,6 +350,7 @@ public partial class AjustesView : UserControl
         }
         try
         {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso($"Ajuste: {t.Nome}");
             if (sw.IsChecked == true)
             {
                 _motor.Aplicar(t);
@@ -239,17 +358,17 @@ public partial class AjustesView : UserControl
                 NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' aplicado", $"Novo valor: {(t.Tipo == TipoValor.String ? t.ValorTexto : t.ValorOtimizado.ToString())}. Desfazer restaura o anterior.");
                 Toasts.Mostrar(this, confirmado ? TipoToast.Sucesso : TipoToast.Aviso, confirmado ? "Ajuste aplicado" : "Ajuste não confirmado",
                     confirmado ? t.Nome : $"Não foi possível confirmar '{t.Nome}' no registro — verifique permissões.",
-                    confirmado ? (Action?)(() => { if (_motor.Desfazer(t)) { sw.IsChecked = false; AtualizarLinha(r); AtualizarContador(); } }) : null);
+                    confirmado ? (Action?)(() => { if (_motor.Desativar(t)) { sw.IsChecked = false; AtualizarLinha(r); AtualizarContador(); } }) : null);
             }
-            else if (!_motor.Desfazer(t))
+            else if (!_motor.Desativar(t))
             {
-                sw.IsChecked = true; // mantém "ligado": não havia backup (valor aplicado fora do SevenzinTwks)
-                Toasts.Mostrar(this, TipoToast.Aviso, "Sem backup para desfazer", $"'{t.Nome}' já estava aplicado antes do SevenzinTwks — não há valor anterior salvo para restaurar.");
+                sw.IsChecked = _motor.Aplicado(t);
+                Toasts.Mostrar(this, TipoToast.Aviso, "Alteração bloqueada", $"O Windows manteve '{t.Nome}' protegido nesta chave.");
             }
             else
             {
-                NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
-                Toasts.Mostrar(this, TipoToast.Sucesso, "Ajuste desfeito", t.Nome);
+                NotificacoesStore.Padrao.Adicionar("Ajustes", $"'{t.Nome}' desativado", "Valor anterior ou padrão do Windows restaurado.");
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Ajuste desativado", t.Nome);
             }
         }
         catch (UnauthorizedAccessException)
@@ -257,15 +376,21 @@ public partial class AjustesView : UserControl
             sw.IsChecked = _motor.Aplicado(t);
             var msg = t.Caminho.Contains("Windows Defender", StringComparison.OrdinalIgnoreCase)
                 ? "O Windows bloqueia a gravação nesta chave do Defender (Proteção contra adulteração ativa). Desative-a em Segurança do Windows → Proteção contra vírus e ameaças → Configurações de proteção contra adulteração e tente de novo."
-                : "Sem permissão para gravar nesta chave do registro. Feche e reabra o SevenzinTwks como administrador (botão direito → Executar como administrador).";
+                : "O Windows protegeu esta chave contra gravação direta (TrustedInstaller / política de sistema).";
+            NotificacoesStore.Padrao.Adicionar("Ajustes", $"Acesso bloqueado em '{t.Nome}'", msg);
             Toasts.Mostrar(this, TipoToast.Erro, "Chave protegida", msg);
             MessageBox.Show(msg, "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
             sw.IsChecked = _motor.Aplicado(t);
+            NotificacoesStore.Padrao.Adicionar("Ajustes", $"Erro em '{t.Nome}'", ex.Message);
             Toasts.Mostrar(this, TipoToast.Erro, "Falha no ajuste", ex.Message);
             MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso(null);
         }
         AtualizarLinha(r);
         AtualizarContador();

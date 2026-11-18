@@ -93,6 +93,48 @@ public sealed class MotorTweaks
     public bool Desfazer(Tweak t)
     {
         if (!_backup.TryGetValue(t.Id, out var anterior)) return false;
+        AplicarValorAnterior(t, anterior);
+        Auditar("desfazer", t, anterior);
+        _backup.Remove(t.Id);
+        SalvarBackup();
+        return true;
+    }
+
+    /// <summary>
+    /// Desativa sempre um tweak: usa o backup anterior quando ele de fato desliga o ajuste;
+    /// caso o ajuste já viesse ativo no Windows antes do Sevenzin (sem backup), restaura o padrão de fábrica do Windows.
+    /// </summary>
+    public bool Desativar(Tweak t)
+    {
+        if (_backup.TryGetValue(t.Id, out var salvo))
+        {
+            bool backupDiferenteDoOtimizado = salvo.EraString
+                ? salvo.Texto != t.ValorTexto
+                : salvo.Dword != t.ValorOtimizado;
+            if (backupDiferenteDoOtimizado)
+                return Desfazer(t);
+        }
+
+        var padrao = PadraoDesativadoWindows(t);
+        AplicarValorAnterior(t, padrao);
+
+        // Defesa extra: se ApagarValor manteve valor herdado igual ao otimizado, força o inverso explícito
+        if (Aplicado(t))
+        {
+            if (t.Tipo == TipoValor.String)
+                _reg.EscreverString(t.Colmeia, t.Caminho, t.NomeValor, t.ValorTexto == "0" ? "1" : "0");
+            else
+                _reg.EscreverDword(t.Colmeia, t.Caminho, t.NomeValor, t.ValorOtimizado == 0 ? 1 : 0);
+        }
+
+        Auditar("desativar-padrao", t, padrao);
+        if (_backup.Remove(t.Id))
+            SalvarBackup();
+        return !Aplicado(t);
+    }
+
+    void AplicarValorAnterior(Tweak t, ValorAnterior anterior)
+    {
         if (anterior.EraString)
         {
             if (anterior.Texto is null) _reg.ApagarValor(t.Colmeia, t.Caminho, t.NomeValor);
@@ -103,10 +145,62 @@ public sealed class MotorTweaks
             if (anterior.Dword is null) _reg.ApagarValor(t.Colmeia, t.Caminho, t.NomeValor);
             else _reg.EscreverDword(t.Colmeia, t.Caminho, t.NomeValor, anterior.Dword.Value);
         }
-        Auditar("desfazer", t, anterior);
-        _backup.Remove(t.Id);
-        SalvarBackup();
-        return true;
+    }
+
+    /// <summary>Padrão nativo do Windows para desativar cada ajuste quando não há backup anterior salvo.</summary>
+    public static ValorAnterior PadraoDesativadoWindows(Tweak t)
+    {
+        if (t.Tipo == TipoValor.String)
+        {
+            string? txt = t.Id switch
+            {
+                "mouse-aceleracao-off" => "1",
+                "mouse-limiar1-off" => "6",
+                "mouse-limiar2-off" => "10",
+                "mouse-hover-off" => "400",
+                "arrastar-janela-off" => "1",
+                "menu-delay-0" => "400",
+                _ => null,
+            };
+            return new ValorAnterior(true, null, txt);
+        }
+
+        if (t.Caminho.StartsWith(@"SOFTWARE\Policies\", StringComparison.OrdinalIgnoreCase)
+            || t.Caminho.StartsWith(@"Software\Policies\", StringComparison.OrdinalIgnoreCase))
+            return new ValorAnterior(false, null, null);
+
+        int? dword = t.Id switch
+        {
+            "gamedvr-off" or "gamedvr-captura-off" => 1,
+            "gamedvr-fse-off" => 0,
+            "advertising-id-off" or "sugestoes-off" or "sugestoes-config-off"
+                or "apps-promovidos-off" or "dicas-windows-off" or "experiencias-sob-medida-off"
+                or "destaques-busca-off" or "bing-busca-off" or "notificacoes-off" => 1,
+            "taskbar-animations-off" or "widgets-barra-off" or "transparencia-off"
+                or "taskbar-transparencia-off" or "aero-peek-off" or "tema-escuro"
+                or "botao-taskview-off" or "botao-cortana-off" or "min-animate-off" => 1,
+            "som-inicializacao-off" or "dados-adicionais-off" or "wer-off"
+                or "paginacao-off" or "large-cache-on" => 0,
+            "mmcss-responsiveness" => 20,
+            "priority-separation" or "priority-separation-26" => 2,
+            "fast-startup-off" => 1,
+            "hags" => 1,
+            "uac-off" => 1,
+            "uac-consent-admin" => 5,
+            "uac-consent-user" => 3,
+            "uac-filter-token" => 1,
+            "uac-secure-desktop" => 1,
+            "uac-validate-signatures" => 1,
+            "uac-uiadesktop" => 1,
+            "uac-secureuia" => 1,
+            "hvci-off" => 1,
+            "localizacao-servico-off" => 3,
+            "mmcss-games-gpu" => 2,
+            "lmhosts-off" => 1,
+            var id when id.StartsWith("rede-netbios-", StringComparison.OrdinalIgnoreCase) => 0,
+            _ => null,
+        };
+        return new ValorAnterior(false, dword, null);
     }
 
     public bool TemBackup(string id) => _backup.ContainsKey(id);
@@ -326,5 +420,19 @@ public static class CatalogoTweaks
         // ── Timer global de alta resolução (valor literal do original) ──
         new Tweak("timer-global-1ms", "Timer global de alta resolução", "GlobalTimerResolutionRequests=1 (valor do original) — o sistema atende pedidos de resolução de 1 ms. ATENÇÃO: aumenta o consumo de energia (o SevenzinTwks prefere o timer opt-in por jogo, que é temporário).", "Desempenho",
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "GlobalTimerResolutionRequests", 1, "ALTO — global e permanente até desfazer; aumenta consumo de energia", true, true),
+
+        // ── Fechamento de paridade de registro (valores literais confirmados na engenharia reversa) ──
+        new Tweak("priority-separation-26", "Prioridade de foreground (quantum curto 0x1A)", "Preset alternativo confirmado no original (Win32PrioritySeparation=26 / 0x1A: quantum curto fixo e boost máximo ao foreground). Use este OU o valor 38.", "Desempenho",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\PriorityControl", "Win32PrioritySeparation", 26, "Médio — quantum curto fixo (0x1A); meça A/B", true),
+        new Tweak("gamedvr-fse-off", "Desativar otimizações de tela cheia (FSE global)", "Define GameDVR_FSEBehaviorMode=2 em HKCU (valor literal do original) para priorizar modo exclusivo legado.", "Jogos",
+            Colmeia.UsuarioAtual, @"System\GameConfigStore", "GameDVR_FSEBehaviorMode", 2, "Baixo — pode ser revertido a qualquer momento", false),
+        new Tweak("gamedvr-policy-off", "Bloquear Game DVR por política de máquina", "Política AllowGameDVR=0 em HKLM (valor literal do original) — impede gravação de fundo da Xbox Game Bar.", "Jogos",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\GameDVR", "AllowGameDVR", 0, "Baixo — desativa captura Xbox Game Bar", true),
+        new Tweak("onedrive-sync-off", "Desativar sincronização em segundo plano do OneDrive", "Política DisableFileSyncNGSC=1 em HKLM (valor literal do original) — pausa a sincronização sem apagar arquivos.", "Privacidade",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\OneDrive", "DisableFileSyncNGSC", 1, "Baixo — pausa o cliente OneDrive; reversível", true),
+        new Tweak("mitigacoes-mask", "Máscara de mitigações Spectre/Meltdown (Mask)", "Define FeatureSettingsOverrideMask=33554435 (0x2000003, par obrigatório de FeatureSettingsOverride no original). Requer reinício.", "Segurança",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverrideMask", 33554435, "ALTO — ativa a máscara de desligamento Spectre/Meltdown; requer reinício", true, true),
+        new Tweak("wu-drivers-off", "Impedir atualização automática de drivers pelo Windows Update", "Define ExcludeWUDriversInQualityUpdate=1 (valor literal do original) para evitar sobrescrever drivers de GPU/rede.", "Segurança",
+            Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "ExcludeWUDriversInQualityUpdate", 1, "ALTO — drivers passam a exigir atualização manual", true, true),
     };
 }

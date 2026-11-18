@@ -21,6 +21,17 @@ public partial class LoginWindow : Window
 
     /// <summary>Ligado pelo app Admin antes de abrir o login, para diferenciar a tela (selo "Painel administrativo").</summary>
     public static bool ModoAdmin;
+    const string SubtituloAdmin = "Área restrita para administradores";
+
+    /// <summary>"Acesso Administrativo" → letras separadas por thin space e palavras por em space (WPF não tem letter-spacing).</summary>
+    static string Espacado(string s) => string.Join(" ", s.Split(' ').Select(p => string.Join(" ", p.ToCharArray())));
+
+    /// <summary>Layout do Admin: a dica do campo de senha ("Digite sua senha…") some quando há texto (o template
+    /// lê Tag="cheio", porque PasswordBox não expõe a senha para gatilhos de XAML).</summary>
+    void Senha_Dica(object sender, RoutedEventArgs e)
+    {
+        if (sender is PasswordBox p) p.Tag = p.Password.Length > 0 ? "cheio" : null;
+    }
 
     readonly bool _bootstrap;
     string? _email2fa, _senha2fa; // credenciais aguardando o código do 2FA
@@ -30,13 +41,18 @@ public partial class LoginWindow : Window
     public LoginWindow()
     {
         InitializeComponent();
-        JanelaArredondada.Arredondar(this);
-        // Com Supabase não há "primeiro admin" local — o admin já existe no backend.
-        _bootstrap = !Servicos.UsaSupabase && Servicos.Contas.Todos.Count == 0;
+        JanelaArredondada.SemMolduraNativa(this); // o cartão desenha a própria borda; a do Windows sobrava como moldura cinza
+        // ADMINISTRADOR GLOBAL ÚNICO: o otimizador (User) nunca cria administrador nem usa conta local — contas só no
+        // servidor. "Crie o primeiro administrador" existe só no app Admin, e só sem servidor configurado (modo local).
+        _bootstrap = ModoAdmin && !Servicos.UsaSupabase && Servicos.Contas.Todos.Count == 0;
 
         if (ModoAdmin)
         {
+            // Mesmo layout do User; no Admin muda só o vocabulário: escudo no lugar do ícone de conta e "Acesso Administrativo".
             AdminBadge.Visibility = Visibility.Visible;
+            IconeConta.Visibility = Visibility.Collapsed;
+            Tagline.Text = Espacado("Acesso Administrativo");
+            System.Windows.Automation.AutomationProperties.SetName(Tagline, "Acesso Administrativo");
             Title = "SevenzinTwks Admin — Acesso";
         }
 
@@ -58,7 +74,7 @@ public partial class LoginWindow : Window
             catch { }
         }
 
-        if (ModoAdmin && !_bootstrap) Subtitulo.Text = "Acesso de administrador";
+        if (ModoAdmin && !_bootstrap) Subtitulo.Text = SubtituloAdmin;
         if (ModoAdmin || _bootstrap) SemAcessoTxt.Visibility = Visibility.Collapsed;
 
         _timerReenvio.Tick += (_, _) => AtualizarReenvio();
@@ -91,6 +107,11 @@ public partial class LoginWindow : Window
         if (Servicos.UsaSupabase)
         {
             await EntrarSupabase(email, senha);
+            return;
+        }
+        if (!ModoAdmin)
+        {
+            Erro("Esta instalação não tem o servidor de contas configurado. Reinstale o SevenzinTwks pelo instalador oficial ou fale com o administrador.");
             return;
         }
 
@@ -191,7 +212,7 @@ public partial class LoginWindow : Window
     {
         var papel = cliente.EhAdmin ? PapelUsuario.Administrador : PapelUsuario.Usuario;
         var nome = string.IsNullOrWhiteSpace(cliente.NomePerfil) ? ValidacaoCredenciais.NomeDeEmail(cliente.Sessao!.Email) : cliente.NomePerfil!;
-        Servicos.Sessao.Abrir(new Usuario(cliente.Sessao!.Email, nome, papel, "-", DateTime.UtcNow));
+        Servicos.Sessao.Abrir(new Usuario(cliente.Sessao!.Email, nome, papel, "-", DateTime.UtcNow), autenticadoPorBackend: true);
         Servicos.ClienteSupabase = cliente;
         LembrarCredenciais(email, senha);
         DialogResult = true;
@@ -343,7 +364,7 @@ public partial class LoginWindow : Window
         RedefinirBloco.Visibility = Visibility.Collapsed;
         LoginCampos.Visibility = Visibility.Visible;
         Movimento.Entrar(LoginCampos);
-        Subtitulo.Text = ModoAdmin ? "Acesso de administrador" : "Acesse sua conta";
+        Subtitulo.Text = ModoAdmin ? SubtituloAdmin : "Acesse sua conta";
         Mensagem.Visibility = Visibility.Collapsed;
         if (_emailRedef.Length > 0) Email.Text = _emailRedef;
         if (EtapaOk.Visibility == Visibility.Visible) { Senha.Clear(); SenhaVisivel.Clear(); }

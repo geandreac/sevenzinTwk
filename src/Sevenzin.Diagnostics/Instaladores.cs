@@ -1,13 +1,26 @@
+using System.Diagnostics;
+using System.IO.Compression;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Sevenzin.Diagnostics;
 
-/// <summary>Um utilitário do catálogo: origem OFICIAL e o que validar antes de executar.
-/// Sha256Esperado e PublisherEsperado são opcionais, mas a assinatura é sempre exigida.</summary>
+/// <summary>Um utilitário do catálogo: origem OFICIAL, ícone local (`Assets/Apps/{Icone}.png`), URL HTTPS oficial
+/// de download (ou API GitHub Releases oficial), ID opcional do `winget` oficial para fallback de mirror, e o
+/// que validar antes de executar. Assinatura Authenticode é sempre exigida.</summary>
 public sealed record Utilitario(
-    string Nome, string Descricao, string UrlOficial, string? UrlDownload,
-    string? PublisherEsperado, string? Sha256Esperado, string Categoria = "Sistema");
+    string Nome,
+    string Descricao,
+    string UrlOficial,
+    string? UrlDownload,
+    string? PublisherEsperado,
+    string? Sha256Esperado,
+    string Categoria = "Sistema",
+    string Icone = "hdd",
+    string? WingetId = null);
 
 public enum ResultadoVerificacao { Ok, HashNaoConfere, SemAssinatura, PublisherDiferente }
 
@@ -62,7 +75,7 @@ public static class DownloaderInstalador
             var raiz = Path.GetPathRoot(Path.GetFullPath(pasta));
             return string.IsNullOrEmpty(raiz) || new DriveInfo(raiz).AvailableFreeSpace >= bytesNecessarios;
         }
-        catch { return true; } // não foi possível medir: deixa o download tentar e falhar com erro claro
+        catch { return true; }
     }
 
     /// <param name="handler">injetável para teste; por padrão usa HttpClient real.</param>
@@ -73,7 +86,7 @@ public static class DownloaderInstalador
         var part = destino + ".part";
         try
         {
-            using var http = handler is null ? new HttpClient() : new HttpClient(handler);
+            using var http = handler is null ? CriarClienteHttp() : new HttpClient(handler);
             using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
             resp.EnsureSuccessStatusCode();
             long total = resp.Content.Headers.ContentLength ?? -1;
@@ -84,7 +97,7 @@ public static class DownloaderInstalador
             await using var arquivo = File.Create(part);
             var buffer = new byte[81920];
             long lido = 0; int n;
-            var crono = System.Diagnostics.Stopwatch.StartNew();
+            var crono = Stopwatch.StartNew();
             while ((n = await origem.ReadAsync(buffer, ct)) > 0)
             {
                 await arquivo.WriteAsync(buffer.AsMemory(0, n), ct);
@@ -97,8 +110,8 @@ public static class DownloaderInstalador
                 }
             }
             await arquivo.FlushAsync(ct);
-            arquivo.Dispose(); // fecha antes do move atômico (Windows exige)
-            File.Move(part, destino, overwrite: true); // move atômico só no sucesso
+            arquivo.Dispose();
+            File.Move(part, destino, overwrite: true);
         }
         catch
         {
@@ -106,96 +119,313 @@ public static class DownloaderInstalador
             throw;
         }
     }
+
+    static HttpClient CriarClienteHttp()
+    {
+        var c = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+        c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) SevenzinTwks/2.0");
+        return c;
+    }
+
+    /// <summary>Resolve URL oficial (incluindo API GitHub Releases), faz download com fallback oficial via `winget download`
+    /// quando o mirror exige sessão web e, se for pacote `.zip`, extrai para subpasta isolada devolvendo o `.exe`/`.msi` alvo.</summary>
+    public static async Task<string> ObterInstaladorProntoAsync(
+        Utilitario u,
+        string pastaBase,
+        IProgress<ProgressoDownload>? progresso = null,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(u.UrlDownload))
+            throw new InvalidOperationException("URL de download não configurada para este item.");
+
+        Directory.CreateDirectory(pastaBase);
+        var slug = Regex.Replace(u.Nome.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+
+        string? caminhoBaixado = null;
+        Exception? erroHttp = null;
+        try
+        {
+            var (urlReal, nomeSugerido) = await ResolverUrlRealAsync(u.UrlDownload, slug, ct);
+            var destino = Path.Combine(pastaBase, nomeSugerido);
+            await BaixarAsync(urlReal, destino, progresso, ct);
+            if (EhBinarioInstaladorOuZip(destino))
+                caminhoBaixado = destino;
+            else
+            {
+                try { File.Delete(destino); } catch { }
+                erroHttp = new InvalidDataException("O servidor oficial retornou uma página HTML em vez do binário direto.");
+            }
+        }
+        catch (Exception ex)
+        {
+            erroHttp = ex;
+        }
+
+        if (caminhoBaixado is null && !string.IsNullOrWhiteSpace(u.WingetId))
+        {
+            caminhoBaixado = await BaixarViaWingetOficialAsync(u.WingetId!, Path.Combine(pastaBase, slug + "-winget"), ct);
+        }
+
+        if (caminhoBaixado is null)
+            throw erroHttp ?? new IOException($"Não foi possível obter o instalador direto de '{u.Nome}'.");
+
+        if (EhArquivoZip(caminhoBaixado))
+        {
+            var pastaExtraida = Path.Combine(pastaBase, slug + "-pkg");
+            if (Directory.Exists(pastaExtraida)) Directory.Delete(pastaExtraida, recursive: true);
+            ZipFile.ExtractToDirectory(caminhoBaixado, pastaExtraida, overwriteFiles: true);
+            var exe = Directory.GetFiles(pastaExtraida, "*.exe", SearchOption.AllDirectories)
+                .OrderByDescending(f => f.Contains("64", StringComparison.OrdinalIgnoreCase) || f.Contains("setup", StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(f => new FileInfo(f).Length)
+                .FirstOrDefault()
+                ?? Directory.GetFiles(pastaExtraida, "*.msi", SearchOption.AllDirectories).FirstOrDefault();
+            if (exe is null)
+                throw new InvalidDataException("Nenhum executável (.exe/.msi) encontrado dentro do arquivo .zip baixado.");
+            return exe;
+        }
+
+        return caminhoBaixado;
+    }
+
+    static async Task<(string Url, string NomeArquivo)> ResolverUrlRealAsync(string urlConfigurada, string slug, CancellationToken ct)
+    {
+        if (urlConfigurada.StartsWith("https://api.github.com/repos/", StringComparison.OrdinalIgnoreCase))
+        {
+            using var http = CriarClienteHttp();
+            var json = await http.GetStringAsync(urlConfigurada, ct);
+            var escolhida = ExtrairAssetGitHubRelease(json);
+            if (escolhida is null)
+                throw new InvalidOperationException("Nenhum instalador (.exe/.msi/.zip) encontrado na última release oficial do GitHub.");
+            return escolhida.Value;
+        }
+
+        var uri = new Uri(urlConfigurada);
+        var nomeLocal = Path.GetFileName(uri.LocalPath);
+        if (string.IsNullOrWhiteSpace(nomeLocal) || !nomeLocal.Contains('.'))
+            nomeLocal = slug + ".exe";
+        return (urlConfigurada, nomeLocal);
+    }
+
+    /// <summary>Seleciona o melhor asset Windows x64 a partir do JSON oficial do GitHub Releases. Puro/testável.</summary>
+    public static (string Url, string NomeArquivo)? ExtrairAssetGitHubRelease(string jsonRelease)
+    {
+        if (string.IsNullOrWhiteSpace(jsonRelease)) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(jsonRelease);
+            if (!doc.RootElement.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array)
+                return null;
+
+            var candidatos = new List<(string Nome, string Url, int Peso)>();
+            foreach (var a in assets.EnumerateArray())
+            {
+                var nome = a.TryGetProperty("name", out var nEl) ? (nEl.GetString() ?? "") : "";
+                var url = a.TryGetProperty("browser_download_url", out var uEl) ? (uEl.GetString() ?? "") : "";
+                if (!url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || nome.Length == 0) continue;
+                var lower = nome.ToLowerInvariant();
+                if (lower.Contains("arm64") || lower.Contains("linux") || lower.Contains("macos") || lower.Contains("darwin") || lower.EndsWith(".sig") || lower.EndsWith(".sha256"))
+                    continue;
+
+                int peso = 0;
+                if (lower.EndsWith(".exe")) peso += 30;
+                else if (lower.EndsWith(".msi")) peso += 25;
+                else if (lower.EndsWith(".zip")) peso += 15;
+                else continue;
+
+                if (lower.Contains("x64") || lower.Contains("win64") || lower.Contains("64bit")) peso += 10;
+                if (lower.Contains("installer") || lower.Contains("setup")) peso += 5;
+                candidatos.Add((nome, url, peso));
+            }
+
+            var melhor = candidatos.OrderByDescending(c => c.Peso).FirstOrDefault();
+            return melhor.Url is not null ? (melhor.Url, melhor.Nome) : null;
+        }
+        catch { return null; }
+    }
+
+    static bool EhBinarioInstaladorOuZip(string caminho)
+    {
+        try
+        {
+            var fi = new FileInfo(caminho);
+            if (!fi.Exists || fi.Length < 4096) return false;
+            Span<byte> cab = stackalloc byte[4];
+            using var fs = File.OpenRead(caminho);
+            if (fs.Read(cab) < 4) return false;
+            // MZ (PE .exe), PK\x03\x04 (.zip), D0CF11E0 (.msi Compound File)
+            if (cab[0] == (byte)'M' && cab[1] == (byte)'Z') return true;
+            if (cab[0] == (byte)'P' && cab[1] == (byte)'K' && cab[2] == 3 && cab[3] == 4) return true;
+            if (cab[0] == 0xD0 && cab[1] == 0xCF && cab[2] == 0x11 && cab[3] == 0xE0) return true;
+            return false;
+        }
+        catch { return false; }
+    }
+
+    static bool EhArquivoZip(string caminho)
+    {
+        try
+        {
+            if (caminho.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) return true;
+            Span<byte> cab = stackalloc byte[4];
+            using var fs = File.OpenRead(caminho);
+            return fs.Read(cab) == 4 && cab[0] == (byte)'P' && cab[1] == (byte)'K' && cab[2] == 3 && cab[3] == 4;
+        }
+        catch { return false; }
+    }
+
+    static async Task<string?> BaixarViaWingetOficialAsync(string wingetId, string pastaStage, CancellationToken ct)
+    {
+        if (!Regex.IsMatch(wingetId, @"^[A-Za-z0-9._+-]+$")) return null;
+        try
+        {
+            if (Directory.Exists(pastaStage)) Directory.Delete(pastaStage, recursive: true);
+            Directory.CreateDirectory(pastaStage);
+
+            var psi = new ProcessStartInfo("winget",
+                $"download --id {wingetId} --exact --download-directory \"{pastaStage}\" --accept-source-agreements --accept-package-agreements --disable-interactivity")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using var proc = Process.Start(psi);
+            if (proc is null) return null;
+            await proc.WaitForExitAsync(ct);
+
+            return Directory.GetFiles(pastaStage, "*.*", SearchOption.AllDirectories)
+                .Where(f => f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                         || f.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)
+                         || f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f => new FileInfo(f).Length)
+                .FirstOrDefault();
+        }
+        catch { return null; }
+    }
 }
 
-/// <summary>Catálogo de utilitários benignos com origem oficial. Nada é baixado ou executado sem o usuário,
-/// e só após verificação de assinatura. Para um download direto, preencha UrlDownload (+ hash, opcional).</summary>
+/// <summary>Catálogo de 55 utilitários benignos com origem HTTPS oficial, ícone individual e suporte universal a
+/// "Baixar e verificar". Nada é baixado ou executado sem confirmação do usuário e validação de assinatura.</summary>
 public static class CatalogoUtilitarios
 {
     public static readonly IReadOnlyList<Utilitario> Todos = new[]
     {
         new Utilitario("Coreinfo (Sysinternals)", "Mostra o mapeamento de núcleos lógicos/físicos, cache e topologia (Microsoft).",
-            "https://learn.microsoft.com/sysinternals/downloads/coreinfo", "https://live.sysinternals.com/Coreinfo.exe", "Microsoft", null, "Monitoramento"),
+            "https://learn.microsoft.com/sysinternals/downloads/coreinfo", "https://live.sysinternals.com/Coreinfo64.exe", "Microsoft", null, "Monitoramento", "autocpuset_icon", "Microsoft.Sysinternals.Coreinfo"),
         new Utilitario("CPU-Z", "Informações detalhadas de CPU, placa-mãe e memória (CPUID).",
-            "https://www.cpuid.com/softwares/cpu-z.html", null, "CPUID", null, "Monitoramento"),
+            "https://www.cpuid.com/softwares/cpu-z.html", "https://download.cpuid.com/cpu-z/cpu-z_2.11-en.exe", "CPUID", null, "Monitoramento", "logo_cpuz", "CPUID.CPU-Z"),
         new Utilitario("CrystalDiskInfo", "Saúde e S.M.A.R.T. dos discos (Crystal Dew World).",
-            "https://crystalmark.info/en/software/crystaldiskinfo/", null, null, null, "Monitoramento"),
+            "https://crystalmark.info/en/software/crystaldiskinfo/", "https://api.github.com/repos/hiyohiyo/CrystalDiskInfo/releases/latest", null, null, "Monitoramento", "hdd", "CrystalDewWorld.CrystalDiskInfo"),
         new Utilitario("HWiNFO", "Monitoramento de sensores (temperatura, clock, uso) de CPU/GPU/placa (REALiX).",
-            "https://www.hwinfo.com/download/", null, null, null, "Monitoramento"),
+            "https://www.hwinfo.com/download/", "https://www.sac.sk/download/utildiag/hwi_814.exe", "REALiX", null, "Monitoramento", "logo_hwinfo", "REALiX.HWiNFO"),
         new Utilitario("GPU-Z", "Informações e sensores da placa de vídeo (TechPowerUp).",
-            "https://www.techpowerup.com/gpuz/", null, null, null, "Monitoramento"),
+            "https://www.techpowerup.com/gpuz/", "https://www.techpowerup.com/gpuz/", "TechPowerUp", null, "Monitoramento", "logo_gpuz", "TechPowerUp.GPU-Z"),
         new Utilitario("Process Explorer (Sysinternals)", "Gerenciador de processos avançado da Microsoft (handles, árvore, CPU por thread).",
-            "https://learn.microsoft.com/sysinternals/downloads/process-explorer", "https://live.sysinternals.com/procexp64.exe", "Microsoft", null, "Monitoramento"),
+            "https://learn.microsoft.com/sysinternals/downloads/process-explorer", "https://live.sysinternals.com/procexp64.exe", "Microsoft", null, "Monitoramento", "logo_processexplorer", "Microsoft.Sysinternals.ProcessExplorer"),
         new Utilitario("Autoruns (Sysinternals)", "Lista tudo que inicia com o Windows, para revisar e desligar itens de inicialização (Microsoft).",
-            "https://learn.microsoft.com/sysinternals/downloads/autoruns", "https://live.sysinternals.com/Autoruns64.exe", "Microsoft", null, "Sistema"),
+            "https://learn.microsoft.com/sysinternals/downloads/autoruns", "https://live.sysinternals.com/Autoruns64.exe", "Microsoft", null, "Sistema", "logo_autorun", "Microsoft.Sysinternals.Autoruns"),
 
-        // ── Ampliação F3: nomes confirmados na engenharia reversa (05_metricas §6, 35 logos) ──
-        // Política: sempre fonte OFICIAL; download direto só quando a URL é estável e assinável.
         new Utilitario("7-Zip", "Compactador de arquivos leve e aberto (Igor Pavlov).",
-            "https://www.7-zip.org/", null, null, null, "Sistema"),
+            "https://www.7-zip.org/", "https://api.github.com/repos/ip7z/7zip/releases/latest", "Igor Pavlov", null, "Sistema", "logo_7zip", "7zip.7zip"),
         new Utilitario("Brave Browser", "Navegador com bloqueio de anúncios e rastreadores embutido.",
-            "https://brave.com/", "https://laptop-updates.brave.com/latest/winx64", null, null, "Sistema"),
+            "https://brave.com/", "https://laptop-updates.brave.com/latest/winx64", "Brave", null, "Sistema", "logo_brave", "Brave.Brave"),
         new Utilitario("Google Chrome", "Navegador do Google.",
-            "https://www.google.com/chrome/", "https://dl.google.com/chrome/install/latest/chrome_installer.exe", null, null, "Sistema"),
+            "https://www.google.com/chrome/", "https://dl.google.com/chrome/install/latest/chrome_installer.exe", "Google", null, "Sistema", "logo_googlechrome", "Google.Chrome"),
         new Utilitario("Visual Studio Code", "Editor de código da Microsoft.",
-            "https://code.visualstudio.com/", "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user", null, null, "Sistema"),
+            "https://code.visualstudio.com/", "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user", "Microsoft", null, "Sistema", "logo_vscode", "Microsoft.VisualStudioCode"),
         new Utilitario("Microsoft Edge", "Navegador da Microsoft.",
-            "https://www.microsoft.com/edge", null, null, null, "Sistema"),
+            "https://www.microsoft.com/edge", "https://go.microsoft.com/fwlink/?linkid=2108834&Channel=Stable&language=pt-br", "Microsoft", null, "Sistema", "logo_microsoftedge", "Microsoft.Edge"),
         new Utilitario("DirectX End-User Runtime", "Bibliotecas DirectX legadas para jogos antigos (Microsoft).",
-            "https://www.microsoft.com/en-us/download/details.aspx?id=35", null, null, null, "Sistema"),
+            "https://www.microsoft.com/en-us/download/details.aspx?id=35", "https://download.microsoft.com/download/1/7/1/1718CCC4-6315-4D8E-9543-8E28A4E18C4C/dxwebsetup.exe", "Microsoft", null, "Sistema", "logo_directx", "Microsoft.DirectX"),
         new Utilitario("Epic Games Launcher", "Loja e launcher de jogos da Epic.",
-            "https://store.epicgames.com/", null, null, null, "Plataformas"),
+            "https://store.epicgames.com/", "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi", "Epic Games", null, "Plataformas", "logo_epicgames", "EpicGames.EpicGamesLauncher"),
         new Utilitario("Rockstar Games Launcher", "Launcher da Rockstar Games.",
-            "https://socialclub.rockstargames.com/rockstar-games-launcher", null, null, null, "Plataformas"),
+            "https://socialclub.rockstargames.com/rockstar-games-launcher", "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe", "Rockstar", null, "Plataformas", "logo_rockstar", "RockstarGames.Launcher"),
         new Utilitario("Ubisoft Connect", "Launcher da Ubisoft.",
-            "https://ubisoftconnect.com/", null, null, null, "Plataformas"),
+            "https://ubisoftconnect.com/", "https://ubi.li/4vxt9", "Ubisoft", null, "Plataformas", "logo_ubisoftconnect", "Ubisoft.Connect"),
         new Utilitario("VALORANT", "Jogo de tiro tático da Riot (com anti-cheat Vanguard).",
-            "https://playvalorant.com/", null, null, null, "Jogos"),
+            "https://playvalorant.com/", "https://valorant.secure.dyn.riotcdn.net/channels/public/x/installer/current/live.live.br.exe", "Riot Games", null, "Jogos", "logo_valorant", "RiotGames.Valorant.BR"),
         new Utilitario("FACEIT", "Plataforma competitiva de partidas e anti-cheat.",
-            "https://www.faceit.com/", null, null, null, "Plataformas"),
+            "https://www.faceit.com/", "https://cdn.faceit.com/faceit/anticheat/FaceitAC_1.0.17.36.exe", "FACEIT", null, "Plataformas", "logo_faceit", "FACEITLtd.FACEITClient"),
         new Utilitario("Gamers Club", "Plataforma brasileira de partidas competitivas.",
-            "https://gamersclub.com.br/", null, null, null, "Plataformas"),
+            "https://gamersclub.com.br/", "https://anti-cheat.gamersclub.com.br/Gamers-Club-Anti-Cheat.exe", null, null, "Plataformas", "logo_gamersclub", null),
         new Utilitario("TeamSpeak", "Comunicação por voz com servidores próprios.",
-            "https://teamspeak.com/en/downloads/", null, null, null, "Sistema"),
+            "https://teamspeak.com/en/downloads/", "https://files.teamspeak-services.com/releases/client/3.6.2/TeamSpeak3-Client-win64-3.6.2.exe", "TeamSpeak", null, "Sistema", "logo_teamspeak", "TeamSpeakSystems.TeamSpeakClient"),
         new Utilitario("LatencyMon", "Mede a latência DPC/ISR do sistema (Resplendence).",
-            "https://www.resplendence.com/latencymon", null, null, null, "Monitoramento"),
+            "https://www.resplendence.com/latencymon", "https://www.resplendence.com/download/LatencyMon.exe", "Resplendence", null, "Monitoramento", "logo_latencymon", "Resplendence.LatencyMon"),
         new Utilitario("MSI Afterburner", "Overclock e monitoramento de GPU (MSI).",
-            "https://www.msi.com/Landing/afterburner/graphics-cards", null, null, null, "Monitoramento"),
+            "https://www.msi.com/Landing/afterburner/graphics-cards", "https://download.msi.com/uti_exe/vga/MSIAfterburnerSetup.zip", "Micro-Star", null, "Monitoramento", "logo_msiafterburner", "Guru3D.Afterburner"),
         new Utilitario("Logitech G HUB", "Periféricos Logitech G (RGB, perfis).",
-            "https://www.logitechg.com/en-us/innovation/g-hub.html", null, null, null, "Sistema"),
+            "https://www.logitechg.com/en-us/innovation/g-hub.html", "https://download01.logi.com/web/ftp/pub/techsupport/gaming/lghub_installer.exe", "Logitech", null, "Sistema", "logo_logitechghub", "Logitech.GHUB"),
         new Utilitario("NVCleanstall", "Instalação limpa do driver NVIDIA (TechPowerUp).",
-            "https://www.techpowerup.com/download/techpowerup-nvcleanstall/", null, null, null, "Drivers"),
+            "https://www.techpowerup.com/download/techpowerup-nvcleanstall/", "https://www.techpowerup.com/download/techpowerup-nvcleanstall/", "TechPowerUp", null, "Drivers", "logo_nvcleanstall", "TechPowerUp.NVCleanstall"),
         new Utilitario("OCAT", "Captura de FPS por PresentMon (GPUOpen/AMD).",
-            "https://gpuopen.com/ocat/", null, null, null, "Monitoramento"),
+            "https://gpuopen.com/ocat/", "https://api.github.com/repos/GPUOpen-Tools/OCAT/releases/latest", "Advanced Micro Devices", null, "Monitoramento", "logo_ocat", null),
         new Utilitario("Open-Shell", "Menu Iniciar clássico do Windows (open source).",
-            "https://open-shell.github.io/Open-Shell-Menu/", null, null, null, "Sistema"),
+            "https://open-shell.github.io/Open-Shell-Menu/", "https://api.github.com/repos/Open-Shell/Open-Shell-Menu/releases/latest", null, null, "Sistema", "logo_openshell", "Open-Shell.Open-Shell-Menu"),
         new Utilitario("StartAllBack", "Restaura a barra de tarefas/Explorer clássicos (pago).",
-            "https://www.startallback.com/", null, null, null, "Sistema"),
+            "https://www.startallback.com/", "https://s3.amazonaws.com/startisback/StartAllBack_3.8.13_setup.exe", "StartIsBack", null, "Sistema", "logo_startallback", "StartIsBack.StartAllBack"),
         new Utilitario("Visual Studio", "IDE da Microsoft.",
-            "https://visualstudio.microsoft.com/", null, null, null, "Sistema"),
+            "https://visualstudio.microsoft.com/", "https://aka.ms/vs/17/release/vs_community.exe", "Microsoft", null, "Sistema", "logo_visualstudio", "Microsoft.VisualStudio.2022.Community"),
         new Utilitario("DDU (Display Driver Uninstaller)", "Remove drivers de vídeo de forma limpa (Wagnardsoft).",
-            "https://www.wagnardsoft.com/forums/viewforum.php?f=5", null, null, null, "Drivers"),
+            "https://www.wagnardsoft.com/forums/viewforum.php?f=5", "https://www.wagnardsoft.com/DDU/download/DDU%20v18.0.8.9.exe", "Wagnardsoft", null, "Drivers", "logo_ddu", "Wagnardsoft.DisplayDriverUninstaller"),
         new Utilitario("Radeon Software Slimmer", "Instalação enxuta do driver AMD (open source).",
-            "https://github.com/GSDragoon/RadeonSoftwareSlimmer", null, null, null, "Drivers"),
+            "https://github.com/GSDragoon/RadeonSoftwareSlimmer", "https://api.github.com/repos/GSDragoon/RadeonSoftwareSlimmer/releases/latest", null, null, "Drivers", "logo_radeonslimmer", "GSDragoon.RadeonSoftwareSlimmer"),
         new Utilitario("ZenTimings", "Tempos de memória em placas AMD (open source).",
-            "https://zentimings.protonrom.com/", null, null, null, "Monitoramento"),
+            "https://zentimings.protonrom.com/", "https://api.github.com/repos/irusanov/ZenTimings/releases/latest", null, null, "Monitoramento", "logo_zentimings", "ivanrusanov.ZenTimings"),
         new Utilitario("Prime95", "Teste de estabilidade de CPU/memória (GIMPS).",
-            "https://www.mersenne.org/download/", null, null, null, "Monitoramento"),
+            "https://www.mersenne.org/download/", "https://www.mersenne.org/download/software/v30/30.19/p95v3019b20.win64.zip", null, null, "Monitoramento", "logo_prime95", null),
         new Utilitario("Geekbench", "Benchmark de CPU/GPU multiplataforma (Primate Labs).",
-            "https://www.geekbench.com/download/", null, null, null, "Monitoramento"),
+            "https://www.geekbench.com/download/", "https://cdn.geekbench.com/Geekbench-6.3.0-WindowsSetup.exe", "Primate Labs", null, "Monitoramento", "logo_geek", "PrimateLabs.Geekbench.6"),
         new Utilitario("OCCT", "Teste de estabilidade e sensores (Ocbase).",
-            "https://www.ocbase.com/", null, null, null, "Monitoramento"),
+            "https://www.ocbase.com/", "https://www.ocbase.com/download/edition:Personal/os:Windows", "OCBASE", null, "Monitoramento", "logo_occt", "OCBASE.OCCT.Personal"),
         new Utilitario("DriverStore Explorer", "Gerencia drivers instalados (open source, GitHub).",
-            "https://github.com/lostindark/DriverStoreExplorer", null, null, null, "Drivers"),
-        new Utilitario("Internet / Wi-Fi driver", "Página oficial de drivers de rede (Intel).",
-            "https://www.intel.com/content/www/us/en/download-center/home.html", null, null, null, "Drivers"),
+            "https://github.com/lostindark/DriverStoreExplorer", "https://api.github.com/repos/lostindark/DriverStoreExplorer/releases/latest", null, null, "Drivers", "logo_driverstools", "lostindark.DriverStoreExplorer"),
+        new Utilitario("Internet / Wi-Fi driver", "Assistente oficial de drivers de rede e Wi-Fi (Intel DSA).",
+            "https://www.intel.com/content/www/us/en/download-center/home.html", "https://dsadata.intel.com/installer", "Intel", null, "Drivers", "logo_internetdriver", "Intel.IntelDriverAndSupportAssistant"),
+
+        new Utilitario("Steam", "Plataforma e biblioteca de jogos para PC (Valve).",
+            "https://store.steampowered.com/about/", "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe", "Valve", null, "Plataformas", "logo_steam", "Valve.Steam"),
+        new Utilitario("Discord", "Comunicação por voz, vídeo e comunidades para jogadores.",
+            "https://discord.com/download", "https://discord.com/api/download?platform=win", "Discord", null, "Sistema", "logo_discord", "Discord.Discord"),
+        new Utilitario("VLC Media Player", "Reprodutor multimídia leve e open source (VideoLAN).",
+            "https://www.videolan.org/vlc/", "https://get.videolan.org/vlc/last/win64/", "VideoLAN", null, "Sistema", "logo_vlcplayer", "VideoLAN.VLC"),
+        new Utilitario("Spotify", "Streaming de música e podcasts.",
+            "https://www.spotify.com/download/windows/", "https://download.scdn.co/SpotifySetup.exe", "Spotify", null, "Sistema", "logo_spotify", "Spotify.Spotify"),
+        new Utilitario("Everything (voidtools)", "Busca instantânea de arquivos por índice NTFS.",
+            "https://www.voidtools.com/downloads/", "https://www.voidtools.com/Everything-1.4.1.1026.x64-Setup.exe", "voidtools", null, "Sistema", "logo_everything", "voidtools.Everything"),
+        new Utilitario("Revo Uninstaller", "Desinstalador com varredura de sobras de registro e pastas.",
+            "https://www.revouninstaller.com/products/revo-uninstaller-free/", "https://download.revouninstaller.com/download/revosetup.exe", "VS Revo Group", null, "Sistema", "logo_revouninstaller", "RevoUninstaller.RevoUninstaller"),
+        new Utilitario("Notepad++", "Editor de texto e código rápido e leve.",
+            "https://notepad-plus-plus.org/downloads/", "https://api.github.com/repos/notepad-plus-plus/notepad-plus-plus/releases/latest", "Notepad++", null, "Sistema", "logo_notepad", "Notepad++.Notepad++"),
+        new Utilitario("qBittorrent", "Cliente BitTorrent open source sem anúncios.",
+            "https://www.qbittorrent.org/download", "https://www.qbittorrent.org/download", null, null, "Sistema", "logo_qbittorrent", "qBittorrent.qBittorrent"),
+        new Utilitario("OBS Studio", "Gravação e transmissão ao vivo acelerada por GPU (open source).",
+            "https://obsproject.com/download", "https://api.github.com/repos/obsproject/obs-studio/releases/latest", "OBS", null, "Sistema", "logo_obsstudio", "OBSProject.OBSStudio"),
+        new Utilitario("CapFrameX", "Captura e análise avançada de frametime baseada em PresentMon.",
+            "https://www.capframex.com/download", "https://api.github.com/repos/CXWorld/CapFrameX/releases/latest", null, null, "Monitoramento", "logo_capframex", "CXWorld.CapFrameX"),
+        new Utilitario("HWMonitor", "Leitura de tensões, temperaturas e ventoinhas (CPUID).",
+            "https://www.cpuid.com/softwares/hwmonitor.html", "https://download.cpuid.com/hwmonitor/hwmonitor_1.55.exe", "CPUID", null, "Monitoramento", "logo_hwmonitor", "CPUID.HWMonitor"),
+        new Utilitario("AMD Chipset Drivers", "Instalador oficial de drivers de chipset e gráficos AMD.",
+            "https://www.amd.com/en/support/downloads/drivers.html/chipsets.html", "https://drivers.amd.com/drivers/installer/amd_software_installer.exe", "Advanced Micro Devices", null, "Drivers", "logo_amdchipset", "AMD.RyzenMaster"),
+        new Utilitario("Intel Wireless Bluetooth", "Driver oficial Bluetooth para adaptadores Intel.",
+            "https://www.intel.com/content/www/us/en/download/18649/intel-wireless-bluetooth-drivers-for-windows-10-and-windows-11.html", "https://dsadata.intel.com/installer", "Intel", null, "Drivers", "logo_bluetoothdriver", "Intel.IntelDriverAndSupportAssistant"),
+        new Utilitario("Microsoft Visual C++ Redistributable", "Pacote oficial de runtimes C++ x64 exigido pela maioria dos jogos (Microsoft).",
+            "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist", "https://aka.ms/vs/17/release/vc_redist.x64.exe", "Microsoft", null, "Sistema", "logo_vcredist", "Microsoft.VCRedist.2015+.x64"),
+        new Utilitario("EA App", "Plataforma oficial de jogos da Electronic Arts.",
+            "https://www.ea.com/ea-app", "https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe", "Electronic Arts", null, "Plataformas", "logo_eaapp", "ElectronicArts.EADesktop"),
+        new Utilitario("Medal.tv", "Clipes rápidos de partidas com codificação por hardware.",
+            "https://medal.tv/", "https://install.medal.tv/", "Medal", null, "Plataformas", "logo_medaltv", "MedalB.V.Medal"),
+        new Utilitario("Minecraft Launcher", "Launcher oficial de Minecraft Java & Bedrock (Mojang/Microsoft).",
+            "https://www.minecraft.net/download", "https://launcher.mojang.com/download/MinecraftInstaller.exe", "Microsoft", null, "Jogos", "logo_minecraft", "Mojang.MinecraftLauncher"),
+        new Utilitario("FiveM", "Plataforma multiplayer dedicada de roleplay e servidores customizados (Cfx.re).",
+            "https://fivem.net/", "https://runtime.fivem.net/client/FiveM.exe", "CitizenFX", null, "Jogos", "logo_fivem", "Cfx.re.FiveM"),
+        new Utilitario("League of Legends", "MOBA competitivo da Riot Games.",
+            "https://www.leagueoflegends.com/", "https://lol.secure.dyn.riotcdn.net/channels/public/x/installer/current/live.br.exe", "Riot Games", null, "Jogos", "logo_leagueoflegends", "RiotGames.LeagueOfLegends.BR"),
     };
 
-    // Ordem de exibição das categorias (como no original); categorias fora desta lista vão ao fim, em ordem alfabética.
     static readonly string[] OrdemCategorias = { "Sistema", "Drivers", "Plataformas", "Jogos", "Monitoramento" };
 
-    /// <summary>Categorias presentes no catálogo e quantos utilitários cada uma tem, na ordem de exibição.
-    /// Usado pelas "pills" de filtro. Puro/testável.</summary>
     public static IReadOnlyList<(string Categoria, int Qtd)> ContagemPorCategoria()
     {
         var por = Todos.GroupBy(u => u.Categoria).ToDictionary(g => g.Key, g => g.Count());
@@ -204,7 +434,5 @@ public static class CatalogoUtilitarios
         return ordem.Select(c => (c, por[c])).ToList();
     }
 
-    /// <summary>Nomes do original que NÃO entram no catálogo por decisão registrada:
-    /// KMS Activator (ativador de licença não-oficial — risco de malware e violação de licença).</summary>
     public static readonly IReadOnlyList<string> Excluidos = new[] { "KMS Activator" };
 }

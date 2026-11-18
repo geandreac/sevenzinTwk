@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,8 +10,8 @@ using Sevenzin.Diagnostics;
 
 namespace Sevenzin.Wpf.Views;
 
-/// <summary>Tela "Jogos" (Figma, §21.4): perfil reversível por jogo — prioridade (nunca Realtime) e afinidade
-/// (todos os núcleos ou só P-cores, quando a CPU é híbrida). "Aplicar ao abrir" aplica/restaura automaticamente.</summary>
+/// <summary>Tela "Jogos" (Figma, §21.4): perfil reversível por jogo — prioridade, afinidade (P-cores, Excluir Core 0,
+/// Sem SMT, 1º CCD), compatibilidade FSE/HighDPI, inicialização direta do jogo e controle avançado de prioridade por PID.</summary>
 public partial class JogosView : UserControl
 {
     readonly CatalogoJogos _catalogo = new();
@@ -19,15 +20,18 @@ public partial class JogosView : UserControl
     readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(2) };
     readonly TopologiaCpu.Resultado? _topo = TopologiaCpu.Ler();
     string _filtro = "";
-    List<JogoDetectado>? _detectados; // null = ainda não pediu a detecção
+    List<JogoDetectado>? _detectados;
     bool _detectando;
-    Grid? _overlay;        // modal de perfil por jogo (null = fechado)
-    string? _perfilAberto; // .exe do jogo com o modal aberto
+    Grid? _overlay;
+    string? _perfilAberto;
 
     static Style Primario => (Style)Application.Current.Resources["PrimaryButton"];
     static Style Secundario => (Style)Application.Current.Resources["SecondaryButton"];
+    static Style DarkCombo => (Style)Application.Current.Resources["DarkCombo"];
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
+    static Brush Secondary => (Brush)Application.Current.Resources["TextSecondaryBrush"];
     static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
+    static Brush Warning => (Brush)Application.Current.Resources["WarningBrush"];
     static Brush Primary => (Brush)Application.Current.Resources["TextPrimaryBrush"];
     static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
     static Brush Borda => (Brush)Application.Current.Resources["BorderDefaultBrush"];
@@ -46,6 +50,7 @@ public partial class JogosView : UserControl
     }
 
     bool Hibrido => _topo?.Hibrido ?? false;
+    int DominiosL3 => _topo?.DominiosL3 ?? 0;
     long MascaraPCores => _topo?.MascaraPCores ?? 0;
 
     static string NomePrio(PrioridadeJogo p) => p switch
@@ -76,17 +81,16 @@ public partial class JogosView : UserControl
         }
         foreach (var j in jogos) Lista.Children.Add(Cartao(j));
         Lista.Children.Add(CartaoDetectados());
+        Lista.Children.Add(CartaoPrioridadeProcesso());
     }
 
-    /// <summary>Seção "Jogos detectados" (Steam/Epic, só leitura): lista o que está instalado e deixa o
-    /// usuário adicionar ao catálogo — NADA é aplicado automaticamente.</summary>
     Border CartaoDetectados()
     {
         var sp = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
-        sp.Children.Add(new TextBlock { Text = "JOGOS DETECTADOS (STEAM/EPIC)", Style = (Style)Application.Current.Resources["SectionLabel"] });
+        sp.Children.Add(new TextBlock { Text = "JOGOS DETECTADOS (STEAM/EPIC)", Style = SectionLabel });
         sp.Children.Add(new TextBlock
         {
-            Text = "Só leitura: o SevenzinTwks procura instalações nos manifestos locais (nada é executado). Adicionar cria o perfil — aplicar continua sendo manual ou pelo \"Aplicar ao abrir\".",
+            Text = "Só leitura: o Sevenzin procura instalações nos manifestos locais (nada é executado). Adicionar cria o perfil — aplicar continua sendo manual ou pelo \"Aplicar ao abrir\".",
             Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 2, 0, 8), TextWrapping = TextWrapping.Wrap,
         });
 
@@ -102,14 +106,113 @@ public partial class JogosView : UserControl
                 sp.Children.Add(new TextBlock { Text = "Nenhum jogo detectado (launchers ausentes ou sem instalações).", Foreground = Muted, FontSize = 13, Margin = new Thickness(0, 8, 0, 0) });
             foreach (var d in lista) sp.Children.Add(LinhaDetectado(d));
         }
-        return new Border { Style = (Style)Application.Current.Resources["Card"], Margin = new Thickness(0, 0, 0, 12), Child = sp };
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 12), Child = sp };
+    }
+
+    Border CartaoPrioridadeProcesso()
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock { Text = "PRIORIDADE DE PROCESSO EM EXECUÇÃO (AVANÇADO)", Style = SectionLabel });
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Ajuste temporário da classe de prioridade de um processo aberto (não persiste após fechar). Processos críticos do Windows são bloqueados contra Tempo Real.",
+            Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 0, 0, 10), TextWrapping = TextWrapping.Wrap,
+        });
+
+        var comboProc = new ComboBox { Style = DarkCombo, MinWidth = 260, Margin = new Thickness(0, 0, 8, 8) };
+        var comboNivel = new ComboBox { Style = DarkCombo, Width = 170, Margin = new Thickness(0, 0, 8, 8) };
+        foreach (var (rotulo, niv) in new[]
+        {
+            ("Normal (padrão)", NivelPrioridade.Normal),
+            ("Acima do normal", NivelPrioridade.AcimaNormal),
+            ("Alta", NivelPrioridade.Alto),
+            ("Abaixo do normal", NivelPrioridade.AbaixoNormal),
+            ("Ocioso", NivelPrioridade.Ocioso),
+            ("Tempo Real (avançado)", NivelPrioridade.TempoReal),
+        })
+        {
+            comboNivel.Items.Add(new ComboBoxItem { Content = rotulo, Tag = niv });
+        }
+        comboNivel.SelectedIndex = 2; // Alta por padrão
+
+        void PopularProcessos()
+        {
+            comboProc.Items.Clear();
+            try
+            {
+                var procs = Process.GetProcesses()
+                    .Where(p =>
+                    {
+                        try { return p.Id > 4 && !PrioridadeProcesso.EhCritico(p.ProcessName) && p.MainWindowHandle != IntPtr.Zero; }
+                        catch { return false; }
+                    })
+                    .OrderBy(p => p.ProcessName)
+                    .Take(50)
+                    .ToList();
+                foreach (var p in procs)
+                {
+                    comboProc.Items.Add(new ComboBoxItem
+                    {
+                        Content = $"{p.ProcessName} (PID {p.Id})",
+                        Tag = (p.Id, p.ProcessName),
+                    });
+                }
+                if (comboProc.Items.Count > 0) comboProc.SelectedIndex = 0;
+            }
+            catch { }
+        }
+        PopularProcessos();
+
+        var wrap = new WrapPanel();
+        wrap.Children.Add(comboProc);
+        wrap.Children.Add(comboNivel);
+        wrap.Children.Add(Botao(Secundario, "Atualizar lista", PopularProcessos));
+        wrap.Children.Add(Botao(Primario, "Aplicar prioridade", () =>
+        {
+            if ((comboProc.SelectedItem as ComboBoxItem)?.Tag is not ValueTuple<int, string> alvo)
+            {
+                Toasts.Mostrar(this, TipoToast.Aviso, "Selecione um processo", "Nenhum processo com janela visível selecionado.");
+                return;
+            }
+            var nivel = (comboNivel.SelectedItem as ComboBoxItem)?.Tag is NivelPrioridade np ? np : NivelPrioridade.Normal;
+            var erroVal = PrioridadeProcesso.Validar(nivel, alvo.Item2);
+            if (erroVal is not null)
+            {
+                Toasts.Mostrar(this, TipoToast.Erro, "Processo protegido", erroVal);
+                return;
+            }
+            if (nivel == NivelPrioridade.TempoReal)
+            {
+                if (!Elevacao.EhAdmin())
+                {
+                    MessageBox.Show("Tempo Real exige executar o Sevenzin como Administrador.", "Elevação necessária", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+                if (MessageBox.Show($"Definir '{alvo.Item2}' (PID {alvo.Item1}) em prioridade TEMPO REAL?\n\nATENÇÃO: se o processo consumir 100% da CPU, mouse, áudio e entrada podem congelar.\nReversão: clique em 'Restaurar Normal' ou feche o processo.\n\nContinuar?",
+                        "Confirmação — Prioridade Tempo Real", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                    return;
+            }
+            var res = PrioridadeProcesso.Aplicar(alvo.Item1, nivel);
+            if (res.Ok) NotificacoesStore.Padrao.Adicionar("Jogos", $"Prioridade {nivel} em {alvo.Item2}", res.Mensagem);
+            Toasts.Mostrar(this, res.Ok ? TipoToast.Sucesso : TipoToast.Erro, res.Ok ? "Prioridade ajustada" : "Falha", res.Mensagem,
+                res.Ok ? (Action?)(() => PrioridadeProcesso.Aplicar(alvo.Item1, NivelPrioridade.Normal)) : null);
+        }));
+        wrap.Children.Add(Botao(Secundario, "Restaurar Normal", () =>
+        {
+            if ((comboProc.SelectedItem as ComboBoxItem)?.Tag is not ValueTuple<int, string> alvo) return;
+            var res = PrioridadeProcesso.Aplicar(alvo.Item1, NivelPrioridade.Normal);
+            Toasts.Mostrar(this, res.Ok ? TipoToast.Sucesso : TipoToast.Erro, res.Ok ? "Restaurado" : "Falha", res.Mensagem);
+        }));
+        sp.Children.Add(wrap);
+
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
     }
 
     async void DetectarAsync()
     {
         _detectando = true;
         Montar();
-        _detectados = await System.Threading.Tasks.Task.Run(DescobridorJogos.DetectarTudo);
+        _detectados = await Task.Run(DescobridorJogos.DetectarTudo);
         _detectando = false;
         Montar();
         StatusLbl.Text = _detectados is { Count: > 0 } d
@@ -145,8 +248,7 @@ public partial class JogosView : UserControl
         var acoes = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         if (jaExiste)
         {
-            var ok = new TextBlock { Text = "✓ no catálogo", Foreground = Success, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
-            acoes.Children.Add(ok);
+            acoes.Children.Add(new TextBlock { Text = "✓ no catálogo", Foreground = Success, FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
         }
         else
         {
@@ -176,9 +278,6 @@ public partial class JogosView : UserControl
         StatusLbl.Text = $"'{d.Nome}' adicionado ao catálogo (perfil padrão). Abra o jogo e clique em Aplicar — nada foi aplicado automaticamente.";
     }
 
-    // Card compacto: nome + selo de estado + resumo do perfil + dois botões. As otimizações detalhadas
-    // (prioridade, afinidade e opt-ins) ficam no modal "OTIMIZAÇÕES DO JOGO" (AbrirPerfil), bem mais
-    // legível que a antiga fileira de ~10 chips. O caminho usa elipse + tooltip.
     Border Cartao(PerfilJogo j)
     {
         bool aplicado = _gestor.EstaAplicado(j.Executavel);
@@ -199,14 +298,33 @@ public partial class JogosView : UserControl
         var acoes = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         acoes.Children.Add(Botao(Primario, "Perfil e otimizações", () => AbrirPerfil(j.Executavel)));
         acoes.Children.Add(Botao(Secundario, aplicado ? "Reverter" : "Aplicar", () => { if (aplicado) Reverter(j); else Aplicar(j); }));
+        acoes.Children.Add(Botao(Secundario, "Iniciar jogo", () => IniciarJogo(j)));
         raiz.Children.Add(acoes);
 
         return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 12), Child = raiz };
     }
 
+    void IniciarJogo(PerfilJogo j)
+    {
+        if (AplicadorPerfil.IniciarExecutavelJogo(j.Executavel, out var msg))
+        {
+            StatusLbl.Text = $"{msg} Ligue 'Aplicar ao abrir' ou clique em 'Aplicar' após a janela iniciar.";
+            Toasts.Mostrar(this, TipoToast.Sucesso, "Jogo iniciado", j.Nome);
+        }
+        else
+        {
+            StatusLbl.Text = msg;
+            Toasts.Mostrar(this, TipoToast.Aviso, "Não foi possível iniciar", msg);
+        }
+    }
+
     static string Resumo(PerfilJogo j)
     {
         var extras = new List<string>();
+        if (j.ExcluirCore0) extras.Add("sem Core 0");
+        if (j.DesativarSmt) extras.Add("sem SMT");
+        if (j.ApenasUmCcd) extras.Add("1º CCD");
+        if (j.ModoCompatibilidade) extras.Add("compat FSE/DPI");
         if (j.TrimWorkingSet) extras.Add("working set");
         if (j.TimerAltaResolucao) extras.Add("timer 1 ms");
         if (j.PrefereGpuAlta) extras.Add("GPU alta");
@@ -217,9 +335,6 @@ public partial class JogosView : UserControl
             : $"Prioridade {NomePrio(j.Prioridade)} · sem otimizações extras";
     }
 
-    // ---- Modal "OTIMIZAÇÕES DO JOGO": toggles em grade 2 colunas + executável + Reverter/Aplicar ----
-
-    // Só ABRIR e FECHAR animam: RenderPerfil é chamado a cada toggle e não pode "piscar" o modal.
     void AbrirPerfil(string exe)
     {
         _perfilAberto = exe;
@@ -256,7 +371,11 @@ public partial class JogosView : UserControl
 
         var grade = new UniformGrid { Columns = 2 };
         grade.Children.Add(Tile("Prioridade", NomePrio(j.Prioridade), j.Prioridade != PrioridadeJogo.Normal, () => { CiclarPrioridade(j); RenderPerfil(); }));
-        if (Hibrido) grade.Children.Add(Tile("Afinidade", NomeAfinidade(j), j.MascaraAfinidade != 0, () => { CiclarAfinidade(j); RenderPerfil(); }));
+        if (Hibrido) grade.Children.Add(Tile("Afinidade P/E", NomeAfinidade(j), j.MascaraAfinidade != 0, () => { CiclarAfinidade(j); RenderPerfil(); }));
+        grade.Children.Add(Tile("Excluir Core 0", j.ExcluirCore0 ? "Sem núcleo 0 (menos DPC/IRQ)" : "Todos os núcleos", j.ExcluirCore0, () => { AlternarExcluirCore0(j); RenderPerfil(); }));
+        grade.Children.Add(Tile("Sem SMT / HT", j.DesativarSmt ? "1 thread por núcleo físico" : "SMT padrão", j.DesativarSmt, () => { AlternarSmt(j); RenderPerfil(); }));
+        grade.Children.Add(Tile("1º CCD (Cache L3)", j.ApenasUmCcd ? "Fixado no 1º CCD" : (DominiosL3 > 1 ? $"{DominiosL3} CCDs disponíveis" : "CCD único detectado"), j.ApenasUmCcd, () => { AlternarCcd(j); RenderPerfil(); }));
+        grade.Children.Add(Tile("Compatibilidade FSE/DPI", j.ModoCompatibilidade ? "FSE off + HighDPI Aware" : "Padrão do Windows", j.ModoCompatibilidade, () => { AlternarCompat(j); RenderPerfil(); }));
         grade.Children.Add(Tile("Working set", j.TrimWorkingSet ? "Trim ao aplicar" : "Padrão", j.TrimWorkingSet, () => { AlternarWorkingSet(j); RenderPerfil(); }));
         grade.Children.Add(Tile("Timer 1 ms", j.TimerAltaResolucao ? "Ligado (mais energia)" : "Desligado", j.TimerAltaResolucao, () => { AlternarTimer(j); RenderPerfil(); }));
         grade.Children.Add(Tile("GPU", j.PrefereGpuAlta ? "Alto desempenho" : "Automática", j.PrefereGpuAlta, () => { AlternarGpu(j); RenderPerfil(); }));
@@ -269,15 +388,16 @@ public partial class JogosView : UserControl
 
         var rodape = new WrapPanel { Margin = new Thickness(0, 16, 0, 0) };
         rodape.Children.Add(Botao(Primario, "Aplicar", () => { Aplicar(j); RenderPerfil(); }));
+        rodape.Children.Add(Botao(Secundario, "Iniciar jogo", () => IniciarJogo(j)));
         rodape.Children.Add(Botao(Secundario, "Reverter", () => { Reverter(j); RenderPerfil(); }));
         rodape.Children.Add(Botao(Secundario, "Remover", () => { Remover(j); FecharPerfil(); }));
         card.Children.Add(rodape);
 
-        var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, MaxHeight = 560, Content = card };
-        var painel = new Border { Style = CardStyle, Child = scroll, Width = 560, MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(24) };
+        var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, MaxHeight = 580, Content = card };
+        var painel = new Border { Style = CardStyle, Child = scroll, Width = 580, MaxWidth = 580, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(24) };
 
         var scrim = new Border { Background = new SolidColorBrush(Color.FromArgb(0xB0, 0, 0, 0)) };
-        scrim.MouseLeftButtonDown += (_, _) => FecharPerfil(); // clicar fora fecha (painel opaco por cima intercepta)
+        scrim.MouseLeftButtonDown += (_, _) => FecharPerfil();
 
         _overlay = new Grid();
         _overlay.Children.Add(scrim);
@@ -287,7 +407,6 @@ public partial class JogosView : UserControl
         Raiz.Children.Add(_overlay);
     }
 
-    // Tile de toggle: título + estado; borda/título em verde quando ativo. Clique chama o handler e re-renderiza.
     Border Tile(string titulo, string estado, bool ativo, Action aoClicar)
     {
         var sp = new StackPanel();
@@ -310,7 +429,6 @@ public partial class JogosView : UserControl
 
     static Button Botao(Style estilo, string texto, Action aoClicar)
     {
-        // margem inferior 8 dá respiro entre faixas quando os botões envolvem (WrapPanel).
         var b = new Button { Style = estilo, Content = texto, Margin = new Thickness(0, 0, 8, 8), Padding = new Thickness(12, 7, 12, 7) };
         b.Click += (_, _) => aoClicar();
         return b;
@@ -330,52 +448,97 @@ public partial class JogosView : UserControl
 
     void CiclarAfinidade(PerfilJogo j)
     {
-        long prox = j.MascaraAfinidade == 0 ? MascaraPCores : 0; // alterna Todos ↔ P-cores
+        long prox = j.MascaraAfinidade == 0 ? MascaraPCores : 0;
         _catalogo.Adicionar(j with { MascaraAfinidade = prox });
         Montar();
     }
 
+    void AlternarExcluirCore0(PerfilJogo j)
+    {
+        var novo = j with { ExcluirCore0 = !j.ExcluirCore0 };
+        _catalogo.Adicionar(novo);
+        Montar();
+        StatusLbl.Text = novo.ExcluirCore0
+            ? "Excluir Core 0 ligado — remove os threads do núcleo 0 (onde costumam cair DPCs/IRQs do Windows); revertido ao fechar."
+            : "Excluir Core 0 desligado.";
+    }
+
+    void AlternarSmt(PerfilJogo j)
+    {
+        var novo = j with { DesativarSmt = !j.DesativarSmt };
+        _catalogo.Adicionar(novo);
+        Montar();
+        StatusLbl.Text = novo.DesativarSmt
+            ? "Sem SMT ligado — o jogo roda apenas no 1º thread de cada núcleo físico; meça antes/depois (revertido ao fechar)."
+            : "Sem SMT desligado.";
+    }
+
+    void AlternarCcd(PerfilJogo j)
+    {
+        var novo = j with { ApenasUmCcd = !j.ApenasUmCcd };
+        _catalogo.Adicionar(novo);
+        Montar();
+        StatusLbl.Text = novo.ApenasUmCcd
+            ? "1º CCD ligado — em CPUs multi-CCD evita latência entre dies (Infinity Fabric); sem efeito negativo em CPU de 1 CCD."
+            : "1º CCD desligado.";
+    }
+
+    void AlternarCompat(PerfilJogo j)
+    {
+        var novo = j with { ModoCompatibilidade = !j.ModoCompatibilidade };
+        _catalogo.Adicionar(novo);
+        Montar();
+        StatusLbl.Text = novo.ModoCompatibilidade
+            ? "Compatibilidade FSE/HighDPI marcada (DISABLEDXMAXIMIZEDWINDOWEDMODE + HIGHDPIAWARE) — gravada ao aplicar e restaurada ao reverter."
+            : "Compatibilidade FSE/HighDPI desligada.";
+    }
+
     void AlternarWorkingSet(PerfilJogo j)
     {
-        _catalogo.Adicionar(j with { TrimWorkingSet = !j.TrimWorkingSet });
+        var novo = j with { TrimWorkingSet = !j.TrimWorkingSet };
+        _catalogo.Adicionar(novo);
         Montar();
-        StatusLbl.Text = j.TrimWorkingSet
+        StatusLbl.Text = novo.TrimWorkingSet
             ? "Trim de working set ligado para aplicar — pode causar micro-travadas logo após aplicar (memória volta a crescer)."
             : "Trim de working set desligado.";
     }
 
     void AlternarTimer(PerfilJogo j)
     {
-        _catalogo.Adicionar(j with { TimerAltaResolucao = !j.TimerAltaResolucao });
+        var novo = j with { TimerAltaResolucao = !j.TimerAltaResolucao };
+        _catalogo.Adicionar(novo);
         Montar();
-        StatusLbl.Text = j.TimerAltaResolucao
+        StatusLbl.Text = novo.TimerAltaResolucao
             ? "Timer de 1 ms ligado — ATENÇÃO: aumenta o consumo de energia enquanto o jogo estiver aplicado; revertido ao fechar."
             : "Timer de alta resolução desligado.";
     }
 
     void AlternarGpu(PerfilJogo j)
     {
-        _catalogo.Adicionar(j with { PrefereGpuAlta = !j.PrefereGpuAlta });
+        var novo = j with { PrefereGpuAlta = !j.PrefereGpuAlta };
+        _catalogo.Adicionar(novo);
         Montar();
-        StatusLbl.Text = j.PrefereGpuAlta
-            ? "GPU de alto desempenho marcada para este .exe (UserGpuPreferences) — aplicada com o perfil e removida ao reverter."
+        StatusLbl.Text = novo.PrefereGpuAlta
+            ? "GPU de alto desempenho marcada para este .exe (UserGpuPreferences) — aplicada com o perfil e restaurada ao reverter."
             : "Preferência de GPU removida (volta à automática).";
     }
 
     void AlternarBoost(PerfilJogo j)
     {
-        _catalogo.Adicionar(j with { PriorityBoost = !j.PriorityBoost });
+        var novo = j with { PriorityBoost = !j.PriorityBoost };
+        _catalogo.Adicionar(novo);
         Montar();
-        StatusLbl.Text = j.PriorityBoost
+        StatusLbl.Text = novo.PriorityBoost
             ? "Boost de prioridade ligado — temporário (revertido ao fechar)."
             : "Boost de prioridade desligado.";
     }
 
     void AlternarCpuSets(PerfilJogo j)
     {
-        _catalogo.Adicionar(j with { CpuSetsPCores = !j.CpuSetsPCores });
+        var novo = j with { CpuSetsPCores = !j.CpuSetsPCores };
+        _catalogo.Adicionar(novo);
         Montar();
-        StatusLbl.Text = j.CpuSetsPCores
+        StatusLbl.Text = novo.CpuSetsPCores
             ? "Núcleos P (CPU Sets) ligado — os threads do jogo passam a preferir os P-cores enquanto aplicado; revertido ao fechar."
             : "Núcleos P (CPU Sets) desligado — volta ao agendamento padrão do Windows.";
     }
@@ -384,16 +547,12 @@ public partial class JogosView : UserControl
     {
         if (_controle.ExesRodando(new[] { j.Executavel }).Count == 0)
         {
-            StatusLbl.Text = $"'{j.Nome}' não está aberto — abra o jogo e clique em Aplicar.";
+            StatusLbl.Text = $"'{j.Nome}' não está aberto — abra o jogo (ou clique em 'Iniciar jogo') e clique em Aplicar.";
             return;
         }
         if (_gestor.AplicarAgora(j))
         {
-            var extras = new List<string>();
-            if (j.TrimWorkingSet) extras.Add("trim de working set");
-            if (j.TimerAltaResolucao) extras.Add("timer 1 ms (revertido ao fechar)");
-            var textoExtras = extras.Count > 0 ? $" · {string.Join(" + ", extras)}" : "";
-            StatusLbl.Text = $"'{j.Nome}' aplicado (prioridade {NomePrio(j.Prioridade)}, afinidade {NomeAfinidade(j)}{textoExtras}) — reversível.";
+            StatusLbl.Text = $"'{j.Nome}' aplicado ({Resumo(j)}) — reversível.";
             Toasts.Mostrar(this, TipoToast.Sucesso, "Perfil aplicado", j.Nome);
         }
         else

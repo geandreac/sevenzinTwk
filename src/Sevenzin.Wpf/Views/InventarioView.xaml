@@ -7,8 +7,9 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0">
-            <TextBlock Text="Inventário" Style="{StaticResource TituloTela}" Margin="0,8,0,2"/>
-            <TextBlock Text="Somente leitura · origem e grau de confiança de cada dado, sem identificadores pessoais." Foreground="{StaticResource TextSecondaryBrush}"/>
+            <TextBlock Text="HARDWARE E SISTEMA" Style="{StaticResource Eyebrow}" Margin="0,8,0,4"/>
+            <TextBlock Text="Meu PC" Style="{StaticResource TituloTela}" Margin="0,0,0,2"/>
+            <TextBlock Text="Somente leitura · origem e grau de confiança de cada dado do seu computador, sem identificadores pessoais." Foreground="{StaticResource TextSecondaryBrush}"/>
         </StackPanel>
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0" Margin="0,16,0,16" ClipToBounds="True">
             <DataGrid x:Name="Grade" Style="{StaticResource DarkGrid}">

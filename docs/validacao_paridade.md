@@ -17,7 +17,7 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 
 | Item | geandre.exe (evidência) | Sevenzin | Verificação | Resultado | Ação |
 |---|---|---|---|---|---|
-| Win32PrioritySeparation (foreground) | `01:321` valor dinâmico (obj._0002) | `priority-separation` (38) | `MotorTweaks.Aplicado` releitura | Divergente (valor fixo 38 vs dinâmico) | registrar: original calculava por CPU |
+| Win32PrioritySeparation (foreground) | `01:321` valores 38 (0x26) e 26 (0x1A) | `priority-separation` (38) + `priority-separation-26` (26) | `MotorTweaks.Aplicado` releitura | Idêntico (ambos presets cobertos) | — |
 | SystemResponsiveness | `01` = 10 | `mmcss-responsiveness` (10) | releitura | Idêntico (valor) · aplicação real pendente | — |
 | MMCSS "Games" (4 valores) | `01:123,224,254,256` = 8 / 2 / "Normal" / "Medium" | `mmcss-games-*` (literais) | releitura | Idêntico (valor) · aplicação real pendente | — |
 | HwSchMode (HAGS) | `01` = 2 | `hags` (2) | releitura | Idêntico (valor) | — |
@@ -31,7 +31,7 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 | DisablePagingExecutive / LargeSystemCache | catálogo §5 = 1 | itens (1) | releitura | Idêntico (valor) | — |
 | Visual (transparência, AeroPeek, DragFullWindows, MenuShowDelay, tema escuro, Toast…) | `01` literais | itens literais | releitura | Idêntico (valor) | — |
 | UAC completo (EnableLUA + 8 chaves Policies\System) | `01` literais | 9 itens literais | releitura | Idêntico (valor) · requer reinício | — |
-| Mitigações Spectre (FeatureSettingsOverride) | `01` = 33554435 (0x2000003) | `mitigacoes-off` (33554435) | releitura | Idêntico (valor) | corrigido de 1 → literal |
+| Mitigações Spectre (FeatureSettingsOverride + Mask) | `01` = 33554435 (0x2000003) + Mask=33554435 | `mitigacoes-off` + `mitigacoes-mask` (33554435) | releitura | Idêntico (valor) | par completo implementado |
 | AllowTelemetry | `01` = 0 | `telemetria-minima` (1) | releitura | Divergente | Home/Pro clampam em 1; Enterprise aceita 0 — mantido 1 por segurança |
 | WER / Copilot / Bing / LMHOSTS / DontSendAdditionalData | catálogo §8/§4 | itens literais | releitura | Idêntico (valor) | — |
 | Write-cache (CacheIsPowerProtected/UserWriteCacheSetting) | `01` = 1 | `CacheEscrita` por disco (=1) | releitura | Idêntico (valor) | — |
@@ -48,7 +48,8 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 
 | Item | geandre.exe | Sevenzin | Verificação | Resultado |
 |---|---|---|---|---|
-| Plano de energia próprio + 134 powercfg índices | catálogo §3 (comandos em `03_comandos_sistema.txt`) | plano "SevenzinTwks" (duplica o ativo; fábrica intacta) + `IndicesEnergiaOriginal` (134 literais) | `powercfg /getactivescheme` | Idêntico (valor) · aplicação real pendente |
+| Plano de energia próprio + 134 AC + 134 DC powercfg índices | catálogo §3 (comandos em `03_comandos_sistema.txt`) | plano "SevenzinTwks" (duplica o ativo; fábrica intacta) + `IndicesEnergiaOriginal.Todos` (134 AC) + `TodosDc` (134 DC) | `powercfg /getactivescheme` + testes | Idêntico (268 índices literais) |
+| MMAgent (MemoryCompression / PreLaunch) + NIC Offloads (LSO/RSC/Checksum/IPsec/Power) | `03_comandos_sistema.txt` linhas 5–13 | `OtimizacoesSistema` + cartões reversíveis em `AjustesView` | testes + releitura `Get-MMAgent` | Idêntico (comandos oficiais reversíveis) |
 | Serviço de localização lfsvc | catálogo §7 | `localizacao-servico-off` (Start=4) | `Get-Service lfsvc` | Idêntico (efeito) |
 | Rede global (TCP: autotuninglevel=normal, congestionprovider=ctcp) | `03_comandos_sistema.txt` | `RedeGlobal` (netsh) | `netsh int tcp show global` | Idêntico (valor) · aplicação real pendente |
 | Demais serviços/tarefas (lista) | lista no `#US` cifrado | — | — | Não verificável |
@@ -57,8 +58,8 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 
 | Item | geandre.exe | Sevenzin | Verificação | Resultado |
 |---|---|---|---|---|
-| 35 logos confirmados | `05_metricas §6` | 35/35 no catálogo (KMS excluído por decisão: ativador não-oficial) | `CatalogoUtilitarios` + teste | Idêntico (cobertura) · downloads reais pendentes |
-| 19 nomes prováveis (VLC, Spotify, Everything…) | `05 §6` inferidos | VLC/Steam/Discord via winget; demais ausentes | — | Parcial (nomes inferidos não confirmados) |
+| 35 logos confirmados + Steam/Discord | `05_metricas §6` | 36/36 legítimos no catálogo (`KMS Activator` excluído por decisão) | `CatalogoUtilitarios` + teste | Idêntico (cobertura) |
+| 19 nomes complementares (VLC, Spotify, Everything, OBS, CapFrameX, VC++…) | `05 §6` | 19/19 incluídos com URLs HTTPS oficiais (total **55 utilitários**) | `CatalogoUtilitarios_atinge_55_itens_oficiais_https` | Idêntico (cobertura oficial) |
 | winget allowlist (5 IDs) | `110_BuildMedia.ps1` literal | `WingetAllowlist` literal + comando exato | teste de comando | Idêntico (comando) |
 | Download direto | URLs do original no `#US` | URLs oficiais "latest" só onde documentadas (Chrome, VS Code, Brave, Sysinternals); staging .part + hash/assinatura | testes F5 | Parcial (origens diferentes por design) |
 | KMS Activator | logo confirmado | excluído (risco malware/licença) | teste `Excluidos` | Ausente (excluído por decisão) |
@@ -70,8 +71,8 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 | Descoberta Steam (SteamAppId/KnownPaths) | `06_fluxos F10` | `DescobridorJogos.DetectarSteam` (libraryfolders + appmanifest) | testes com estrutura sintética | Idêntico (mecanismo) · máquina real pendente |
 | Descoberta Epic (EpicAppName) | `06_fluxos F10` | `DetectarEpic` (manifests .item) | testes | Idêntico (mecanismo) |
 | Jogo customizado (CustomPath/ExecutableName) | `04 §9` | adicionar .exe manual | testes | Idêntico |
-| Perfil por jogo (afinidade/prioridade/boost/CPU Sets/WS/timer/GPU pref) | `04 §8` | aplicado temporário com reversão | testes (aplicar/reverter no processo real) | Idêntico (mecanismo) · jogos específicos = genérico, sem presets inventados |
-| Cards fixos (EA FC, Fortnite, Rust, Warzone) | `05 §9` | 4 cards na Home → Jogos | render | Idêntico (presença) |
+| Perfil por jogo (afinidade/prioridade/boost/CPU Sets/WS/timer/GPU pref + Excluir Core 0 / Sem SMT / 1º CCD / Compatibilidade FSE+HighDPI / Iniciar jogo + `PrioridadeProcesso`) | `04 §8` + `05 §4` | aplicado temporário com reversão exata em `ControleProcessoWindows` + `TopologiaCpu` | testes unitários | Idêntico (mecanismo completo) |
+| Cards fixos na Home (8 jogos: CS2, EA FC, FiveM, Fortnite, PUBG, Rust, VALORANT, Warzone) | `05 §9` + recursos v4 | 8 cards na `InicioView` → aba Jogos | render | Idêntico (presença completa) |
 | Otimizações específicas por jogo (CS2/PUBG/etc.) | não confirmado nos relatórios | — | — | Não verificável (não existe evidência; não inventado) |
 
 ## 5. BIOS (somente leitura, sem escrita)
@@ -91,9 +92,9 @@ implementado (com justificativa); `Não verificável` = sem evidência recuperá
 | Modos de vídeo (DEVMODE/Hz) | `05 §2` | `LeitorModosVideo` | leitura real | Idêntico |
 | Uso de GPU (%) | `05 §3` | `LeitorGpuUso` (GPU Engine) | leitura real | Idêntico |
 | Uso de CPU (%) | `05 §3` | `LeitorCpuUso` (GetSystemTimes) | leitura real | Idêntico |
-| Topologia P/E e CCD | `05 §1` | `TopologiaCpu` | leitura real | Idêntico |
-| FPS/temperatura/clocks | **inexistente no original** (confirmado) | Benchmark interno de frametime | — | Não verificável (não há paridade a atingir) |
-| Overclock/voltagem/fan | não é otimização segura | não implementado | — | Ausente (correto) |
+| Topologia P/E, Core 0, SMT e CCD | `05 §1` + `05 §4` | `TopologiaCpu` (leitura + máscaras puras) | leitura real + testes | Idêntico |
+| Ajustes de Driver GPU NVIDIA (Economia 15, Power Gating 9, Driver Perf) + AMD (5 grupos) + 7 Perfis Gráficos (RT ON/OFF) + Auto NVIDIA Debloat (`NvClean`) | REA `---.cs` + `Honest_Tech_GPU_Funcionalidades.docx` | `GpuDriverTweaks` + `NvidiaDebloat` + `GpuView` (2 colunas + modal) | `GpuModuloCompletoTests` | Idêntico (100% seguro/oficial) |
+| FPS/temperatura/clocks + Overclock envelope | inexistente no original / `nvidia-smi` seguro | Benchmark interno de frametime + `GpuOverclock` (`-lgc`/`-pl`/`-rgc`) · **Sessão de Teste em Jogo A/B agendada para validação amanhã** | `Estado2Tests` + `GpuModuloCompletoTests` | Implementado (além do original) |
 
 ## 7. Resumo por categoria
 

@@ -5,12 +5,24 @@ using System.Text.Json;
 
 namespace Sevenzin.Diagnostics;
 
-/// <summary>Configuração do Supabase lida de variáveis de ambiente (nunca do código).
-/// SEVENZIN_SUPABASE_URL = URL do projeto; SEVENZIN_SUPABASE_ANON = chave pública (publishable/anon).</summary>
+/// <summary>Configuração do Supabase. SEVENZIN_SUPABASE_URL = URL do projeto; SEVENZIN_SUPABASE_ANON = chave pública
+/// (publishable/anon). Ordem: variável de ambiente (sobrescreve, útil no PC de desenvolvimento) → valor embutido no
+/// executável no build (AssemblyMetadata, vindo das variáveis da máquina que gerou o build; não fica no código-fonte).
+/// O embutido é o que faz o app instalado em QUALQUER PC falar com o servidor — sem ele caía no modo de contas locais.
+/// A chave anon é pública por desenho do Supabase; a segurança está no servidor (RLS + regra perfis_admin_unico).</summary>
 public static class ConfigSupabase
 {
-    public static string? Url => Environment.GetEnvironmentVariable("SEVENZIN_SUPABASE_URL")?.Trim().TrimEnd('/');
-    public static string? Anon => Environment.GetEnvironmentVariable("SEVENZIN_SUPABASE_ANON")?.Trim();
+    static string? LerVar(string nome) =>
+        Environment.GetEnvironmentVariable(nome)
+        ?? (OperatingSystem.IsWindows() ? Environment.GetEnvironmentVariable(nome, EnvironmentVariableTarget.User) : null)
+        ?? (OperatingSystem.IsWindows() ? Environment.GetEnvironmentVariable(nome, EnvironmentVariableTarget.Machine) : null)
+        ?? System.Reflection.Assembly.GetEntryAssembly()?
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
+            .OfType<System.Reflection.AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == nome)?.Value;
+
+    public static string? Url => LerVar("SEVENZIN_SUPABASE_URL")?.Trim().TrimEnd('/');
+    public static string? Anon => LerVar("SEVENZIN_SUPABASE_ANON")?.Trim();
     public static bool Ativo => !string.IsNullOrWhiteSpace(Url) && !string.IsNullOrWhiteSpace(Anon);
 }
 
@@ -27,9 +39,18 @@ public sealed class ClienteSupabase
 {
     static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
     readonly string _url, _anon;
+    bool _adminPorAppMetadata;
     public SessaoSupabase? Sessao { get; private set; }
     public bool EhAdmin { get; private set; }
     public string? NomePerfil { get; private set; }
+
+    public static bool PapelEhAdmin(string? papel)
+    {
+        if (string.IsNullOrWhiteSpace(papel)) return false;
+        var p = papel.Trim();
+        return p.Equals("admin", StringComparison.OrdinalIgnoreCase)
+            || p.Equals("administrador", StringComparison.OrdinalIgnoreCase);
+    }
 
     public ClienteSupabase()
     {
@@ -72,17 +93,28 @@ public sealed class ClienteSupabase
             using var doc = JsonDocument.Parse(txt);
             var root = doc.RootElement;
             var user = root.GetProperty("user");
+            _adminPorAppMetadata = user.TryGetProperty("app_metadata", out var appMeta)
+                && appMeta.ValueKind == JsonValueKind.Object
+                && appMeta.TryGetProperty("role", out var roleProp)
+                && PapelEhAdmin(roleProp.GetString());
             Sessao = new(
                 root.GetProperty("access_token").GetString()!,
                 root.GetProperty("refresh_token").GetString()!,
                 user.GetProperty("id").GetString()!,
                 (user.TryGetProperty("email", out var em) ? em.GetString() : null) ?? email ?? "");
-            var perfil = await PerfilAtualAsync();
-            EhAdmin = perfil?.Papel?.Equals("admin", StringComparison.OrdinalIgnoreCase) == true;
-            NomePerfil = perfil?.Nome;
+            var perfil = await RecarregarPerfilAsync();
             return new(true, null, perfil?.Nome);
         }
         catch (Exception e) { return new(false, e.Message); }
+    }
+
+    async Task<PerfilSupabase?> RecarregarPerfilAsync()
+    {
+        var perfil = await PerfilAtualAsync();
+        EhAdmin = PapelEhAdmin(perfil?.Papel) || _adminPorAppMetadata;
+        if (!string.IsNullOrWhiteSpace(perfil?.Nome))
+            NomePerfil = perfil!.Nome;
+        return perfil;
     }
 
     /// <summary>Perfil (papel/nome) do usuário logado — RLS garante que ele vê só o próprio.</summary>
@@ -214,6 +246,7 @@ public sealed class ClienteSupabase
             using var doc = JsonDocument.Parse(vrTxt);
             if (doc.RootElement.TryGetProperty("access_token", out var at) && at.ValueKind == JsonValueKind.String)
                 Sessao = Sessao with { AccessToken = at.GetString()! };
+            await RecarregarPerfilAsync(); // Revalida papel em perfis com o novo token aal2 pós-MFA
             return new(true, null);
         }
         catch (Exception e) { return new(false, e.Message); }

@@ -163,13 +163,17 @@ public partial class InicioView : UserControl
         rec.Children.Add(CardRecurso("Perfil por jogo", "Detecção Steam/Epic, afinidade, prioridade e opt-ins por título.", 1, "jogos"));
         Raiz.Children.Add(rec);
 
-        // JOGOS EM DESTAQUE (cards confirmados na RE: EA FC, Fortnite, Rust, Warzone — 05_metricas §9)
-        Raiz.Children.Add(new TextBlock { Text = "JOGOS EM DESTAQUE", Style = SectionStyle, Margin = new Thickness(0, 22, 0, 0) });
-        var jogos = new UniformGrid { Rows = 1, Columns = 4 };
-        jogos.Children.Add(CardJogo("EA SPORTS FC", "Futebol — perfil detectado pela pasta do jogo.", 0));
-        jogos.Children.Add(CardJogo("Fortnite", "Battle Royale — perfil detectado pela pasta do jogo.", 1));
-        jogos.Children.Add(CardJogo("Rust", "Sobrevivência — perfil detectado pela pasta do jogo.", 2));
-        jogos.Children.Add(CardJogo("Warzone", "Call of Duty — perfil detectado pela pasta do jogo.", 3));
+        // JOGOS EM DESTAQUE (8 cards confirmados na engenharia reversa: CS2, EA FC, FiveM, Fortnite, PUBG, Rust, VALORANT, Warzone)
+        Raiz.Children.Add(new TextBlock { Text = "JOGOS EM DESTAQUE", Style = SectionStyle, Margin = new Thickness(0, 22, 0, 10) });
+        var jogos = new UniformGrid { Rows = 2, Columns = 4 };
+        jogos.Children.Add(CardJogo("Counter-Strike 2", "FPS tático — perfil detectado pela biblioteca Steam.", 0));
+        jogos.Children.Add(CardJogo("EA SPORTS FC", "Futebol — perfil detectado pela pasta do jogo.", 1));
+        jogos.Children.Add(CardJogo("FiveM", "GTA RP — perfil detectado pelo executável.", 2));
+        jogos.Children.Add(CardJogo("Fortnite", "Battle Royale — perfil detectado pela Epic Games.", 3));
+        jogos.Children.Add(CardJogo("PUBG", "Battle Royale — perfil detectado pela Steam.", 4));
+        jogos.Children.Add(CardJogo("Rust", "Sobrevivência — perfil detectado pela Steam.", 5));
+        jogos.Children.Add(CardJogo("VALORANT", "FPS tático — perfil detectado pelo executável.", 6));
+        jogos.Children.Add(CardJogo("Warzone", "Call of Duty — perfil detectado pela pasta do jogo.", 7));
         Raiz.Children.Add(jogos);
 
         _cpuUso.Ler(); // 1ª amostra do GetSystemTimes: o próximo tick já tem intervalo para calcular o %
@@ -299,8 +303,8 @@ public partial class InicioView : UserControl
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16),
-            Height = 120,
-            Margin = new Thickness(indice == 0 ? 0 : 6, 0, indice == 3 ? 0 : 6, 0),
+            Height = 114,
+            Margin = new Thickness((indice % 4) == 0 ? 0 : 6, indice >= 4 ? 12 : 0, (indice % 4) == 3 ? 0 : 6, 0),
             Child = sp,
             Cursor = Cursors.Hand,
             ToolTip = $"Abrir Jogos para {nome}",

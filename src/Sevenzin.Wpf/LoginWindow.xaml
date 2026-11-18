@@ -1,300 +1,350 @@
+﻿<!-- Login (cartão centralizado com brilho azul). Um só layout para os dois apps: o User usa como está; o Admin
+     (que linka este arquivo) troca só os textos e o ícone do subtítulo no código (LoginWindow.ModoAdmin). -->
 <Window x:Class="Sevenzin.Wpf.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SevenzinTwks — Acesso" Height="740" Width="1280" MinWidth="1040" MinHeight="660"
+        Title="SevenzinTwks — Acesso" Width="600" SizeToContent="Height"
         Icon="pack://application:,,,/Assets/sevenzin.ico"
-        WindowStyle="None" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen"
-        Background="#FF05080E"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" UseLayoutRounding="True"
         FontFamily="{StaticResource UiFont}" TextElement.Foreground="{StaticResource TextPrimaryBrush}">
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="40" ResizeBorderThickness="0" CornerRadius="0" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+        <WindowChrome CaptionHeight="56" ResizeBorderThickness="0" CornerRadius="0" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- Gradientes do Figma (01 · Login) -->
-        <LinearGradientBrush x:Key="GradBotao" StartPoint="0,0.5" EndPoint="1,0.5">
-            <GradientStop Color="#1E6FE0" Offset="0"/>
-            <GradientStop Color="#1656B8" Offset="1"/>
-        </LinearGradientBrush>
-        <LinearGradientBrush x:Key="GradPainel" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#0B1424" Offset="0"/>
-            <GradientStop Color="#060A12" Offset="1"/>
-        </LinearGradientBrush>
-        <LinearGradientBrush x:Key="GradDivisor" StartPoint="0,0.5" EndPoint="1,0.5">
-            <GradientStop Color="#0038BDF8" Offset="0"/>
-            <GradientStop Color="#FF38BDF8" Offset="0.5"/>
-            <GradientStop Color="#0038BDF8" Offset="1"/>
-        </LinearGradientBrush>
+        <SolidColorBrush x:Key="RotuloBrush" Color="#FFE3E9F5"/>
+        <SolidColorBrush x:Key="IconeCampoBrush" Color="#FF8FA3C4"/>
+        <SolidColorBrush x:Key="DicaBrush" Color="#FF5E6D86"/>
 
-        <!-- Campo (TextBox): 400×50, fundo #0B111C, borda #1A2536, rx10 -->
-        <Style x:Key="CampoLogin" TargetType="TextBox">
-            <Setter Property="Background" Value="#FF0B111C"/>
+        <!-- Campo de texto: ícone à esquerda (fora do template), dica = AutomationProperties.HelpText, brilho azul no foco -->
+        <Style x:Key="CampoAdmin" TargetType="TextBox">
+            <Setter Property="Background" Value="#FF0A1120"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-            <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
-            <Setter Property="BorderBrush" Value="#FF1A2536"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Brand400Brush}"/>
+            <Setter Property="BorderBrush" Value="#FF1C2940"/>
             <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Height" Value="50"/>
-            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Height" Value="52"/>
+            <Setter Property="Padding" Value="48,0,14,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid>
+                            <Border x:Name="brilho" CornerRadius="12" BorderBrush="#FF3B7BFF" BorderThickness="1.5" Opacity="0">
+                                <Border.Effect><DropShadowEffect Color="#3B7BFF" BlurRadius="18" ShadowDepth="0" Opacity="0.85"/></Border.Effect>
+                            </Border>
+                            <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="12"/>
+                            <TextBlock x:Name="dica" Text="{Binding Path=(AutomationProperties.HelpText), RelativeSource={RelativeSource TemplatedParent}}"
+                                       Margin="{TemplateBinding Padding}" Padding="2,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource DicaBrush}"
+                                       FontSize="{TemplateBinding FontSize}" TextAlignment="{TemplateBinding TextAlignment}" IsHitTestVisible="False" Visibility="Collapsed"/>
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/><!-- o TextBox já aplica o Padding por dentro; repetir aqui dobrava o recuo -->
+                        </Grid>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value=""><Setter TargetName="dica" Property="Visibility" Value="Visible"/></Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="#FF2B3D5C"/></Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Brand500Brush}"/>
+                                <Setter TargetName="b" Property="BorderBrush" Value="#FF3B7BFF"/>
+                                <Setter TargetName="brilho" Property="Opacity" Value="1"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- Campo (PasswordBox): mesmo visual -->
-        <Style x:Key="CampoLoginSenha" TargetType="PasswordBox">
-            <Setter Property="Background" Value="#FF0B111C"/>
+
+        <!-- Campo de senha: a dica some quando Tag="cheio" (LoginWindow.Senha_Dica, no PasswordChanged) -->
+        <Style x:Key="CampoAdminSenha" TargetType="PasswordBox">
+            <Setter Property="Background" Value="#FF0A1120"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-            <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
-            <Setter Property="BorderBrush" Value="#FF1A2536"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Brand400Brush}"/>
+            <Setter Property="BorderBrush" Value="#FF1C2940"/>
             <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Height" Value="50"/>
-            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Height" Value="52"/>
+            <Setter Property="Padding" Value="48,0,14,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="PasswordBox">
-                        <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid>
+                            <Border x:Name="brilho" CornerRadius="12" BorderBrush="#FF3B7BFF" BorderThickness="1.5" Opacity="0">
+                                <Border.Effect><DropShadowEffect Color="#3B7BFF" BlurRadius="18" ShadowDepth="0" Opacity="0.85"/></Border.Effect>
+                            </Border>
+                            <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="12"/>
+                            <TextBlock x:Name="dica" Text="{Binding Path=(AutomationProperties.HelpText), RelativeSource={RelativeSource TemplatedParent}}"
+                                       Margin="{TemplateBinding Padding}" Padding="2,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource DicaBrush}"
+                                       FontSize="{TemplateBinding FontSize}" IsHitTestVisible="False"/>
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/><!-- o TextBox já aplica o Padding por dentro; repetir aqui dobrava o recuo -->
+                        </Grid>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="cheio"><Setter TargetName="dica" Property="Visibility" Value="Collapsed"/></Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="#FF2B3D5C"/></Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Brand500Brush}"/>
+                                <Setter TargetName="b" Property="BorderBrush" Value="#FF3B7BFF"/>
+                                <Setter TargetName="brilho" Property="Opacity" Value="1"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- Botão Entrar: 400×52, gradiente #1E6FE0→#1656B8, borda #5AA9FF, sombra -->
-        <Style x:Key="BotaoEntrar" TargetType="Button">
-            <Setter Property="Height" Value="52"/>
+
+        <!-- Botão principal: gradiente azul→índigo, reflexo vítreo em cima, brilho. Tag="entrar" mostra o ícone de entrada. -->
+        <Style x:Key="BotaoAdmin" TargetType="Button">
+            <Setter Property="Height" Value="56"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontSize" Value="18"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocoVisual}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="b" CornerRadius="10" Background="{StaticResource GradBotao}"
-                                BorderBrush="#995AA9FF" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#1E6FE0" BlurRadius="18" ShadowDepth="4" Opacity="0.45" Direction="270"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid x:Name="raiz" RenderTransformOrigin="0.5,0.5">
+                            <Border CornerRadius="12" BorderThickness="1">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#FF2C64FF" Offset="0"/><GradientStop Color="#FF3557FF" Offset="0.55"/><GradientStop Color="#FF5A47F5" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#FFD6E6FF" Offset="0"/><GradientStop Color="#FF4C78FF" Offset="0.3"/>
+                                        <GradientStop Color="#FF3A4FD8" Offset="0.7"/><GradientStop Color="#FFB4C2FF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                                <Border.Effect><DropShadowEffect Color="#2F5BFF" BlurRadius="26" ShadowDepth="0" Opacity="0.6"/></Border.Effect>
+                            </Border>
+                            <Border CornerRadius="11,11,0,0" Margin="1,1,1,0" Height="26" VerticalAlignment="Top" IsHitTestVisible="False">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#38FFFFFF" Offset="0"/><GradientStop Color="#00FFFFFF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                            <Border x:Name="realce" CornerRadius="12" Background="White" Opacity="0" IsHitTestVisible="False"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Viewbox x:Name="icone" Width="22" Height="22" Margin="0,0,12,0" Visibility="Collapsed">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Data="M10 4 H18 C19.1 4 20 4.9 20 6 V18 C20 19.1 19.1 20 18 20 H10 M3 12 H14 M10.5 8.5 L14 12 L10.5 15.5"
+                                              Stroke="White" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                                    </Canvas>
+                                </Viewbox>
+                                <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                            </StackPanel>
+                        </Grid>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="entrar"><Setter TargetName="icone" Property="Visibility" Value="Visible"/></Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="b" Property="Opacity" Value="0.92"/>
+                                <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="realce" Storyboard.TargetProperty="Opacity" To="0.09" Duration="0:0:0.15"/>
+                                </Storyboard></BeginStoryboard></Trigger.EnterActions>
+                                <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="realce" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
+                                </Storyboard></BeginStoryboard></Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="b" Property="Opacity" Value="0.85"/>
+                                <Setter TargetName="raiz" Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.98" ScaleY="0.98"/></Setter.Value></Setter>
                             </Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5"/><Setter Property="Cursor" Value="Arrow"/></Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Ícones (traço, quadro 24×24) -->
+        <Geometry x:Key="IcEmail">M4.5 5 H19.5 C20.3 5 21 5.7 21 6.5 V17.5 C21 18.3 20.3 19 19.5 19 H4.5 C3.7 19 3 18.3 3 17.5 V6.5 C3 5.7 3.7 5 4.5 5 Z M3.6 6.2 L12 12.6 L20.4 6.2</Geometry>
+        <Geometry x:Key="IcCadeado">M6 11 H18 C18.6 11 19 11.4 19 12 V20 C19 20.6 18.6 21 18 21 H6 C5.4 21 5 20.6 5 20 V12 C5 11.4 5.4 11 6 11 Z M8 11 V7.5 C8 5.3 9.8 3.5 12 3.5 C14.2 3.5 16 5.3 16 7.5 V11 M12 15 V17</Geometry>
+        <Geometry x:Key="IcEscudo">M12 2.5 L19.5 5.5 V11 C19.5 15.6 16.4 19.3 12 21 C7.6 19.3 4.5 15.6 4.5 11 V5.5 Z M8.8 11.8 L11.1 14 L15.4 9.6</Geometry>
+        <Geometry x:Key="IcSeta">M5 12 H19 M13 6 L19 12 L13 18</Geometry>
+        <Geometry x:Key="IcConta">M12 12 C14.2 12 16 10.2 16 8 C16 5.8 14.2 4 12 4 C9.8 4 8 5.8 8 8 C8 10.2 9.8 12 12 12 Z M4.5 20 C4.5 16.4 7.9 14 12 14 C16.1 14 19.5 16.4 19.5 20</Geometry>
     </Window.Resources>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="690"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
-        <!-- Brilho radial superior esquerdo (Figma paint0_radial) -->
-        <Ellipse Grid.ColumnSpan="2" Width="900" Height="900" Margin="-200,-200,0,0"
-                 HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
+    <!-- Margem transparente: espaço do brilho externo do cartão -->
+    <Grid Margin="22">
+        <Border CornerRadius="22" BorderThickness="1.5" IsHitTestVisible="False">
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#FFB8D8FF" Offset="0"/><GradientStop Color="#FF3F7BFF" Offset="0.16"/>
+                    <GradientStop Color="#FF1A2E66" Offset="0.5"/><GradientStop Color="#FF3F7BFF" Offset="0.84"/><GradientStop Color="#FFA8CCFF" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#FF0B1326" Offset="0"/><GradientStop Color="#FF070C18" Offset="0.5"/><GradientStop Color="#FF05080F" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.Effect><DropShadowEffect Color="#2F6BFF" BlurRadius="30" ShadowDepth="0" Opacity="0.55"/></Border.Effect>
+        </Border>
+        <!-- Névoa azul atrás da logo -->
+        <Ellipse Width="440" Height="250" VerticalAlignment="Top" Margin="0,-30,0,0" IsHitTestVisible="False">
             <Ellipse.Fill>
-                <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
-                    <GradientStop Color="#241E6FE0" Offset="0"/>
-                    <GradientStop Color="#001E6FE0" Offset="1"/>
+                <RadialGradientBrush>
+                    <GradientStop Color="#352F7BFF" Offset="0"/><GradientStop Color="#002F7BFF" Offset="1"/>
                 </RadialGradientBrush>
             </Ellipse.Fill>
         </Ellipse>
 
-        <!-- Linhas de "circuito" nos cantos (Figma, azul tênue) -->
-        <Canvas Grid.ColumnSpan="2" IsHitTestVisible="False">
-            <Path Data="M0 250V170L95 75H160" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.55"/>
-            <Path Data="M0 285V215L60 155" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.25"/>
-            <Path Data="M0 560L105 665H205L235 695" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.45"/>
-            <Path Data="M0 610L80 690H140" Stroke="#2F8CFF" StrokeThickness="1" Opacity="0.2"/>
-            <Path Data="M0 170V250L28 222V198L0 170Z" Fill="#2F8CFF" Opacity="0.35"/>
-        </Canvas>
-
-        <!-- Pontos decorativos (canto superior esquerdo) -->
-        <Canvas Grid.ColumnSpan="2" IsHitTestVisible="False">
-            <Ellipse Canvas.Left="22" Canvas.Top="20" Width="11" Height="11" Fill="#7B8AA0"/>
-            <Ellipse Canvas.Left="40" Canvas.Top="20" Width="11" Height="11" Fill="#26364F"/>
-        </Canvas>
-
         <!-- Controles da janela -->
-        <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top"
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,12,0"
                     WindowChrome.IsHitTestVisibleInChrome="True">
             <Button Style="{StaticResource ChromeButton}" Click="Min_Click" ToolTip="Minimizar">
-                <Path Data="M0,0 H11" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.3"
-                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                <Path Data="M0,0 H11"/>
             </Button>
             <Button Style="{StaticResource ChromeButton}" Click="Close_Click" ToolTip="Fechar">
-                <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.3"
-                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                <Path Data="M0,0 L10,10 M10,0 L0,10"/>
             </Button>
         </StackPanel>
 
-        <!-- Formulário (coluna esquerda, 400px centrado) -->
-        <StackPanel x:Name="Formulario" Grid.Column="0" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <Image x:Name="LogoTopo" Source="{StaticResource LogoSimbolo}" Height="74" HorizontalAlignment="Center"
+        <StackPanel x:Name="Formulario" Margin="56,40,56,0">
+            <!-- Cabeçalho -->
+            <Image x:Name="LogoTopo" Source="{StaticResource LogoSimbolo}" Height="88" HorizontalAlignment="Center"
                    RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="SevenzinTwks">
-                <Image.Effect><DropShadowEffect Color="#008CFF" BlurRadius="36" ShadowDepth="0" Opacity="0.5"/></Image.Effect>
+                <Image.Effect><DropShadowEffect Color="#008CFF" BlurRadius="34" ShadowDepth="0" Opacity="0.5"/></Image.Effect>
             </Image>
-            <TextBlock x:Name="Marca" FontFamily="{StaticResource MarcaFont}" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"
-                       Margin="0,14,0,0" AutomationProperties.Name="SevenzinTwks">
+            <TextBlock x:Name="Marca" FontFamily="{StaticResource MarcaFont}" FontSize="50" FontWeight="Bold" HorizontalAlignment="Center"
+                       Margin="0,10,0,0" AutomationProperties.Name="SevenzinTwks">
                 <Run Text="Sevenzin" Foreground="{StaticResource MarcaPrata}"/><Run Text="Twks" Foreground="{StaticResource MarcaAzul}"/>
             </TextBlock>
-            <!-- Assinatura da marca: traços azuis + "OTIMIZAÇÃO DE COMPUTADORES" espaçado (WPF não tem letter-spacing:
-                 o espaço entre letras é um thin space U+2009). -->
-            <Grid HorizontalAlignment="Center" Margin="0,6,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Rectangle Width="28" Height="2" RadiusX="1" RadiusY="1" Fill="{StaticResource LogoAzul}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBlock Grid.Column="1" FontSize="10.5" FontWeight="Medium" Foreground="#B9C9E0" VerticalAlignment="Center"
-                           AutomationProperties.Name="Otimização de computadores"
-                           Text="O&#x2009;T&#x2009;I&#x2009;M&#x2009;I&#x2009;Z&#x2009;A&#x2009;Ç&#x2009;Ã&#x2009;O&#x2003;D&#x2009;E&#x2003;C&#x2009;O&#x2009;M&#x2009;P&#x2009;U&#x2009;T&#x2009;A&#x2009;D&#x2009;O&#x2009;R&#x2009;E&#x2009;S"/>
-                <Rectangle Grid.Column="2" Width="28" Height="2" RadiusX="1" RadiusY="1" Fill="{StaticResource LogoAzul}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            <Grid Margin="0,6,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Rectangle Height="1.5" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#003F7BFF" Offset="0"/><GradientStop Color="#FF3F7BFF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                </Rectangle>
+                <TextBlock x:Name="Tagline" Grid.Column="1" FontSize="16" Foreground="#FFC9D5E8" AutomationProperties.Name="Otimização de Computadores"
+                           Text="O&#x2009;t&#x2009;i&#x2009;m&#x2009;i&#x2009;z&#x2009;a&#x2009;ç&#x2009;ã&#x2009;o&#x2003;d&#x2009;e&#x2003;C&#x2009;o&#x2009;m&#x2009;p&#x2009;u&#x2009;t&#x2009;a&#x2009;d&#x2009;o&#x2009;r&#x2009;e&#x2009;s"/>
+                <Rectangle Grid.Column="2" Height="1.5" VerticalAlignment="Center" Margin="14,0,0,0">
+                    <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#FF3F7BFF" Offset="0"/><GradientStop Color="#003F7BFF" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                </Rectangle>
             </Grid>
-            <!-- Selo visível só no app Admin (SevenzinAdmin.exe) -->
-            <Border x:Name="AdminBadge" Visibility="Collapsed" HorizontalAlignment="Center" Margin="0,12,0,0"
-                    CornerRadius="999" Background="{StaticResource BrandTintBrush}" BorderBrush="{StaticResource Brand500Brush}" BorderThickness="1" Padding="12,5">
-                <StackPanel Orientation="Horizontal">
-                    <Path Data="M8,1.5 L13.5,3.6 V8 C13.5,11.4 11,13.7 8,14.5 C5,13.7 2.5,11.4 2.5,8 V3.6 Z" Width="13" Height="14"
-                          Stretch="Uniform" Stroke="{StaticResource Brand400Brush}" StrokeThickness="1.4" StrokeLineJoin="Round" Fill="{x:Null}" VerticalAlignment="Center"/>
-                    <TextBlock Text="PAINEL ADMINISTRATIVO" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Brand400Brush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Border>
-            <Rectangle Width="220" Height="2" RadiusX="1" RadiusY="1" Margin="0,16,0,0" Fill="{StaticResource GradDivisor}"/>
-            <TextBlock x:Name="Subtitulo" Text="Acesse sua conta" Foreground="#A9B6C8" HorizontalAlignment="Center" Margin="0,16,0,26"/>
+            <!-- Subtítulo: ícone de conta (User) ou escudo (AdminBadge, só no Admin); o texto troca nas etapas da redefinição -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,26">
+                <Viewbox x:Name="IconeConta" Width="20" Height="20" VerticalAlignment="Center">
+                    <Canvas Width="24" Height="24"><Path Data="{StaticResource IcConta}" Stroke="#FF5B9BFF" StrokeThickness="1.8" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/></Canvas>
+                </Viewbox>
+                <Viewbox x:Name="AdminBadge" Width="20" Height="20" VerticalAlignment="Center" Visibility="Collapsed">
+                    <Canvas Width="24" Height="24"><Path Data="{StaticResource IcEscudo}" Stroke="#FF5B9BFF" StrokeThickness="1.8" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/></Canvas>
+                </Viewbox>
+                <TextBlock x:Name="Subtitulo" Text="Acesse sua conta" Foreground="#FFA9B6C8" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
 
-            <!-- Campos de login (somem enquanto o painel "Redefinir senha" está aberto) -->
+            <!-- Campos de login -->
             <StackPanel x:Name="LoginCampos">
-            <TextBlock Text="E-mail" Foreground="#A9B6C8" FontSize="12" Margin="2,0,0,6"/>
-            <TextBox x:Name="Email" Style="{StaticResource CampoLogin}" KeyDown="Campo_KeyDown"/>
+                <StackPanel Orientation="Horizontal" Margin="2,0,0,8">
+                    <Viewbox Width="18" Height="18"><Canvas Width="24" Height="24"><Path Data="{StaticResource IcEmail}" Stroke="{StaticResource Brand400Brush}" StrokeThickness="2" StrokeLineJoin="Round"/></Canvas></Viewbox>
+                    <TextBlock Text="E-mail" Foreground="{StaticResource RotuloBrush}" FontSize="14.5" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Grid>
+                    <TextBox x:Name="Email" Style="{StaticResource CampoAdmin}" KeyDown="Campo_KeyDown"
+                             AutomationProperties.Name="E-mail" AutomationProperties.HelpText="Digite seu e-mail..."/>
+                    <Viewbox Width="18" Height="18" HorizontalAlignment="Left" Margin="18,0,0,0" IsHitTestVisible="False">
+                        <Canvas Width="24" Height="24"><Path Data="{StaticResource IcEmail}" Stroke="{StaticResource IconeCampoBrush}" StrokeThickness="2" StrokeLineJoin="Round"/></Canvas>
+                    </Viewbox>
+                </Grid>
 
-            <TextBlock Text="Senha" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
-            <Grid>
-                <PasswordBox x:Name="Senha" Style="{StaticResource CampoLoginSenha}" Padding="14,0,44,0" KeyDown="Campo_KeyDown"/>
-                <TextBox x:Name="SenhaVisivel" Style="{StaticResource CampoLogin}" Padding="14,0,44,0" Visibility="Collapsed" KeyDown="Campo_KeyDown"/>
-                <ToggleButton x:Name="OlhoBtn" Width="44" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0"
-                              Cursor="Hand" Click="Olho_Click" ToolTip="Mostrar/ocultar senha" Foreground="#A9B6C8">
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <Border Background="Transparent">
-                                <Viewbox Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Grid Width="24" Height="24">
-                                        <!-- olho aberto: senha oculta → clicar revela -->
-                                        <Path x:Name="olho" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6" Fill="{x:Null}"
-                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Data="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"/>
-                                        <!-- olho cortado: senha visível → clicar esconde -->
-                                        <Path x:Name="olhoOff" Visibility="Collapsed" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6" Fill="{x:Null}"
-                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Data="M10.73 5.08C11.15 5.03 11.57 5 12 5C18.5 5 22 12 22 12C21.55 12.84 21.03 13.62 20.43 14.34 M6.52 6.52C4.48 7.9 2.83 9.8 2 12C2 12 5.5 19 12 19C13.84 19 15.5 18.44 16.92 17.6 M9.9 9.9C9.34 10.46 9 11.19 9 12C9 13.66 10.34 15 12 15C12.81 15 13.54 14.66 14.1 14.1 M2 2L22 22"/>
-                                    </Grid>
-                                </Viewbox>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="olho" Property="Visibility" Value="Collapsed"/>
-                                    <Setter TargetName="olhoOff" Property="Visibility" Value="Visible"/>
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-                </ToggleButton>
-            </Grid>
-            <TextBlock x:Name="SenhaAjuda" Text="mínimo 12 · maiúsc/minúsc, número e símbolo" Foreground="{StaticResource TextMutedBrush}"
-                       FontSize="11" Margin="2,6,0,0" Visibility="Collapsed"/>
+                <StackPanel Orientation="Horizontal" Margin="2,20,0,8">
+                    <Viewbox Width="18" Height="18"><Canvas Width="24" Height="24"><Path Data="{StaticResource IcCadeado}" Stroke="{StaticResource Brand400Brush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/></Canvas></Viewbox>
+                    <TextBlock Text="Senha" Foreground="{StaticResource RotuloBrush}" FontSize="14.5" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Grid>
+                    <PasswordBox x:Name="Senha" Style="{StaticResource CampoAdminSenha}" Padding="48,0,50,0" KeyDown="Campo_KeyDown" PasswordChanged="Senha_Dica"
+                                 AutomationProperties.Name="Senha" AutomationProperties.HelpText="Digite sua senha..."/>
+                    <TextBox x:Name="SenhaVisivel" Style="{StaticResource CampoAdmin}" Padding="48,0,50,0" Visibility="Collapsed" KeyDown="Campo_KeyDown"
+                             AutomationProperties.Name="Senha visível" AutomationProperties.HelpText="Digite sua senha..."/>
+                    <Viewbox Width="18" Height="18" HorizontalAlignment="Left" Margin="18,0,0,0" IsHitTestVisible="False">
+                        <Canvas Width="24" Height="24"><Path Data="{StaticResource IcCadeado}" Stroke="{StaticResource IconeCampoBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/></Canvas>
+                    </Viewbox>
+                    <ToggleButton x:Name="OlhoBtn" Width="50" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0"
+                                  Cursor="Hand" Click="Olho_Click" ToolTip="Mostrar/ocultar senha" Foreground="{StaticResource IconeCampoBrush}"
+                                  AutomationProperties.Name="Mostrar ou ocultar senha">
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border Background="Transparent">
+                                    <Viewbox Width="21" Height="21" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Grid Width="24" Height="24">
+                                            <Path x:Name="olho" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.7" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  Data="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"/>
+                                            <Path x:Name="olhoOff" Visibility="Collapsed" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.7" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  Data="M10.73 5.08C11.15 5.03 11.57 5 12 5C18.5 5 22 12 22 12C21.55 12.84 21.03 13.62 20.43 14.34 M6.52 6.52C4.48 7.9 2.83 9.8 2 12C2 12 5.5 19 12 19C13.84 19 15.5 18.44 16.92 17.6 M9.9 9.9C9.34 10.46 9 11.19 9 12C9 13.66 10.34 15 12 15C12.81 15 13.54 14.66 14.1 14.1 M2 2L22 22"/>
+                                        </Grid>
+                                    </Viewbox>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="olho" Property="Visibility" Value="Collapsed"/>
+                                        <Setter TargetName="olhoOff" Property="Visibility" Value="Visible"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/></Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
+                    </ToggleButton>
+                </Grid>
+                <TextBlock x:Name="SenhaAjuda" Text="mínimo 12 · maiúsc/minúsc, número e símbolo" Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11" Margin="2,6,0,0" Visibility="Collapsed"/>
 
-            <!-- Código do autenticador (aparece só quando a conta tem 2FA) -->
-            <StackPanel x:Name="TotpBloco" Visibility="Collapsed">
-                <TextBlock Text="Código do autenticador" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
-                <TextBox x:Name="Totp" Style="{StaticResource CampoLogin}" MaxLength="6" KeyDown="Campo_KeyDown" Tag="000000"/>
-                <TextBlock Text="Abra seu aplicativo autenticador e digite o código de 6 dígitos." Foreground="{StaticResource TextMutedBrush}"
-                           FontSize="11" Margin="2,6,0,0"/>
+                <!-- Código do autenticador (contas com 2FA) -->
+                <StackPanel x:Name="TotpBloco" Visibility="Collapsed">
+                    <TextBlock Text="Código do autenticador" Foreground="{StaticResource RotuloBrush}" FontSize="14.5" Margin="2,20,0,8"/>
+                    <TextBox x:Name="Totp" Style="{StaticResource CampoAdmin}" Padding="14,0" MaxLength="6" FontSize="20" TextAlignment="Center"
+                             KeyDown="Campo_KeyDown" AutomationProperties.Name="Código do autenticador" AutomationProperties.HelpText="000000"/>
+                </StackPanel>
+
+                <!-- Confirmar senha (só na criação do primeiro administrador local) -->
+                <StackPanel x:Name="ConfirmarBloco" Visibility="Collapsed">
+                    <TextBlock Text="Confirmar senha" Foreground="{StaticResource RotuloBrush}" FontSize="14.5" Margin="2,20,0,8"/>
+                    <PasswordBox x:Name="Confirmar" Style="{StaticResource CampoAdminSenha}" Padding="14,0" KeyDown="Campo_KeyDown" PasswordChanged="Senha_Dica"
+                                 AutomationProperties.Name="Confirmar senha" AutomationProperties.HelpText="Repita a senha..."/>
+                </StackPanel>
+
+                <Grid x:Name="LinhaOpcoes" Margin="0,20,0,0">
+                    <CheckBox x:Name="Lembrar" Content="Lembrar de mim" Foreground="{StaticResource RotuloBrush}" FontSize="14" VerticalAlignment="Center"/>
+                    <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="14">
+                        <Hyperlink x:Name="EsqueciLink" Click="Esqueci_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">
+                            <Run Text="Esqueci minha senha"/>
+                            <InlineUIContainer BaselineAlignment="Center">
+                                <Viewbox Width="14" Height="14" Margin="5,0,0,0"><Canvas Width="24" Height="24"><Path Data="{StaticResource IcSeta}" Stroke="{StaticResource Brand400Brush}" StrokeThickness="2.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox>
+                            </InlineUIContainer>
+                        </Hyperlink>
+                    </TextBlock>
+                </Grid>
+
+                <Button x:Name="EntrarBtn" Style="{StaticResource BotaoAdmin}" Tag="entrar" Content="Entrar" Margin="0,24,0,0" Click="Entrar_Click"/>
+                <TextBlock x:Name="SemAcessoTxt" Text="Ainda não tem acesso? Adquira sua licença com o administrador." Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="12" HorizontalAlignment="Center" Margin="0,14,0,0"/>
             </StackPanel>
 
-            <!-- Confirmar senha (apenas no primeiro administrador) -->
-            <StackPanel x:Name="ConfirmarBloco" Visibility="Collapsed">
-                <TextBlock Text="Confirmar senha" Foreground="#A9B6C8" FontSize="12" Margin="2,18,0,6"/>
-                <PasswordBox x:Name="Confirmar" Style="{StaticResource CampoLoginSenha}" KeyDown="Campo_KeyDown"/>
-            </StackPanel>
-
-            <Grid x:Name="LinhaOpcoes" Margin="0,18,0,0">
-                <CheckBox x:Name="Lembrar" Content="Lembrar de mim" Foreground="#A9B6C8" VerticalAlignment="Center"/>
-                <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Hyperlink x:Name="EsqueciLink" Click="Esqueci_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Esqueci minha senha</Hyperlink>
-                </TextBlock>
-            </Grid>
-
-            <Button x:Name="EntrarBtn" Style="{StaticResource BotaoEntrar}" Content="Entrar" Margin="0,24,0,0" Click="Entrar_Click"/>
-            <!-- Sem "Criar conta": o acesso é gerado só pelo administrador (Geandre) no app Admin, ao vender a licença. -->
-            <TextBlock x:Name="SemAcessoTxt" Text="Ainda não tem acesso? Adquira sua licença com o administrador." Foreground="{StaticResource TextMutedBrush}"
-                       FontSize="11.5" HorizontalAlignment="Center" Margin="0,14,0,0"/>
-            </StackPanel>
-
-            <!-- Redefinir senha por código de e-mail (Supabase): 1) e-mail → 2) código + nova senha → 3) pronto -->
+            <!-- Redefinir senha por código de e-mail: 1) e-mail → 2) código + nova senha → 3) pronto -->
             <StackPanel x:Name="RedefinirBloco" Visibility="Collapsed">
-                <!-- Etapa 1: e-mail -->
                 <StackPanel x:Name="EtapaEmail">
                     <TextBlock Text="Informe o e-mail da sua conta. Vamos enviar um código de 6 dígitos para você criar uma nova senha."
-                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,18"/>
-                    <TextBlock Text="E-mail" Foreground="#A9B6C8" FontSize="12" Margin="2,0,0,6"/>
-                    <TextBox x:Name="RedefEmail" Style="{StaticResource CampoLogin}" KeyDown="RedefCampo_KeyDown"
-                             AutomationProperties.Name="E-mail da conta"/>
-                    <Button x:Name="EnviarCodigoBtn" Style="{StaticResource BotaoEntrar}" Content="Enviar código" Margin="0,22,0,0" Click="EnviarCodigo_Click"/>
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,18"/>
+                    <Grid>
+                        <TextBox x:Name="RedefEmail" Style="{StaticResource CampoAdmin}" KeyDown="RedefCampo_KeyDown"
+                                 AutomationProperties.Name="E-mail da conta" AutomationProperties.HelpText="Digite seu e-mail..."/>
+                        <Viewbox Width="18" Height="18" HorizontalAlignment="Left" Margin="18,0,0,0" IsHitTestVisible="False">
+                            <Canvas Width="24" Height="24"><Path Data="{StaticResource IcEmail}" Stroke="{StaticResource IconeCampoBrush}" StrokeThickness="2" StrokeLineJoin="Round"/></Canvas>
+                        </Viewbox>
+                    </Grid>
+                    <Button x:Name="EnviarCodigoBtn" Style="{StaticResource BotaoAdmin}" Content="Enviar código" Margin="0,22,0,0" Click="EnviarCodigo_Click"/>
                 </StackPanel>
 
-                <!-- Etapa 2: código + nova senha -->
                 <StackPanel x:Name="EtapaCodigo" Visibility="Collapsed">
-                    <TextBlock x:Name="RedefInfo" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" TextWrapping="Wrap"
-                               TextAlignment="Center" Margin="0,0,0,16"/>
-                    <TextBlock Text="Código do e-mail" Foreground="#A9B6C8" FontSize="12" Margin="2,0,0,6"/>
-                    <TextBox x:Name="RedefCodigo" Style="{StaticResource CampoLogin}" MaxLength="12" FontSize="22" FontWeight="SemiBold"
-                             TextAlignment="Center" InputScope="Number" KeyDown="RedefCampo_KeyDown" AutomationProperties.Name="Código recebido por e-mail"/>
-                    <TextBlock Text="Nova senha" Foreground="#A9B6C8" FontSize="12" Margin="2,14,0,6"/>
-                    <PasswordBox x:Name="RedefSenha" Style="{StaticResource CampoLoginSenha}" KeyDown="RedefCampo_KeyDown"
-                                 AutomationProperties.Name="Nova senha"/>
-                    <TextBlock Text="mínimo 12 · maiúsc/minúsc, número e símbolo" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="2,6,0,0"/>
-                    <TextBlock Text="Confirmar nova senha" Foreground="#A9B6C8" FontSize="12" Margin="2,12,0,6"/>
-                    <PasswordBox x:Name="RedefConfirmar" Style="{StaticResource CampoLoginSenha}" KeyDown="RedefCampo_KeyDown"
-                                 AutomationProperties.Name="Confirmar nova senha"/>
-                    <Button x:Name="SalvarSenhaBtn" Style="{StaticResource BotaoEntrar}" Content="Salvar nova senha" Margin="0,20,0,0" Click="SalvarSenha_Click"/>
+                    <TextBlock x:Name="RedefInfo" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,16"/>
+                    <TextBox x:Name="RedefCodigo" Style="{StaticResource CampoAdmin}" Padding="14,0" MaxLength="12" FontSize="22" FontWeight="SemiBold"
+                             TextAlignment="Center" KeyDown="RedefCampo_KeyDown" AutomationProperties.Name="Código recebido por e-mail" AutomationProperties.HelpText="Código do e-mail"/>
+                    <PasswordBox x:Name="RedefSenha" Style="{StaticResource CampoAdminSenha}" Margin="0,12,0,0" KeyDown="RedefCampo_KeyDown" PasswordChanged="Senha_Dica"
+                                 AutomationProperties.Name="Nova senha" AutomationProperties.HelpText="Nova senha (12+, maiúsc/minúsc, número e símbolo)"/>
+                    <PasswordBox x:Name="RedefConfirmar" Style="{StaticResource CampoAdminSenha}" Margin="0,12,0,0" KeyDown="RedefCampo_KeyDown" PasswordChanged="Senha_Dica"
+                                 AutomationProperties.Name="Confirmar nova senha" AutomationProperties.HelpText="Confirmar nova senha"/>
+                    <Button x:Name="SalvarSenhaBtn" Style="{StaticResource BotaoAdmin}" Content="Salvar nova senha" Margin="0,20,0,0" Click="SalvarSenha_Click"/>
                     <Grid Margin="0,12,0,0">
                         <TextBlock HorizontalAlignment="Left">
-                            <Hyperlink x:Name="ReenviarLink" Click="Reenviar_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">
-                                <Run x:Name="ReenviarTxt" Text="Reenviar código"/>
-                            </Hyperlink>
+                            <Hyperlink x:Name="ReenviarLink" Click="Reenviar_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}"><Run x:Name="ReenviarTxt" Text="Reenviar código"/></Hyperlink>
                         </TextBlock>
                         <TextBlock HorizontalAlignment="Right">
                             <Hyperlink Click="OutroEmail_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">Usar outro e-mail</Hyperlink>
@@ -302,49 +352,46 @@
                     </Grid>
                 </StackPanel>
 
-                <!-- Etapa 3: sucesso -->
                 <StackPanel x:Name="EtapaOk" Visibility="Collapsed" HorizontalAlignment="Center">
                     <Grid Width="56" Height="56" HorizontalAlignment="Center" Margin="0,0,0,16">
                         <Ellipse Fill="{StaticResource SuccessBrush}" Opacity="0.15"/>
                         <Path Data="M0,8 L7,15 L20,0" Width="20" Height="15" Stretch="None" Stroke="{StaticResource SuccessBrush}" StrokeThickness="3"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <TextBlock Text="Senha redefinida" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Pronto! Agora entre com a sua nova senha." Foreground="{StaticResource TextSecondaryBrush}"
-                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
-                    <Button Style="{StaticResource BotaoEntrar}" Content="Ir para o login" Width="400" Margin="0,24,0,0" Click="VoltarLogin_Click"/>
+                    <TextBlock Text="Pronto! Agora entre com a sua nova senha." Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                    <Button Style="{StaticResource BotaoAdmin}" Content="Ir para o login" Width="440" Margin="0,24,0,0" Click="VoltarLogin_Click"/>
                 </StackPanel>
 
-                <!-- Sem servidor (modo local): não há e-mail; explica o caminho -->
                 <TextBlock x:Name="RedefLocal" Visibility="Collapsed" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"
-                           Text="Este app está no modo local, sem servidor de e-mail. Peça ao administrador para redefinir o seu acesso no app Admin."/>
+                           Text="Este app está no modo local, sem servidor de e-mail. Peça ao administrador para redefinir o seu acesso."/>
 
                 <TextBlock x:Name="VoltarLinha" HorizontalAlignment="Center" Margin="0,18,0,0">
                     <Hyperlink Click="VoltarLogin_Click" Foreground="{StaticResource Brand400Brush}" TextDecorations="{x:Null}">← Voltar para o login</Hyperlink>
                 </TextBlock>
             </StackPanel>
+
             <TextBlock x:Name="Mensagem" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" Margin="0,14,0,0"
                        HorizontalAlignment="Center" TextAlignment="Center" Visibility="Collapsed"/>
-        </StackPanel>
 
-        <!-- Painel decorativo (Figma: x690 y60 560×640, gradiente + glow + "S") -->
-        <Border x:Name="PainelMarca" Grid.Column="1" Margin="0,60,30,40" CornerRadius="18" Background="{StaticResource GradPainel}"
-                BorderBrush="#CC26364F" BorderThickness="1" ClipToBounds="True">
-            <Grid>
-                <Ellipse Width="340" Height="220" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                    <Ellipse.Fill>
-                        <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
-                            <GradientStop Color="#592F8CFF" Offset="0"/>
-                            <GradientStop Color="#002F8CFF" Offset="1"/>
-                        </RadialGradientBrush>
-                    </Ellipse.Fill>
-                </Ellipse>
-                <Image Source="{StaticResource LogoSimbolo}" Height="170" HorizontalAlignment="Center" VerticalAlignment="Center"
-                       RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="SevenzinTwks">
-                    <Image.Effect><DropShadowEffect Color="#008CFF" BlurRadius="60" ShadowDepth="0" Opacity="0.55"/></Image.Effect>
-                </Image>
-            </Grid>
-        </Border>
+            <!-- Rodapé (entra 80ms depois do formulário) -->
+            <StackPanel x:Name="PainelMarca" Margin="0,26,0,30">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Rectangle Height="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#002A4E9E" Offset="0"/><GradientStop Color="#FF2A4E9E" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                    </Rectangle>
+                    <Viewbox Grid.Column="1" Width="18" Height="18">
+                        <Canvas Width="24" Height="24"><Path Data="{StaticResource IcEscudo}" Stroke="#FF4F86F7" StrokeThickness="1.8" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/></Canvas>
+                    </Viewbox>
+                    <Rectangle Grid.Column="2" Height="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#FF2A4E9E" Offset="0"/><GradientStop Color="#002A4E9E" Offset="1"/></LinearGradientBrush></Rectangle.Fill>
+                    </Rectangle>
+                </Grid>
+                <TextBlock HorizontalAlignment="Center" Margin="0,10,0,0" FontSize="10.5" Foreground="#FF7B8AA0"
+                           AutomationProperties.Name="SevenzinTwks: otimização, desempenho, controle"
+                           Text="S&#x2009;E&#x2009;V&#x2009;E&#x2009;N&#x2009;Z&#x2009;I&#x2009;N&#x2009;T&#x2009;W&#x2009;K&#x2009;S&#x2003;•&#x2003;O&#x2009;T&#x2009;I&#x2009;M&#x2009;I&#x2009;Z&#x2009;A&#x2009;Ç&#x2009;Ã&#x2009;O&#x2003;•&#x2003;D&#x2009;E&#x2009;S&#x2009;E&#x2009;M&#x2009;P&#x2009;E&#x2009;N&#x2009;H&#x2009;O&#x2003;•&#x2003;C&#x2009;O&#x2009;N&#x2009;T&#x2009;R&#x2009;O&#x2009;L&#x2009;E"/>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Window>

@@ -23,6 +23,11 @@
     <Color x:Key="Warning">#FFF5B841</Color>
     <Color x:Key="Danger">#FFF05252</Color>
     <Color x:Key="SuccessBg">#FF0A2A1A</Color>
+    <!-- Fundos dos toasts: o ToastHost busca "<tipo>Bg" como Color. Sem estes três, todo toast de erro/aviso/info
+         lançava NullReferenceException (e, com a recuperação automática, virava laço de reabertura). -->
+    <Color x:Key="DangerBg">#FF2A0E12</Color>
+    <Color x:Key="WarningBg">#FF2A210A</Color>
+    <Color x:Key="AccentCyanBg">#FF0A2230</Color>
     <!-- Degradê do cartão de recurso (amostrado do Figma 3:1052, diagonal topo-esq → baixo) -->
     <Color x:Key="ResGradTop">#FF1A2B44</Color>
     <Color x:Key="ResGradMid">#FF0A111B</Color>
@@ -288,8 +293,32 @@
         </Setter>
     </Style>
 
-    <!-- Botão da barra de título (minimizar/maximizar/fechar) — conteúdo vetorial (Figma: Controles da janela) -->
+    <!-- Botão da barra de título (minimizar/maximizar/fechar) — conteúdo vetorial (Figma: Controles da janela).
+         Sem fundo no hover (antes surgia um quadrado): o próprio ícone fica em "negrito" (traço 1.3 → 2.1). Por isso o
+         traço dos ícones vem DESTE estilo (Style.Resources), não de cada Path/Rectangle. -->
     <Style x:Key="ChromeButton" TargetType="Button">
+        <Style.Resources>
+            <Style TargetType="Path">
+                <Setter Property="Stroke" Value="{StaticResource TextSecondaryBrush}"/>
+                <Setter Property="StrokeThickness" Value="1.3"/>
+                <Setter Property="StrokeStartLineCap" Value="Round"/>
+                <Setter Property="StrokeEndLineCap" Value="Round"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                        <Setter Property="StrokeThickness" Value="2.1"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="Rectangle">
+                <Setter Property="Stroke" Value="{StaticResource TextSecondaryBrush}"/>
+                <Setter Property="StrokeThickness" Value="1.3"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                        <Setter Property="StrokeThickness" Value="2.1"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Style.Resources>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Width" Value="46"/>
@@ -300,14 +329,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{TemplateBinding Background}">
+                    <!-- fundo transparente só para a área de clique; nenhum realce visual além do ícone -->
+                    <Border Background="{TemplateBinding Background}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="{StaticResource Surface2Brush}"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -464,7 +489,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
-                    <Grid Background="Transparent">
+                    <!-- Área de clique = caixa + rótulo, não a linha inteira: com o padrão (Left), o espaço vazio ao lado
+                         não marca a caixa (antes, tocar perto de "Esqueci minha senha" marcava "Lembrar de mim").
+                         Quem quer o cartão todo clicável (Limpeza) usa HorizontalContentAlignment=Stretch. -->
+                    <Grid Background="Transparent" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -533,36 +561,74 @@
         </Setter>
     </Style>
 
-    <!-- Item de navegação da sidebar estreita (ListBoxItem). Figma 3:950/3:994:
-         66px, só ícone; ativo = indicador lateral 3×22 na borda + destaque sutil + ícone de marca. -->
+    <!-- Item de navegação da sidebar (ListBoxItem).
+         Largura útil recolhida = 68px; Margin="10,2" => item de 48×40 perfeitamente centralizado.
+         Hover suave em fade (Surface2 + borda sutil + ícone iluminado) e estado selecionado com pílula BrandTint + marcador lateral. -->
     <Style x:Key="NavItem" TargetType="ListBoxItem">
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Padding" Value="0,11"/>
-        <Setter Property="Margin" Value="8,2"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="10,2"/>
+        <Setter Property="MinHeight" Value="40"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <!-- Fundo (hover) é a Border "b" ATRÁS do conteúdo, recuada 6px nas laterais: fica proporcional
-                         ao ícone e deixa folga da scrollbar sobreposta à direita. O ContentPresenter ocupa a largura
-                         toda, então o ícone continua centralizado; a área de clique/foco é o item inteiro. -->
-                    <Grid>
-                        <Border x:Name="b" Margin="6,2" CornerRadius="10" Background="Transparent"/>
-                        <Border x:Name="accent" Width="3" Height="22" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-8,0,0,0"
-                                CornerRadius="0,2,2,0" Background="{StaticResource Brand400Brush}" Visibility="Collapsed"/>
-                        <ContentPresenter VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                    <Grid Background="Transparent" MinHeight="{TemplateBinding MinHeight}">
+                        <Border x:Name="hoverBg" CornerRadius="10"
+                                Background="{StaticResource Surface2Brush}"
+                                BorderBrush="{StaticResource BorderStrongBrush}"
+                                BorderThickness="1" Opacity="0"/>
+                        <Border x:Name="selBg" CornerRadius="10"
+                                Background="{StaticResource BrandTintBrush}"
+                                BorderBrush="#3D258CF4"
+                                BorderThickness="1" Opacity="0"/>
+                        <Border x:Name="accent" Width="3" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-10,0,0,0"
+                                CornerRadius="0,3,3,0" Background="{StaticResource Brand400Brush}" Opacity="0"/>
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="{TemplateBinding Padding}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="{StaticResource Surface2Brush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="hoverBg" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="hoverBg" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
-                        <!-- Seleção: só o marcador lateral + ícone/texto de marca (sem pílula de fundo), conforme o Figma. -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="accent" Property="Visibility" Value="Visible"/>
                             <Setter Property="Foreground" Value="{StaticResource Brand400Brush}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="selBg" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16"/>
+                                        <DoubleAnimation Storyboard.TargetName="accent" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="selBg" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="accent" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>

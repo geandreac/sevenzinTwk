@@ -1,0 +1,11 @@
+<Project>
+  <!-- Editor e direitos de todos os executáveis (User, Admin, Report): aparecem em Propriedades > Detalhes do .exe.
+       Sem isto o .NET usa o nome do assembly ("Sevenzin") como empresa. O "Editor" do aviso do Windows (SmartScreen/UAC)
+       só muda com assinatura digital (certificado de assinatura de código), não por estes campos. -->
+  <PropertyGroup>
+    <Company>geandreac</Company>
+    <Authors>geandreac</Authors>
+    <Product>SevenzinTwks</Product>
+    <Copyright>© 2026 geandreac</Copyright>
+  </PropertyGroup>
+</Project>

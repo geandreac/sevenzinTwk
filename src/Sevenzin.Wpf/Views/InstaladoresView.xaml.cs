@@ -3,13 +3,14 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Sevenzin.Diagnostics;
 
 namespace Sevenzin.Wpf.Views;
 
-/// <summary>Tela "Instaladores" (§21.5/21.7): catálogo de utilitários de fonte oficial. O download é
-/// verificado (assinatura + hash quando fixado) antes de permitir executar, e nada roda sem confirmação.
-/// O andamento de cada item fica registrado numa fila persistida em JSON local (sobrevive a reinícios).</summary>
+/// <summary>Tela "Instaladores" (§21.5/21.7): catálogo completo de utilitários de fonte oficial com ícone à esquerda
+/// e botão universal "Baixar e verificar" em todos os itens. O download é verificado (assinatura Authenticode + hash
+/// quando fixado) antes de permitir executar, e nada roda sem confirmação.</summary>
 public partial class InstaladoresView : UserControl
 {
     static readonly string Pasta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "instaladores");
@@ -17,7 +18,7 @@ public partial class InstaladoresView : UserControl
     readonly FilaInstaladores _fila = new();
     StackPanel? _filaLista;
     StackPanel _catalogoHost = null!;
-    string? _filtro; // categoria selecionada; null = Todos
+    string? _filtro;
     readonly List<Button> _pills = new();
 
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
@@ -25,6 +26,8 @@ public partial class InstaladoresView : UserControl
     static Style Secundario => (Style)Application.Current.Resources["SecondaryButton"];
     static Style SectionStyle => (Style)Application.Current.Resources["SectionLabel"];
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
+    static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
+    static Brush Borda => (Brush)Application.Current.Resources["BorderDefaultBrush"];
     static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
     static Brush Danger => (Brush)Application.Current.Resources["DangerBrush"];
 
@@ -39,14 +42,19 @@ public partial class InstaladoresView : UserControl
         Lista.Children.Add(CartaoFila());
     }
 
-    // Pills de categoria com contagem (inspirado no original): filtram o catálogo. "Todos" + uma por categoria.
     WrapPanel Pills()
     {
         var wrap = new WrapPanel { Margin = new Thickness(0, 0, 0, 14) };
         void Add(string? cat, string texto)
         {
-            var b = new Button { Content = texto, Tag = cat, Margin = new Thickness(0, 0, 8, 8), Padding = new Thickness(13, 6, 13, 6),
-                Style = cat == _filtro ? Primario : Secundario };
+            var b = new Button
+            {
+                Content = texto,
+                Tag = cat,
+                Margin = new Thickness(0, 0, 8, 8),
+                Padding = new Thickness(13, 6, 13, 6),
+                Style = cat == _filtro ? Primario : Secundario,
+            };
             b.Click += (_, _) => SelecionarFiltro(cat);
             _pills.Add(b);
             wrap.Children.Add(b);
@@ -70,34 +78,95 @@ public partial class InstaladoresView : UserControl
         foreach (var u in itens) _catalogoHost.Children.Add(Cartao(u));
     }
 
+    static UIElement CriarIconeAplicativo(Utilitario u)
+    {
+        var caixa = new Border
+        {
+            Width = 54,
+            Height = 54,
+            CornerRadius = new CornerRadius(12),
+            Background = Surface2,
+            BorderBrush = Borda,
+            BorderThickness = new Thickness(1),
+            Margin = new Thickness(0, 0, 16, 0),
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+
+        try
+        {
+            var uri = new Uri($"pack://application:,,,/Assets/Apps/{u.Icone}.png", UriKind.Absolute);
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.UriSource = uri;
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+
+            var img = new Image
+            {
+                Source = bmp,
+                Width = 36,
+                Height = 36,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.HighQuality);
+            caixa.Child = img;
+        }
+        catch
+        {
+            caixa.Child = new TextBlock
+            {
+                Text = u.Nome.Length > 0 ? u.Nome[..1].ToUpperInvariant() : "?",
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+        }
+
+        return caixa;
+    }
+
     Border Cartao(Utilitario u)
     {
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var icone = CriarIconeAplicativo(u);
+        Grid.SetColumn(icone, 0);
+        grid.Children.Add(icone);
+
         var sp = new StackPanel();
         sp.Children.Add(new TextBlock { Text = u.Nome, FontSize = 15, FontWeight = FontWeights.SemiBold });
         sp.Children.Add(new TextBlock { Text = u.Descricao, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap });
-        var publisher = u.PublisherEsperado is { } p ? $"Assinatura esperada: {p}" : "Assinatura exigida na verificação.";
+        var publisher = u.PublisherEsperado is { } p ? $"Assinatura esperada: {p}" : "Assinatura Authenticode exigida na verificação.";
         sp.Children.Add(new TextBlock { Text = publisher, Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 4, 0, 0) });
 
         var status = new TextBlock { FontSize = 12, Margin = new Thickness(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
 
-        var acoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
-        var abrir = new Button { Style = Secundario, Content = "Abrir página oficial", Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 7, 12, 7) };
-        abrir.Click += (_, _) => AbrirUrl(u.UrlOficial);
-        acoes.Children.Add(abrir);
+        var acoes = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
+        var baixar = new Button { Style = Primario, Content = "Baixar e verificar", Margin = new Thickness(0, 0, 8, 6), Padding = new Thickness(12, 7, 12, 7) };
+        var abrir = new Button { Style = Secundario, Content = "Abrir página oficial", Margin = new Thickness(0, 0, 8, 6), Padding = new Thickness(12, 7, 12, 7) };
+        var executar = new Button { Style = Primario, Content = "Executar instalador", Margin = new Thickness(0, 0, 8, 6), Padding = new Thickness(12, 7, 12, 7), Visibility = Visibility.Collapsed };
 
-        var executar = new Button { Style = Primario, Content = "Executar instalador", Padding = new Thickness(12, 7, 12, 7), Visibility = Visibility.Collapsed };
-        if (u.UrlDownload is not null)
-        {
-            var baixar = new Button { Style = Primario, Content = "Baixar e verificar", Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 7, 12, 7) };
-            baixar.Click += async (_, _) => await BaixarEVerificar(u, status, baixar, executar);
-            acoes.Children.Add(baixar);
-            executar.Click += (_, _) => Executar((string?)executar.Tag);
-            acoes.Children.Add(executar);
-        }
+        baixar.Click += async (_, _) => await BaixarEVerificar(u, status, baixar, executar);
+        abrir.Click += (_, _) => AbrirUrl(u.UrlOficial);
+        executar.Click += (_, _) => Executar((string?)executar.Tag);
+
+        acoes.Children.Add(baixar);
+        acoes.Children.Add(abrir);
+        acoes.Children.Add(executar);
 
         sp.Children.Add(acoes);
         sp.Children.Add(status);
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
+
+        Grid.SetColumn(sp, 1);
+        grid.Children.Add(sp);
+
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = grid };
     }
 
     async Task BaixarEVerificar(Utilitario u, TextBlock status, Button baixar, Button executar)
@@ -106,24 +175,28 @@ public partial class InstaladoresView : UserControl
         executar.Visibility = Visibility.Collapsed;
         status.Visibility = Visibility.Visible;
         status.Foreground = Muted;
-        _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Baixando, null, null));
+        status.Text = "Resolvendo fonte oficial e iniciando download…";
+        var urlRef = u.UrlDownload ?? u.UrlOficial;
+        _fila.Marcar(new ItemFila(u.Nome, urlRef, EstadoFila.Baixando, null, null));
         try
         {
             Directory.CreateDirectory(Pasta);
-            var destino = Path.Combine(Pasta, Path.GetFileName(new Uri(u.UrlDownload!).LocalPath));
             var prog = new Progress<ProgressoDownload>(p => status.Text =
-                p.Percentual is { } pct ? $"Baixando… {pct:P0} · {p.BytesPorSegundo / 1024:0} KB/s" + (p.TempoRestante is { } eta ? $" · falta ~{eta.TotalSeconds:0}s" : "") : $"Baixando… {p.BytesRecebidos / 1024} KB");
-            await DownloaderInstalador.BaixarAsync(u.UrlDownload!, destino, prog);
+                p.Percentual is { } pct
+                    ? $"Baixando… {pct:P0} · {p.BytesPorSegundo / 1024:0} KB/s" + (p.TempoRestante is { } eta ? $" · falta ~{eta.TotalSeconds:0}s" : "")
+                    : $"Baixando… {p.BytesRecebidos / 1024:N0} KB");
 
-            _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Verificando, null, null));
+            var destino = await DownloaderInstalador.ObterInstaladorProntoAsync(u, Pasta, prog);
+
+            _fila.Marcar(new ItemFila(u.Nome, urlRef, EstadoFila.Verificando, null, null));
             var r = VerificadorDownload.Verificar(destino, u);
             if (r == ResultadoVerificacao.Ok)
             {
-                status.Text = "✔ Verificado (assinatura confere). Você pode executar.";
+                status.Text = $"✔ Verificado ({Path.GetFileName(destino)} — assinatura confere). Você pode executar.";
                 status.Foreground = Success;
                 executar.Tag = destino;
                 executar.Visibility = Visibility.Visible;
-                _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Concluido, "assinatura verificada", null));
+                _fila.Marcar(new ItemFila(u.Nome, urlRef, EstadoFila.Concluido, "assinatura verificada", null));
                 NotificacoesStore.Padrao.Adicionar("Instaladores", $"'{u.Nome}' verificado", "Assinatura confere — pronto para executar.");
                 Toasts.Mostrar(this, TipoToast.Sucesso, "Download verificado", $"{u.Nome} — assinatura confere.");
             }
@@ -131,7 +204,7 @@ public partial class InstaladoresView : UserControl
             {
                 status.Text = $"✖ Verificação falhou: {Motivo(r)}. O arquivo NÃO será oferecido para execução.";
                 status.Foreground = Danger;
-                _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, Motivo(r), null));
+                _fila.Marcar(new ItemFila(u.Nome, urlRef, EstadoFila.Falhou, Motivo(r), null));
                 NotificacoesStore.Padrao.Adicionar("Instaladores", $"'{u.Nome}' reprovado na verificação", Motivo(r));
                 Toasts.Mostrar(this, TipoToast.Erro, "Verificação falhou", $"{u.Nome}: {Motivo(r)}. O arquivo foi descartado.");
                 try { File.Delete(destino); } catch { }
@@ -139,9 +212,9 @@ public partial class InstaladoresView : UserControl
         }
         catch (Exception ex)
         {
-            status.Text = "Falha no download: " + ex.Message;
+            status.Text = "Falha no download direto: " + ex.Message + " (você pode usar 'Abrir página oficial').";
             status.Foreground = Danger;
-            _fila.Marcar(new ItemFila(u.Nome, u.UrlDownload!, EstadoFila.Falhou, ex.Message, null));
+            _fila.Marcar(new ItemFila(u.Nome, urlRef, EstadoFila.Falhou, ex.Message, null));
             NotificacoesStore.Padrao.Adicionar("Instaladores", $"Falha no download de '{u.Nome}'", ex.Message);
             Toasts.Mostrar(this, TipoToast.Erro, "Falha no download", ex.Message);
         }
@@ -151,7 +224,7 @@ public partial class InstaladoresView : UserControl
     static string Motivo(ResultadoVerificacao r) => r switch
     {
         ResultadoVerificacao.HashNaoConfere => "o hash não confere",
-        ResultadoVerificacao.SemAssinatura => "o arquivo não está assinado",
+        ResultadoVerificacao.SemAssinatura => "o arquivo não possui assinatura digital Authenticode",
         ResultadoVerificacao.PublisherDiferente => "o publisher da assinatura não é o esperado",
         _ => "desconhecido",
     };
@@ -180,8 +253,6 @@ public partial class InstaladoresView : UserControl
         _ => chave,
     };
 
-    /// <summary>Instalação rápida via winget: SOMENTE os 5 IDs da allowlist confirmada na engenharia
-    /// reversa. Cada execução exige confirmação explícita; nada roda sozinho.</summary>
     Border CartaoWinget()
     {
         var sp = new StackPanel();
@@ -229,7 +300,8 @@ public partial class InstaladoresView : UserControl
         return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
     }
 
-    static string NomeEstado(EstadoFila e) => e switch    {
+    static string NomeEstado(EstadoFila e) => e switch
+    {
         EstadoFila.Pendente => "Pendente",
         EstadoFila.Baixando => "Baixando…",
         EstadoFila.Verificando => "Verificando…",
@@ -237,7 +309,6 @@ public partial class InstaladoresView : UserControl
         _ => "✖ Falhou",
     };
 
-    /// <summary>Cartão "Fila" no fim da lista: andamento persistido em JSON local (nada é enviado pela rede).</summary>
     Border CartaoFila()
     {
         var sp = new StackPanel();

@@ -67,6 +67,29 @@ public class AdminUnicoTests : IDisposable
     }
 
     [Fact]
+    public void Sessao_autenticada_por_backend_supabase_autoriza_admin_sem_variavel_local_mas_nega_usuario()
+    {
+        var agora = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+        var ssSemEnvLocal = new ServicoSessao(() => agora, lerEnv: _ => null);
+
+        // No modo local (autenticadoPorBackend: false), sem SEVENZIN_ADMIN_EMAIL continua negado
+        ssSemEnvLocal.Abrir(new Usuario(Geandre, "Geandre", PapelUsuario.Administrador, "-", agora), autenticadoPorBackend: false);
+        Assert.False(ssSemEnvLocal.PodeAcessarAdmin);
+
+        // No modo Supabase (autenticadoPorBackend: true), admin validado pelo RLS de perfis entra normalmente
+        ssSemEnvLocal.Abrir(new Usuario(Geandre, "Geandre", PapelUsuario.Administrador, "-", agora), autenticadoPorBackend: true);
+        Assert.True(ssSemEnvLocal.PodeAcessarAdmin);
+
+        // Usuário comum do Supabase continua negado no app Admin
+        ssSemEnvLocal.Abrir(new Usuario("cliente@x.com", "Cliente", PapelUsuario.Usuario, "-", agora), autenticadoPorBackend: true);
+        Assert.False(ssSemEnvLocal.PodeAcessarAdmin);
+
+        Assert.True(ClienteSupabase.PapelEhAdmin("admin"));
+        Assert.True(ClienteSupabase.PapelEhAdmin("Administrador"));
+        Assert.False(ClienteSupabase.PapelEhAdmin("usuario"));
+    }
+
+    [Fact]
     public void Convite_e_de_uso_unico_e_persiste_apenas_o_hash()
     {
         var convites = new RepositorioConvites(_arqConvites);

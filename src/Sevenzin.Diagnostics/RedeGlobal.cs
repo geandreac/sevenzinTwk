@@ -26,7 +26,9 @@ public static class RedeGlobal
             var l = linha.Trim();
             if (autotuning is null && (l.Contains("Auto-Tuning", StringComparison.OrdinalIgnoreCase) || l.Contains("Ajuste Automático", StringComparison.OrdinalIgnoreCase)))
                 autotuning = Valor(l);
-            if (congestionamento is null && l.Contains("congest", StringComparison.OrdinalIgnoreCase))
+            // Só a linha do PROVEDOR: "Janela de congestionamento inicial (MSS) : 10" vem antes e também contém "congest".
+            if (congestionamento is null && l.Contains("congest", StringComparison.OrdinalIgnoreCase) &&
+                (l.Contains("provedor", StringComparison.OrdinalIgnoreCase) || l.Contains("provider", StringComparison.OrdinalIgnoreCase)))
                 congestionamento = Valor(l);
         }
         return (autotuning, congestionamento);
@@ -55,7 +57,7 @@ public static class RedeGlobal
     public static (string? Autotuning, string? Congestionamento) EstadoAtual()
     {
         var global = AnalisarSaida(Rodar("int tcp show global").Saida);
-        var supp = AnalisarSaida(Rodar("int tcp show supplemental").Saida);
+        var supp = AnalisarSaida(Rodar("int tcp show supplemental internet").Saida); // o mesmo modelo que Aplicar altera
         return (global.Autotuning, supp.Congestionamento ?? global.Congestionamento);
     }
 

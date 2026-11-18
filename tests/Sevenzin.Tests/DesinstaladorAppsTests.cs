@@ -45,7 +45,31 @@ public class DesinstaladorAppsTests : IDisposable
     [Fact]
     public void Argumentos_de_desinstalacao_sao_os_oficiais()
     {
-        Assert.Equal(new[] { "--uninstall", "--force-uninstall", "--system-level" }, DesinstaladorApps.ArgumentosEdge);
+        Assert.Equal(new[] { "--uninstall", "--force-uninstall", "--system-level", "--verbose-logging" }, DesinstaladorApps.ArgumentosEdge);
         Assert.Equal(new[] { "/uninstall" }, DesinstaladorApps.ArgumentosOneDrive);
+    }
+
+    sealed class Marca(Action a) : IDisposable { public void Dispose() => a(); }
+
+    [Fact]
+    public async Task Recusa_libera_tenta_de_novo_e_sempre_desfaz()
+    {
+        int tentativas = 0, liberou = 0, desfez = 0;
+        var r = await DesinstaladorApps.TentarComLiberacaoAsync(
+            () => Task.FromResult(new ResultadoDesinstalacao(++tentativas == 2, "x")),
+            () => { liberou++; return new Marca(() => desfez++); });
+        Assert.True(r.Ok);
+        Assert.Equal((2, 1, 1), (tentativas, liberou, desfez));
+
+        tentativas = liberou = desfez = 0;
+        r = await DesinstaladorApps.TentarComLiberacaoAsync(
+            () => Task.FromResult(new ResultadoDesinstalacao(++tentativas < 0, "x")),
+            () => { liberou++; return new Marca(() => desfez++); });
+        Assert.False(r.Ok);
+        Assert.Equal((2, 1, 1), (tentativas, liberou, desfez)); // falhou de novo: liberação desfeita mesmo assim
+
+        tentativas = liberou = 0;
+        await DesinstaladorApps.TentarComLiberacaoAsync(() => Task.FromResult(new ResultadoDesinstalacao(++tentativas > 0, "x")), () => { liberou++; return new Marca(() => { }); });
+        Assert.Equal((1, 0), (tentativas, liberou)); // deu certo de primeira: não mexe em nada
     }
 }

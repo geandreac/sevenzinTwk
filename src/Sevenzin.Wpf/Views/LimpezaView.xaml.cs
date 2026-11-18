@@ -6,10 +6,11 @@ using Sevenzin.Diagnostics;
 
 namespace Sevenzin.Wpf.Views;
 
-/// <summary>Tela "Limpeza": varre áreas temporárias/cache conhecidas (só leitura ao Analisar) e, com sua
-/// confirmação, envia os selecionados para a Lixeira (reversível). Esvaziar a Lixeira é a única ação
-/// permanente e tem confirmação própria. Nenhum arquivo pessoal é tocado. Toda a lógica fica em
-/// <see cref="Limpeza"/> (testável); aqui só UI.</summary>
+/// <summary>
+/// Tela "Limpeza": varre áreas temporárias/cache conhecidas e, em "Limpeza Total",
+/// deleta os itens selecionados permanentemente do computador (pulando a etapa da Lixeira) + esvazia a Lixeira,
+/// sempre com confirmação explícita e sem tocar em nenhum arquivo pessoal.
+/// </summary>
 public partial class LimpezaView : UserControl
 {
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
@@ -18,7 +19,7 @@ public partial class LimpezaView : UserControl
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style SecButton => (Style)Application.Current.Resources["SecondaryButton"];
 
-    sealed record Controles(CheckBox? Selecao, TextBlock Tamanho);
+    sealed record Controles(CheckBox Selecao, TextBlock Tamanho);
     readonly Dictionary<CategoriaLimpeza, Controles> _ctrl = new();
     readonly Dictionary<CategoriaLimpeza, ResultadoAnalise> _ultima = new();
 
@@ -26,7 +27,6 @@ public partial class LimpezaView : UserControl
     {
         InitializeComponent();
         foreach (var a in Limpeza.Alvos) Lista.Children.Add(Cartao(a));
-        // Mostra "Reabrir como administrador" só quando há alvo de sistema e ainda não estamos elevados.
         if (!Elevacao.EhAdmin() && Limpeza.Alvos.Any(a => a.ExigeAdmin))
             AdminBtn.Visibility = Visibility.Visible;
     }
@@ -47,7 +47,7 @@ public partial class LimpezaView : UserControl
         if (a.ExigeAdmin)
         {
             var tag = new Border { Background = Surface2, CornerRadius = new CornerRadius(6), Padding = new Thickness(7, 1, 7, 1), Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            tag.Child = new TextBlock { Text = "requer admin", Foreground = Muted, FontSize = 10, FontWeight = FontWeights.SemiBold };
+            tag.Child = new TextBlock { Text = "admin", Foreground = Muted, FontSize = 10, FontWeight = FontWeights.SemiBold };
             titulo.Children.Add(tag);
         }
         esq.Children.Add(titulo);
@@ -55,50 +55,49 @@ public partial class LimpezaView : UserControl
         var tam = new TextBlock { Text = bloqueadoPorAdmin ? "Reabra como administrador para medir e limpar." : "—", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) };
         esq.Children.Add(tam);
 
-        CheckBox? chk = null;
+        var chk = new CheckBox
+        {
+            Content = esq,
+            IsChecked = !bloqueadoPorAdmin,
+            IsEnabled = !bloqueadoPorAdmin,
+            VerticalContentAlignment = VerticalAlignment.Top,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+        };
+        AutomationProperties.SetName(chk, a.Nome);
+        chk.Checked += (_, _) => AtualizarResumo();
+        chk.Unchecked += (_, _) => AtualizarResumo();
+        Grid.SetColumn(chk, 0);
+        g.Children.Add(chk);
+
         if (a.Permanente)
         {
-            esq.Margin = new Thickness(28, 0, 16, 0); // 18 (caixa) + 10 (gap): título na mesma coluna dos cartões com checkbox
-            Grid.SetColumn(esq, 0);
-            g.Children.Add(esq);
-            var esvaziar = new Button { Style = SecButton, Content = "Esvaziar (permanente)", Padding = new Thickness(12, 7, 12, 7), VerticalAlignment = VerticalAlignment.Center };
+            var esvaziar = new Button { Style = SecButton, Content = "Esvaziar agora", Padding = new Thickness(12, 7, 12, 7), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
             esvaziar.Click += (_, _) => Esvaziar(a);
             Grid.SetColumn(esvaziar, 1);
             g.Children.Add(esvaziar);
         }
         else
         {
-            // O cartão inteiro é a área de clique: a caixa fica à esquerda, alinhada com o título (padrão de lista
-            // selecionável), em vez de um quadradinho solto na borda direita. Alvos de sistema começam desmarcados
-            // (opt-in) e ficam desabilitados sem admin.
-            chk = new CheckBox
-            {
-                Content = esq, IsChecked = !a.ExigeAdmin, IsEnabled = !bloqueadoPorAdmin,
-                VerticalContentAlignment = VerticalAlignment.Top, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            };
-            AutomationProperties.SetName(chk, a.Nome);
-            chk.Checked += (_, _) => AtualizarResumo();
-            chk.Unchecked += (_, _) => AtualizarResumo();
             Grid.SetColumnSpan(chk, 2);
-            g.Children.Add(chk);
         }
 
         _ctrl[a.Id] = new Controles(chk, tam);
         return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 12), Child = g };
     }
 
-    async void Analisar_Click(object sender, RoutedEventArgs e)
+    async Task ExecutarAnaliseAsync()
     {
         AnalisarBtn.IsEnabled = false;
+        LimparBtn.IsEnabled = false;
         ResumoTxt.Text = "Analisando…";
         foreach (var a in Limpeza.Alvos)
         {
             if (a.ExigeAdmin && !Elevacao.EhAdmin())
             {
                 _ctrl[a.Id].Tamanho.Text = "Reabra como administrador para medir e limpar.";
-                continue; // sem admin a varredura daria 0 enganoso; não conta no resumo
+                continue;
             }
-            var r = await System.Threading.Tasks.Task.Run(() => Limpeza.Analisar(a.Id));
+            var r = await Task.Run(() => Limpeza.Analisar(a.Id));
             _ultima[a.Id] = r;
             _ctrl[a.Id].Tamanho.Text = $"{Tam(r.Bytes)} · {r.Itens} item(ns)";
         }
@@ -107,47 +106,69 @@ public partial class LimpezaView : UserControl
         AtualizarResumo();
     }
 
+    async void Analisar_Click(object sender, RoutedEventArgs e) => await ExecutarAnaliseAsync();
+
     void AtualizarResumo()
     {
         long bytes = 0; int itens = 0;
         foreach (var a in Limpeza.Alvos)
-            if (!a.Permanente && _ctrl[a.Id].Selecao?.IsChecked == true && _ultima.TryGetValue(a.Id, out var r))
+            if (_ctrl[a.Id].Selecao.IsChecked == true && _ultima.TryGetValue(a.Id, out var r))
             { bytes += r.Bytes; itens += r.Itens; }
-        if (_ultima.Count == 0) { ResumoTxt.Text = "Clique em Analisar para medir o que pode ser limpo."; return; }
-        ResumoTxt.Text = $"Recuperável nos selecionados: {Tam(bytes)} em {itens} item(ns) — vai para a Lixeira.";
+        if (_ultima.Count == 0)
+        {
+            ResumoTxt.Text = "Clique em Analisar para medir ou em Limpeza Total para excluir direto do computador.";
+            return;
+        }
+        ResumoTxt.Text = $"Selecionado para exclusão direta: {Tam(bytes)} em {itens} item(ns) (pula a Lixeira).";
     }
 
     async void Limpar_Click(object sender, RoutedEventArgs e)
     {
-        var selecionados = Limpeza.Alvos.Where(a => !a.Permanente && _ctrl[a.Id].Selecao?.IsChecked == true).ToList();
+        var selecionados = Limpeza.Alvos.Where(a => _ctrl[a.Id].Selecao.IsChecked == true && (!a.ExigeAdmin || Elevacao.EhAdmin())).ToList();
         if (selecionados.Count == 0)
         {
-            Toasts.Mostrar(this, TipoToast.Aviso, "Nada selecionado", "Marque ao menos uma categoria para limpar.");
+            Toasts.Mostrar(this, TipoToast.Aviso, "Nada selecionado", "Marque ao menos uma categoria para executar a Limpeza Total.");
             return;
         }
+
+        if (_ultima.Count == 0)
+            await ExecutarAnaliseAsync();
+
         long bytes = selecionados.Sum(a => _ultima.TryGetValue(a.Id, out var r) ? r.Bytes : 0);
         int itens = selecionados.Sum(a => _ultima.TryGetValue(a.Id, out var r) ? r.Itens : 0);
         if (MessageBox.Show(
-                $"Enviar à Lixeira os itens selecionados?\n\n{itens} item(ns) · {Tam(bytes)}.\n\nVai para a Lixeira — você pode restaurar. Nenhum arquivo pessoal é tocado.",
-                "Confirmação — Limpeza", MessageBoxButton.OKCancel, MessageBoxImage.Information) != MessageBoxResult.OK)
+                $"Executar a Limpeza Total agora?\n\n• {itens} item(ns) · {Tam(bytes)} nas {selecionados.Count} categoria(s) marcadas.\n• Os arquivos serão DELETADOS DIRETAMENTE do computador, pulando a etapa da Lixeira.\n• Nenhum arquivo pessoal é tocado e itens em uso pelo sistema são ignorados.",
+                "Confirmação — Limpeza Total (Exclusão Direta)", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
 
+        AnalisarBtn.IsEnabled = false;
         LimparBtn.IsEnabled = false;
+        ResumoTxt.Text = "Limpando permanentemente…";
         int totItens = 0, totErros = 0; long totBytes = 0;
-        foreach (var a in selecionados)
+        try
         {
-            var r = await System.Threading.Tasks.Task.Run(() => Limpeza.Limpar(a.Id));
-            totItens += r.Itens; totErros += r.Erros; totBytes += r.Bytes;
-            _ultima[a.Id] = await System.Threading.Tasks.Task.Run(() => Limpeza.Analisar(a.Id));
-            _ctrl[a.Id].Tamanho.Text = $"{Tam(_ultima[a.Id].Bytes)} · {_ultima[a.Id].Itens} item(ns)";
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso("Limpeza Total");
+            foreach (var a in selecionados)
+            {
+                var r = await Task.Run(() => Limpeza.LimparPermanente(a.Id));
+                totItens += r.Itens; totErros += r.Erros; totBytes += r.Bytes;
+                _ultima[a.Id] = await Task.Run(() => Limpeza.Analisar(a.Id));
+                _ctrl[a.Id].Tamanho.Text = $"{Tam(_ultima[a.Id].Bytes)} · {_ultima[a.Id].Itens} item(ns)";
+            }
         }
-        LimparBtn.IsEnabled = true;
+        finally
+        {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso(null);
+            AnalisarBtn.IsEnabled = true;
+            LimparBtn.IsEnabled = true;
+        }
+
         AtualizarResumo();
         var resumo = totErros > 0
-            ? $"{totItens} item(ns) · {Tam(totBytes)} à Lixeira; {totErros} em uso/ignorado(s)."
-            : $"{totItens} item(ns) · {Tam(totBytes)} enviados à Lixeira.";
-        NotificacoesStore.Padrao.Adicionar("Limpeza", "Limpeza concluída", resumo + " Restaure pela Lixeira do Windows se precisar.");
-        Toasts.Mostrar(this, TipoToast.Sucesso, "Limpeza concluída", resumo);
+            ? $"{totItens} item(ns) ({Tam(totBytes)}) deletados do PC; {totErros} em uso/ignorado(s)."
+            : $"{totItens} item(ns) ({Tam(totBytes)}) deletados permanentemente do computador.";
+        NotificacoesStore.Padrao.Adicionar("Limpeza", "Limpeza Total concluída", resumo + " (exclusão direta sem Lixeira)");
+        Toasts.Mostrar(this, TipoToast.Sucesso, "Limpeza Total concluída", resumo);
     }
 
     void Esvaziar(AlvoLimpeza a)
@@ -163,9 +184,10 @@ public partial class LimpezaView : UserControl
                 "Confirmação — Esvaziar a Lixeira", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
 
-        var r = Limpeza.Limpar(a.Id);
+        var r = Limpeza.LimparPermanente(a.Id);
         _ultima[a.Id] = Limpeza.Analisar(a.Id);
         _ctrl[a.Id].Tamanho.Text = $"{Tam(_ultima[a.Id].Bytes)} · {_ultima[a.Id].Itens} item(ns)";
+        AtualizarResumo();
         NotificacoesStore.Padrao.Adicionar("Limpeza", "Lixeira esvaziada", r.Mensagem + " (ação permanente)");
         Toasts.Mostrar(this, r.Erros == 0 ? TipoToast.Sucesso : TipoToast.Erro, r.Erros == 0 ? "Lixeira esvaziada" : "Falha ao esvaziar", r.Mensagem);
     }

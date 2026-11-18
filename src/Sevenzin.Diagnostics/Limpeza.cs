@@ -23,17 +23,17 @@ public static class Limpeza
     public static readonly IReadOnlyList<AlvoLimpeza> Alvos = new[]
     {
         new AlvoLimpeza(CategoriaLimpeza.TempUsuario, "Arquivos temporários do usuário",
-            "Conteúdo de %TEMP% (cache de instaladores e apps). Vai para a Lixeira; arquivos em uso são pulados.", false),
+            "Conteúdo de %TEMP% (cache de instaladores e apps). Na Limpeza Total, é deletado direto do PC; arquivos em uso são pulados.", false),
         new AlvoLimpeza(CategoriaLimpeza.CacheMiniaturas, "Cache de miniaturas e ícones",
             "thumbcache_*.db / iconcache_*.db do Explorer. O Windows regenera sozinho quando precisar.", false),
         new AlvoLimpeza(CategoriaLimpeza.Lixeira, "Lixeira (Reciclagem)",
-            "Esvaziar remove de vez o que está na Lixeira. PERMANENTE — não dá para desfazer.", true),
+            "Remove definitivamente tudo o que já está na Lixeira do Windows.", true),
         new AlvoLimpeza(CategoriaLimpeza.TempSistema, "Arquivos temporários do sistema",
-            "Conteúdo de %SystemRoot%\\Temp. Vai para a Lixeira; arquivos em uso são pulados.", false, ExigeAdmin: true),
+            "Conteúdo de %SystemRoot%\\Temp. Na Limpeza Total, é deletado direto do PC; arquivos em uso são pulados.", false, ExigeAdmin: true),
         new AlvoLimpeza(CategoriaLimpeza.CacheWindowsUpdate, "Cache do Windows Update",
             "Downloads antigos em SoftwareDistribution\\Download. O Windows Update rebaixa o que precisar.", false, ExigeAdmin: true),
         new AlvoLimpeza(CategoriaLimpeza.Prefetch, "Prefetch",
-            "Arquivos *.pf de %SystemRoot%\\Prefetch. O Windows regenera; os primeiros inícios podem ficar um pouco mais lentos.", false, ExigeAdmin: true),
+            "Arquivos *.pf de %SystemRoot%\\Prefetch. O Windows regenera automaticamente.", false, ExigeAdmin: true),
     };
 
     // ---- Análise (somente leitura) ----
@@ -80,6 +80,132 @@ public static class Limpeza
         _ => MoverParaLixeira(EntradasTopo(PastaDe(cat))),
     };
 
+    /// <summary>
+    /// Limpeza Total: exclui os arquivos e pastas diretamente do computador (pulando a Lixeira),
+    /// respeitando rigorosamente a guarda <see cref="DentroDe"/> e pulando arquivos em uso ou reparse points.
+    /// </summary>
+    public static ResultadoLimpeza LimparPermanente(CategoriaLimpeza cat) => cat switch
+    {
+        CategoriaLimpeza.Lixeira => EsvaziarLixeira(),
+        CategoriaLimpeza.CacheMiniaturas => ExcluirPermanentemente(ArquivosCache().ToList()),
+        _ => ExcluirPermanentemente(EntradasTopo(PastaDe(cat))),
+    };
+
+    /// <summary>Exclui permanentemente cada caminho dentro das raízes seguras permitidas, sem passar pela Lixeira.</summary>
+    public static ResultadoLimpeza ExcluirPermanentemente(IEnumerable<string> alvos, IEnumerable<string>? raizesPermitidas = null)
+    {
+        var raizes = (raizesPermitidas ?? RaizesPermitidas()).ToArray();
+        int itens = 0, erros = 0;
+        long bytes = 0;
+
+        foreach (var p in alvos)
+        {
+            if (!DentroDe(p, raizes))
+            {
+                erros++;
+                continue;
+            }
+            ExcluirEntradaDireta(p, raizes, ref itens, ref bytes, ref erros);
+        }
+
+        var msg = erros > 0
+            ? $"{itens} item(ns) deletado(s) permanentemente; {erros} em uso/ignorado(s)."
+            : $"{itens} item(ns) deletado(s) permanentemente do computador.";
+        return new(itens, bytes, erros, msg);
+    }
+
+    static void ExcluirEntradaDireta(string caminho, string[] raizes, ref int itens, ref long bytes, ref int erros)
+    {
+        try
+        {
+            if (File.Exists(caminho))
+            {
+                var fi = new FileInfo(caminho);
+                if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint)) return;
+                long tam = Math.Max(0, SafeLen(caminho));
+                if (fi.Attributes.HasFlag(FileAttributes.ReadOnly))
+                    fi.Attributes = FileAttributes.Normal;
+                File.Delete(caminho);
+                itens++;
+                bytes += tam;
+                return;
+            }
+
+            if (Directory.Exists(caminho))
+            {
+                var di = new DirectoryInfo(caminho);
+                if (di.Attributes.HasFlag(FileAttributes.ReparsePoint)) return;
+
+                int errosSub = 0;
+                long bytesSub = 0;
+                int arquivosApagados = 0;
+                LimparConteudoDiretorioRecursivo(di, raizes, ref arquivosApagados, ref bytesSub, ref errosSub);
+
+                try
+                {
+                    if (di.Attributes.HasFlag(FileAttributes.ReadOnly))
+                        di.Attributes = FileAttributes.Directory;
+                    Directory.Delete(caminho, recursive: false);
+                    itens++;
+                    bytes += bytesSub;
+                }
+                catch
+                {
+                    // Se sobrou algum arquivo travado dentro da subpasta, contabiliza o que já foi liberado lá dentro
+                    if (arquivosApagados > 0)
+                    {
+                        itens += arquivosApagados;
+                        bytes += bytesSub;
+                    }
+                    erros += Math.Max(1, errosSub);
+                }
+            }
+        }
+        catch
+        {
+            erros++;
+        }
+    }
+
+    static void LimparConteudoDiretorioRecursivo(DirectoryInfo dir, string[] raizes, ref int arquivosApagados, ref long bytes, ref int erros)
+    {
+        FileInfo[] arquivos;
+        try { arquivos = dir.GetFiles(); }
+        catch { erros++; return; }
+
+        foreach (var f in arquivos)
+        {
+            try
+            {
+                if (!DentroDe(f.FullName, raizes) || f.Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
+                long tam = Math.Max(0, f.Length);
+                if (f.Attributes.HasFlag(FileAttributes.ReadOnly))
+                    f.Attributes = FileAttributes.Normal;
+                f.Delete();
+                arquivosApagados++;
+                bytes += tam;
+            }
+            catch { erros++; }
+        }
+
+        DirectoryInfo[] subpastas;
+        try { subpastas = dir.GetDirectories(); }
+        catch { erros++; return; }
+
+        foreach (var sub in subpastas)
+        {
+            try
+            {
+                if (!DentroDe(sub.FullName, raizes) || sub.Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
+                LimparConteudoDiretorioRecursivo(sub, raizes, ref arquivosApagados, ref bytes, ref erros);
+                if (sub.Attributes.HasFlag(FileAttributes.ReadOnly))
+                    sub.Attributes = FileAttributes.Directory;
+                sub.Delete(recursive: false);
+            }
+            catch { erros++; }
+        }
+    }
+
     static ResultadoLimpeza MoverParaLixeira(List<string> alvos)
     {
         int itens = 0, erros = 0; long bytes = 0;
@@ -98,6 +224,8 @@ public static class Limpeza
     static ResultadoLimpeza EsvaziarLixeira()
     {
         var antes = LixeiraInfo();
+        if (antes.Itens == 0)
+            return new(0, 0, 0, "Lixeira já estava vazia.");
         try
         {
             int r = SHEmptyRecycleBin(IntPtr.Zero, null, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);

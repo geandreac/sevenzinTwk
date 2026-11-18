@@ -48,6 +48,24 @@ public class RedeGlobalTests
     }
 
     [Fact]
+    public void AnalisarSaida_ignora_janela_de_congestionamento_inicial()
+    {
+        // Saída real do Windows 11 (PT e EN): a linha da janela inicial vem ANTES do provedor.
+        const string pt = """
+        RTO mínimo (msec)                  : 300
+        Janela de congestionamento inicial (MSS)     : 10
+        Provedor de controle de congestionamento         : ctcp
+        """;
+        const string en = """
+        Minimum RTO (msec)                    : 300
+        Initial Congestion Window (MSS)       : 10
+        Congestion Control Provider           : ctcp
+        """;
+        Assert.Equal("ctcp", RedeGlobal.AnalisarSaida(pt).Congestionamento);
+        Assert.Equal("ctcp", RedeGlobal.AnalisarSaida(en).Congestionamento);
+    }
+
+    [Fact]
     public void AnalisarSaida_reconhece_congestao_legada_global()
     {
         const string saida = "Provedor de Controle de Congestão de Complementos : default";

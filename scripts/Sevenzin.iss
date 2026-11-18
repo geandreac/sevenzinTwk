@@ -4,7 +4,7 @@
 ; Compilar: scripts\build-installer.ps1  (ou abrir este .iss no Inno Setup e Build). Saída: dist\installer\.
 
 #define AppName "SevenzinTwks"
-#define AppVersion "2.0.0"
+#define AppVersion "2.0.1"
 #define AppExe "Sevenzin.exe"
 #define AppPublisher "geandreac"
 
@@ -13,13 +13,13 @@ AppId={{8F3A6C21-5B4E-4D9A-9C2F-1E7A0B3D6F84}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
+AppCopyright=Copyright (C) 2026 {#AppPublisher}
 AppSupportURL=https://github.com/geandreac/sevenzinTwk
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
-; Instala por usuário (sem UAC) por padrão; o usuário pode escolher "para todos" (admin) no diálogo.
-PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
+; O SevenzinTwks opera sempre como Administrador para aplicar e reverter tweaks HKLM/GPU/Sistema sem fechar o app.
+PrivilegesRequired=admin
 OutputDir=..\dist\installer
 OutputBaseFilename=SevenzinTwks-{#AppVersion}-setup
 Compression=lzma2
@@ -45,4 +45,4 @@ Name: "{group}\Desinstalar {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: shellexec nowait postinstall skipifsilent

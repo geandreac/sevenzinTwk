@@ -97,10 +97,11 @@ public sealed class ServicoAutenticacao
 }
 
 /// <summary>Sessão autenticada com token opaco e validade (expiração absoluta, renovável).</summary>
-public sealed record Sessao(string Token, Usuario Usuario, DateTime ExpiraUtc);
+public sealed record Sessao(string Token, Usuario Usuario, DateTime ExpiraUtc, bool AutenticadoPorBackend = false);
 
 /// <summary>Cria, valida, renova e encerra a sessão atual. Expiração deslizante (renova a cada atividade).
-/// ADMINISTRADOR ÚNICO: <see cref="PodeAcessarAdmin"/> exige o papel E a identidade provisionada.</summary>
+/// ADMINISTRADOR ÚNICO: no modo local exige o papel E a identidade provisionada (SEVENZIN_ADMIN_EMAIL);
+/// no modo Supabase (AutenticadoPorBackend), o papel Administrador vem validado pelo servidor (perfis + RLS).</summary>
 public sealed class ServicoSessao
 {
     readonly Func<DateTime> _agora;
@@ -116,10 +117,10 @@ public sealed class ServicoSessao
 
     public Sessao? Atual { get; private set; }
 
-    public Sessao Abrir(Usuario u)
+    public Sessao Abrir(Usuario u, bool autenticadoPorBackend = false)
     {
         var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-        Atual = new Sessao(token, u, _agora() + _duracao);
+        Atual = new Sessao(token, u, _agora() + _duracao, autenticadoPorBackend);
         return Atual;
     }
 
@@ -135,23 +136,27 @@ public sealed class ServicoSessao
 
     public void Encerrar() => Atual = null;
 
-    /// <summary>Administrador = papel Administrador E e-mail idêntico à identidade provisionada.
-    /// Sem identidade configurada, ninguém tem acesso administrativo (falha segura).</summary>
+    /// <summary>
+    /// Autoriza acesso ao painel Admin:
+    /// - Modo local: exige papel Administrador + e-mail idêntico a SEVENZIN_ADMIN_EMAIL.
+    /// - Modo Supabase (AutenticadoPorBackend): aceita o papel Administrador retornado pelo backend (RLS),
+    ///   respeitando também SEVENZIN_ADMIN_EMAIL caso esteja configurada localmente.
+    /// </summary>
     public bool PodeAcessarAdmin =>
-        Valida
-        && Atual!.Usuario.Papel == PapelUsuario.Administrador
-        && IdentidadeAdmin.EhAdminProtegido(Atual.Usuario.Email, IdentidadeAdmin.EmailConfigurado(_lerEnv));
+        Autorizacao.PodeAcessarAdmin(Atual, _agora(), IdentidadeAdmin.EmailConfigurado(_lerEnv));
 }
 
-/// <summary>Autorização por papel (função pura — facilita teste de "sem permissão"). ADMINISTRADOR ÚNICO:
-/// exige também o e-mail idêntico à identidade provisionada.</summary>
+/// <summary>Autorização por papel (função pura — facilita teste de "sem permissão").</summary>
 public static class Autorizacao
 {
     public static bool PodeAcessarAdmin(Sessao? s, DateTime agora, string? adminConfigurado)
-        => s is not null
-        && agora < s.ExpiraUtc
-        && s.Usuario.Papel == PapelUsuario.Administrador
-        && IdentidadeAdmin.EhAdminProtegido(s.Usuario.Email, adminConfigurado);
+    {
+        if (s is null || agora >= s.ExpiraUtc || s.Usuario.Papel != PapelUsuario.Administrador)
+            return false;
+        if (s.AutenticadoPorBackend && string.IsNullOrWhiteSpace(adminConfigurado))
+            return true;
+        return IdentidadeAdmin.EhAdminProtegido(s.Usuario.Email, adminConfigurado);
+    }
 }
 
 /// <summary>Semeia o administrador inicial a partir de variáveis de ambiente — nunca de credenciais no código.</summary>

@@ -1,7 +1,7 @@
 <UserControl x:Class="Sevenzin.Wpf.Views.TelemetriaView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Margin="44,24,40,0">
+    <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -9,7 +9,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <TextBlock Text="Telemetria" Style="{StaticResource TituloTela}" Margin="0,8,0,2"/>
+            <TextBlock Text="MEDIÇÃO LOCAL" Style="{StaticResource Eyebrow}"/>
+            <TextBlock Text="Telemetria" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <TextBlock Text="Sessão iniciada e encerrada por você. Mede uma série temporal (CPU, clock, memória) e o próprio overhead. Sem gravar tela nem ler memória de outros apps." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                 <TextBlock Text="Duração (s)" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>

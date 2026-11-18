@@ -10,18 +10,18 @@
         <StackPanel Grid.Row="0">
             <TextBlock Text="SISTEMA" Style="{StaticResource Eyebrow}"/>
             <TextBlock Text="Limpeza" Style="{StaticResource TituloTela}" Margin="0,2,0,2"/>
-            <TextBlock Text="Remove temporários e caches. Nenhum arquivo pessoal. Limpar envia para a Lixeira (recuperável); só esvaziar a Lixeira é permanente."
+            <TextBlock Text="Remove temporários, caches e Lixeira diretamente do computador (pulando a Lixeira). Nenhum arquivo pessoal é tocado; arquivos em uso pelo Windows são ignorados automaticamente."
                        Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,10"/>
             <Border x:Name="ResumoPill" Background="{StaticResource Surface2Brush}" CornerRadius="8" Padding="12,5" HorizontalAlignment="Left" Margin="0,0,0,16">
-                <TextBlock x:Name="ResumoTxt" FontWeight="SemiBold" FontSize="13" Text="Clique em Analisar para medir o que pode ser limpo."/>
+                <TextBlock x:Name="ResumoTxt" FontWeight="SemiBold" FontSize="13" Text="Clique em Analisar para medir ou em Limpeza Total para excluir direto do computador."/>
             </Border>
         </StackPanel>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,8">
             <StackPanel x:Name="Lista"/>
         </ScrollViewer>
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,16">
-            <Button x:Name="AnalisarBtn" Style="{StaticResource PrimaryButton}" Content="Analisar" Padding="14,8" Margin="0,0,10,0" Click="Analisar_Click"/>
-            <Button x:Name="LimparBtn" Style="{StaticResource PrimaryButton}" Background="{StaticResource SuccessBrush}" Content="Limpeza Total" Padding="14,8" Margin="0,0,10,0" Click="Limpar_Click" IsEnabled="False"/>
+            <Button x:Name="AnalisarBtn" Style="{StaticResource SecondaryButton}" Content="Analisar" Padding="14,8" Margin="0,0,10,0" Click="Analisar_Click"/>
+            <Button x:Name="LimparBtn" Style="{StaticResource PrimaryButton}" Background="{StaticResource SuccessBrush}" Content="Limpeza Total" Padding="16,8" Margin="0,0,10,0" Click="Limpar_Click"/>
             <Button x:Name="AdminBtn" Style="{StaticResource SecondaryButton}" Content="Reabrir como administrador" Padding="14,8" Click="Admin_Click" Visibility="Collapsed"/>
         </StackPanel>
     </Grid>

@@ -1,6 +1,7 @@
 <UserControl x:Class="Sevenzin.Wpf.Views.ConfiguracoesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Sevenzin.Wpf.Views">
     <Grid Margin="44,24,40,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -9,26 +10,35 @@
 
         <StackPanel Grid.Row="0">
             <TextBlock Text="SEU SEVENZIN" Foreground="{StaticResource Brand400Brush}" FontSize="11" FontWeight="SemiBold" Margin="0,8,0,4"/>
-            <TextBlock Text="Configurações do aplicativo" Style="{StaticResource TituloTela}"/>
-            <TextBlock Text="Deixe o SevenzinTwks do seu jeito. Tudo local, sem login." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+            <TextBlock Text="Configurações" Style="{StaticResource TituloTela}"/>
+            <TextBlock Text="Preferências, conta, notificações, telemetria e benchmark reunidos em um só lugar." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
 
-            <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                <Border x:Name="TabGeral" Tag="0" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,28,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+            <WrapPanel Orientation="Horizontal" Margin="0,20,0,0">
+                <Border x:Name="TabGeral" Tag="0" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
                     <TextBlock Text="Geral" FontSize="14"/>
                 </Border>
-                <Border x:Name="TabCapturas" Tag="1" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,28,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
-                    <TextBlock Text="Capturas" FontSize="14"/>
-                </Border>
-                <Border x:Name="TabPref" Tag="2" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                <Border x:Name="TabPref" Tag="1" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
                     <TextBlock Text="Preferências" FontSize="14"/>
                 </Border>
-            </StackPanel>
-            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,0,0,24"/>
+                <Border x:Name="TabPerfil" Tag="2" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                    <TextBlock Text="Perfil" FontSize="14"/>
+                </Border>
+                <Border x:Name="TabNotificacoes" Tag="3" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                    <TextBlock Text="Notificações" FontSize="14"/>
+                </Border>
+                <Border x:Name="TabTelemetria" Tag="4" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                    <TextBlock Text="Telemetria" FontSize="14"/>
+                </Border>
+                <Border x:Name="TabBenchmark" Tag="5" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
+                    <TextBlock Text="Benchmark" FontSize="14"/>
+                </Border>
+            </WrapPanel>
+            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,0,0,22"/>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,24">
             <Grid>
-                <!-- GERAL -->
+                <!-- 0: GERAL -->
                 <StackPanel x:Name="GeralPanel">
                     <TextBlock Text="INICIALIZAÇÃO" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,24">
@@ -39,7 +49,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Margin="0,0,16,0">
                                 <TextBlock Text="Iniciar com o Windows" FontSize="14"/>
-                                <TextBlock Text="Abre o SevenzinTwks automaticamente ao entrar no Windows (atalho no seu usuário, sem administrador)." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="Abre o SevenzinTwks automaticamente como Administrador ao entrar no Windows." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
                             <ToggleButton x:Name="SwInicio" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Inicio_Click"/>
                         </Grid>
@@ -55,9 +65,9 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Margin="0,0,16,0">
                                     <TextBlock Text="Minimizar para a bandeja" FontSize="14"/>
-                                    <TextBlock Text="Mantém o SevenzinTwks perto do relógio. Requer ícone de bandeja — próxima fatia." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Text="Ao minimizar, recolhe o SevenzinTwks para a bandeja do sistema (perto do relógio). Clique no ícone para reabrir." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
-                                <ToggleButton Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" IsEnabled="False"/>
+                                <ToggleButton x:Name="SwMinBandeja" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Bandeja_Click"/>
                             </Grid>
                             <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,6,0,6"/>
                             <Grid Margin="0,4,0,4">
@@ -67,47 +77,22 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Margin="0,0,16,0">
                                     <TextBlock Text="Fechar para a bandeja" FontSize="14"/>
-                                    <TextBlock Text="O botão × mantém o app em segundo plano. Requer ícone de bandeja — próxima fatia." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Text="O botão × mantém o aplicativo ativo na bandeja do sistema em segundo plano (use o menu do ícone para encerrar)." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
-                                <ToggleButton Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" IsEnabled="False"/>
+                                <ToggleButton x:Name="SwFecharBandeja" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Bandeja_Click"/>
                             </Grid>
                         </StackPanel>
                     </Border>
                     <TextBlock Text="As alterações são salvas automaticamente." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,12,0,0"/>
                 </StackPanel>
 
-                <!-- CAPTURAS -->
-                <StackPanel x:Name="CapturasPanel" Visibility="Collapsed">
-                    <TextBlock Text="ENVIO DE CAPTURAS (OPCIONAL)" Style="{StaticResource SectionLabel}"/>
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,24">
-                        <StackPanel>
-                            <TextBlock Text="Webhook (opcional, HTTPS)" FontSize="14"/>
-                            <TextBlock Text="Por padrão a captura é 100% local. Se você configurar uma URL aqui, o botão Enviar fica disponível na tela Capturas — e cada envio pede confirmação explícita. Sem URL, nenhum envio é possível." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                <TextBox x:Name="WebhookTxt" Style="{StaticResource DarkBox}" Width="420" Tag="https://seu-webhook..." VerticalContentAlignment="Center"/>
-                                <Button Style="{StaticResource PrimaryButton}" Content="Salvar" Margin="8,0,0,0" Click="WebhookSalvar_Click"/>
-                                <Button Style="{StaticResource SecondaryButton}" Content="Limpar" Margin="8,0,0,0" Click="WebhookLimpar_Click"/>
-                            </StackPanel>
-                            <TextBlock x:Name="WebhookStatus" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,10,0,0" TextWrapping="Wrap"
-                                       Text="Nenhum webhook configurado — capturas ficam só no seu PC."/>
-                        </StackPanel>
-                    </Border>
-                    <TextBlock Text="LOCAL" Style="{StaticResource SectionLabel}"/>
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Pasta de capturas" FontSize="14"/>
-                            <TextBlock Text="Os PNGs são salvos em %LOCALAPPDATA%\Sevenzin\capturas, com data e hora no nome." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <!-- PREFERÊNCIAS -->
+                <!-- 1: PREFERÊNCIAS -->
                 <StackPanel x:Name="PrefPanel" Visibility="Collapsed">
                     <TextBlock Text="ASSISTENTE (OPCIONAL)" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,24">
                         <StackPanel>
                             <TextBlock Text="Endpoint do assistente (HTTPS)" FontSize="14"/>
-                            <TextBlock Text="Sem URL, a tela Assistente fica com o envio desligado. Com URL, cada mensagem é enviada apenas quando você aperta Enviar — nunca em segundo plano." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                            <TextBlock Text="Sem URL, o envio fica desligado. Com URL, cada mensagem é enviada apenas quando você aperta Enviar — nunca em segundo plano." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                 <TextBox x:Name="AssistenteTxt" Style="{StaticResource DarkBox}" Width="420" Tag="https://seu-endpoint/assistente" VerticalContentAlignment="Center"/>
                                 <Button Style="{StaticResource PrimaryButton}" Content="Salvar" Margin="8,0,0,0" Click="AssistenteSalvar_Click"/>
@@ -127,7 +112,7 @@
                             <StackPanel Margin="0,0,16,0">
                                 <TextBlock Text="Pasta de dados local" FontSize="14"/>
                                 <TextBlock x:Name="PastaTxt" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
-                                <TextBlock Text="Backup/auditoria dos tweaks e relatórios. Nada sai do PC; não há login, telemetria nem envio a webhook." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="Backup/auditoria dos tweaks, perfis e relatórios. Nada sai do PC sem ação explícita sua." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
                             <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="Abrir pasta" VerticalAlignment="Center" Click="AbrirPasta_Click"/>
                         </Grid>
@@ -154,6 +139,26 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
+
+                <!-- 2: PERFIL -->
+                <Border x:Name="PerfilPanel" Visibility="Collapsed">
+                    <views:PerfilView/>
+                </Border>
+
+                <!-- 3: NOTIFICAÇÕES -->
+                <Border x:Name="NotificacoesPanel" Visibility="Collapsed">
+                    <views:NotificacoesView x:Name="NotificacoesSubView"/>
+                </Border>
+
+                <!-- 4: TELEMETRIA -->
+                <Border x:Name="TelemetriaPanel" Visibility="Collapsed">
+                    <views:TelemetriaView/>
+                </Border>
+
+                <!-- 5: BENCHMARK -->
+                <Border x:Name="BenchmarkPanel" Visibility="Collapsed">
+                    <views:BenchmarkView/>
+                </Border>
             </Grid>
         </ScrollViewer>
     </Grid>

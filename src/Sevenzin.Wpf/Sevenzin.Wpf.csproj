@@ -9,9 +9,17 @@
     <AssemblyName>Sevenzin</AssemblyName>
     <RootNamespace>Sevenzin.Wpf</RootNamespace>
     <AssemblyTitle>SevenzinTwks</AssemblyTitle>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <ApplicationIcon>Assets\sevenzin.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
+
+  <!-- Servidor de contas embutido no executável (lido das variáveis de ambiente da máquina que gera o build; não vai
+       para o código-fonte). Sem isto, o app instalado em outro PC não acha o servidor e cai no modo de contas locais. -->
+  <ItemGroup Condition="'$(SEVENZIN_SUPABASE_URL)' != '' and '$(SEVENZIN_SUPABASE_ANON)' != ''">
+    <AssemblyMetadata Include="SEVENZIN_SUPABASE_URL" Value="$(SEVENZIN_SUPABASE_URL)" />
+    <AssemblyMetadata Include="SEVENZIN_SUPABASE_ANON" Value="$(SEVENZIN_SUPABASE_ANON)" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
@@ -22,6 +30,7 @@
   <ItemGroup>
     <Resource Include="Fonts\*.ttf" />
     <Resource Include="Assets\sevenzin.ico" />
+    <Resource Include="Assets\Apps\*.png" />
   </ItemGroup>
 
 </Project>

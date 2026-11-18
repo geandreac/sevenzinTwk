@@ -29,11 +29,24 @@ public sealed class NotificacoesStore
 
     public IReadOnlyList<Notificacao> Todos { get { lock (_travado) return _itens.OrderByDescending(n => n.Utc).ToList(); } }
 
-    public void Adicionar(string origem, string titulo, string detalhe)
+    /// <summary>Repetições idênticas dentro desta janela viram uma só (um erro em laço não inunda o histórico).</summary>
+    public static readonly TimeSpan JanelaDuplicata = TimeSpan.FromSeconds(5);
+
+    public void Adicionar(string origem, string titulo, string detalhe) => Registrar(origem, titulo, detalhe, mesmoDetalheBasta: false);
+
+    /// <summary>Registro AUTOMÁTICO (ex.: todo toast de erro): não duplica se a tela acabou de registrar o mesmo erro
+    /// com um título próprio (mesmo detalhe, dentro da janela).</summary>
+    public void AdicionarSeNovo(string origem, string titulo, string detalhe) => Registrar(origem, titulo, detalhe, mesmoDetalheBasta: true);
+
+    void Registrar(string origem, string titulo, string detalhe, bool mesmoDetalheBasta)
     {
         lock (_travado)
         {
-            _itens.Add(new Notificacao(DateTime.UtcNow, origem, titulo, detalhe));
+            var agora = DateTime.UtcNow;
+            if (_itens.Count > 0 && _itens[^1] is var u && agora - u.Utc < JanelaDuplicata && u.Detalhe == detalhe
+                && (mesmoDetalheBasta || (u.Origem == origem && u.Titulo == titulo)))
+                return;
+            _itens.Add(new Notificacao(agora, origem, titulo, detalhe));
             if (_itens.Count > 200) _itens.RemoveRange(0, _itens.Count - 200); // histórico limitado
             Salvar();
         }

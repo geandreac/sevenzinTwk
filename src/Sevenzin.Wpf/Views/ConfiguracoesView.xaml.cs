@@ -9,41 +9,54 @@ using Sevenzin.Diagnostics;
 
 namespace Sevenzin.Wpf.Views;
 
-/// <summary>Tela "Configurações" (Figma) com abas. Só controles reais: "Iniciar com o Windows" grava
-/// a chave Run do HKCU (reversível, sem admin). Toggles de bandeja ficam desabilitados até existir o
-/// ícone de bandeja. Sem login, Discord ID ou validação de licença (removidos na reconstrução segura).</summary>
+/// <summary>Tela "Configurações" unificada com abas para Geral, Preferências, Perfil, Notificações, Telemetria e Benchmark.</summary>
 public partial class ConfiguracoesView : UserControl
 {
     const string RunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string RunName = "Sevenzin";
+    const string NomeTarefaStartup = "SevenzinTwksStartup";
     static readonly string Pasta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin");
 
     Border[] _tabs = Array.Empty<Border>();
-    StackPanel[] _paineis = Array.Empty<StackPanel>();
+    FrameworkElement[] _paineis = Array.Empty<FrameworkElement>();
 
-    public ConfiguracoesView()
+    public ConfiguracoesView(string? abaInicial = null)
     {
         InitializeComponent();
-        _tabs = new[] { TabGeral, TabCapturas, TabPref };
-        _paineis = new[] { GeralPanel, CapturasPanel, PrefPanel };
+        _tabs = new[] { TabGeral, TabPref, TabPerfil, TabNotificacoes, TabTelemetria, TabBenchmark };
+        _paineis = new FrameworkElement[] { GeralPanel, PrefPanel, PerfilPanel, NotificacoesPanel, TelemetriaPanel, BenchmarkPanel };
         SwInicio.IsChecked = StartupLigado();
+        var prefsUi = PreferenciasUiStore.Padrao.Carregar();
+        SwMinBandeja.IsChecked = prefsUi.MinimizarParaBandeja;
+        SwFecharBandeja.IsChecked = prefsUi.FecharParaBandeja;
         PastaTxt.Text = Pasta;
         VersaoTxt.Text = $"SevenzinTwks {VersaoApp.ToString(3)} · reconstrução segura (WPF)";
-        var cfg = new Sevenzin.Diagnostics.ConfigCapturasStore().Carregar();
-        WebhookTxt.Text = cfg.WebhookUrl ?? "";
-        AtualizarStatusWebhook();
-        var cfgAssistente = new Sevenzin.Diagnostics.ConfigAssistenteStore().Carregar();
+        var cfgAssistente = new ConfigAssistenteStore().Carregar();
         AssistenteTxt.Text = cfgAssistente.EndpointUrl ?? "";
         AtualizarStatusAssistente();
-        SelecionarAba(0);
+        SelecionarSubAba(abaInicial ?? "geral");
+    }
+
+    public void SelecionarSubAba(string chave)
+    {
+        int indice = chave.Trim().ToLowerInvariant() switch
+        {
+            "pref" or "preferencias" => 1,
+            "perfil" => 2,
+            "notificacoes" => 3,
+            "telemetria" => 4,
+            "benchmark" => 5,
+            _ => 0,
+        };
+        SelecionarAba(indice);
     }
 
     void AtualizarStatusAssistente()
     {
         var url = AssistenteTxt.Text.Trim();
-        AssistenteStatus.Text = Sevenzin.Diagnostics.Assistente.UrlEndpointValida(url)
-            ? "Endpoint configurado — a tela Assistente envia cada mensagem só quando você aperta Enviar."
-            : "Nenhum endpoint configurado — a tela Assistente fica com o envio desligado.";
+        AssistenteStatus.Text = Assistente.UrlEndpointValida(url)
+            ? "Endpoint configurado — o envio envia cada mensagem só quando você aperta Enviar."
+            : "Nenhum endpoint configurado — o envio fica desligado.";
     }
 
     void AssistenteSalvar_Click(object sender, RoutedEventArgs e)
@@ -51,18 +64,18 @@ public partial class ConfiguracoesView : UserControl
         var url = AssistenteTxt.Text.Trim();
         if (url.Length == 0)
         {
-            new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(null));
+            new ConfigAssistenteStore().Salvar(new ConfigAssistente(null));
             AtualizarStatusAssistente();
             Toasts.Mostrar(this, TipoToast.Sucesso, "Endpoint removido", "O envio do assistente volta a ficar desligado.");
             return;
         }
-        if (!Sevenzin.Diagnostics.Assistente.UrlEndpointValida(url))
+        if (!Assistente.UrlEndpointValida(url))
         {
             Toasts.Mostrar(this, TipoToast.Erro, "URL inválida", "Use uma URL HTTPS absoluta.");
             MessageBox.Show("Use uma URL HTTPS absoluta.", "URL inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(url));
+        new ConfigAssistenteStore().Salvar(new ConfigAssistente(url));
         AtualizarStatusAssistente();
         Toasts.Mostrar(this, TipoToast.Sucesso, "Endpoint salvo", "O envio do assistente é explícito, por mensagem.");
     }
@@ -70,44 +83,8 @@ public partial class ConfiguracoesView : UserControl
     void AssistenteLimpar_Click(object sender, RoutedEventArgs e)
     {
         AssistenteTxt.Text = "";
-        new Sevenzin.Diagnostics.ConfigAssistenteStore().Salvar(new Sevenzin.Diagnostics.ConfigAssistente(null));
+        new ConfigAssistenteStore().Salvar(new ConfigAssistente(null));
         AtualizarStatusAssistente();
-    }
-
-    void AtualizarStatusWebhook()
-    {
-        var url = WebhookTxt.Text.Trim();
-        WebhookStatus.Text = Sevenzin.Diagnostics.EnvioCaptura.UrlWebhookValida(url)
-            ? $"Webhook configurado — o botão Enviar fica disponível na tela Capturas (cada envio pede confirmação)."
-            : "Nenhum webhook configurado — capturas ficam só no seu PC.";
-    }
-
-    void WebhookSalvar_Click(object sender, RoutedEventArgs e)
-    {
-        var url = WebhookTxt.Text.Trim();
-        if (url.Length == 0)
-        {
-            new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(null));
-            AtualizarStatusWebhook();
-            Toasts.Mostrar(this, TipoToast.Sucesso, "Webhook removido", "O envio de capturas volta a ficar desligado.");
-            return;
-        }
-        if (!Sevenzin.Diagnostics.EnvioCaptura.UrlWebhookValida(url))
-        {
-            Toasts.Mostrar(this, TipoToast.Erro, "URL inválida", "Use uma URL HTTPS absoluta (ex.: https://hooks.exemplo.com/...).");
-            MessageBox.Show("Use uma URL HTTPS absoluta (ex.: https://hooks.exemplo.com/...).", "URL inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-        new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(url));
-        AtualizarStatusWebhook();
-        Toasts.Mostrar(this, TipoToast.Sucesso, "Webhook salvo", "O botão Enviar fica disponível na tela Capturas (cada envio pede confirmação).");
-    }
-
-    void WebhookLimpar_Click(object sender, RoutedEventArgs e)
-    {
-        WebhookTxt.Text = "";
-        new Sevenzin.Diagnostics.ConfigCapturasStore().Salvar(new Sevenzin.Diagnostics.ConfigCaptura(null));
-        AtualizarStatusWebhook();
     }
 
     void Tab_Click(object sender, MouseButtonEventArgs e) => SelecionarAba(int.Parse((string)((Border)sender).Tag));
@@ -125,25 +102,88 @@ public partial class ConfiguracoesView : UserControl
             }
             _paineis[k].Visibility = ativo ? Visibility.Visible : Visibility.Collapsed;
         }
+        if (i == 3) NotificacoesSubView.Atualizar();
     }
 
     static bool StartupLigado()
     {
+        try
+        {
+            using var p = Process.Start(new ProcessStartInfo("schtasks.exe", $"/Query /TN \"{NomeTarefaStartup}\"")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            });
+            if (p is not null && p.WaitForExit(2500) && p.ExitCode == 0)
+                return true;
+        }
+        catch { }
         using var k = Registry.CurrentUser.OpenSubKey(RunPath);
         return k?.GetValue(RunName) != null;
+    }
+
+    void Bandeja_Click(object sender, RoutedEventArgs e)
+    {
+        var novo = new PreferenciasUi(
+            MinimizarParaBandeja: SwMinBandeja.IsChecked == true,
+            FecharParaBandeja: SwFecharBandeja.IsChecked == true);
+        PreferenciasUiStore.Padrao.Salvar(novo);
+
+        if (Window.GetWindow(this) is MainWindow mw)
+            mw.SincronizarIconeBandeja();
+
+        Toasts.Mostrar(
+            this,
+            TipoToast.Sucesso,
+            "Bandeja do sistema atualizada",
+            novo.MinimizarParaBandeja || novo.FecharParaBandeja
+                ? "O ícone do SevenzinTwks já está ativo perto do relógio."
+                : "Minimizar e fechar para a bandeja desativados.");
     }
 
     void Inicio_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            using var k = Registry.CurrentUser.CreateSubKey(RunPath, writable: true);
-            if (SwInicio.IsChecked == true) k.SetValue(RunName, $"\"{Environment.ProcessPath}\"", RegistryValueKind.String);
-            else k.DeleteValue(RunName, throwOnMissingValue: false);
-            bool confirmado = StartupLigado() == SwInicio.IsChecked; // releitura do estado real
+            var exe = Environment.ProcessPath ?? "";
+            using (var k = Registry.CurrentUser.CreateSubKey(RunPath, writable: true))
+                k?.DeleteValue(RunName, throwOnMissingValue: false);
+
+            if (SwInicio.IsChecked == true)
+            {
+                using var p = Process.Start(new ProcessStartInfo("schtasks.exe",
+                    $"/Create /TN \"{NomeTarefaStartup}\" /TR \"\\\"{exe}\\\"\" /SC ONLOGON /RL HIGHEST /F")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                });
+                p?.WaitForExit(4000);
+                if (p is null || p.ExitCode != 0)
+                {
+                    using var k = Registry.CurrentUser.CreateSubKey(RunPath, writable: true);
+                    k.SetValue(RunName, $"\"{exe}\"", RegistryValueKind.String);
+                }
+            }
+            else
+            {
+                using var p = Process.Start(new ProcessStartInfo("schtasks.exe", $"/Delete /TN \"{NomeTarefaStartup}\" /F")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                });
+                p?.WaitForExit(3000);
+            }
+
+            bool confirmado = StartupLigado() == SwInicio.IsChecked;
             Toasts.Mostrar(this, confirmado ? TipoToast.Sucesso : TipoToast.Aviso,
                 confirmado ? "Inicialização salva" : "Alteração não confirmada",
-                confirmado ? "Iniciar com o Windows " + (SwInicio.IsChecked == true ? "ligado." : "desligado.") : "Releitura do registro divergiu — verifique permissões.",
+                confirmado ? "Iniciar com o Windows " + (SwInicio.IsChecked == true ? "ligado (como Administrador)." : "desligado.") : "Não foi possível confirmar a tarefa agendada.",
                 SwInicio.IsChecked == true ? () => { SwInicio.IsChecked = false; Inicio_Click(sender, e); } : null);
         }
         catch (Exception ex)
@@ -172,7 +212,7 @@ public partial class ConfiguracoesView : UserControl
         VerificarBtn.IsEnabled = false;
         AbrirReleaseBtn.Visibility = Visibility.Collapsed;
         AtualizaStatus.Text = "Verificando no GitHub…";
-        var r = await Sevenzin.Diagnostics.VerificadorAtualizacoes.VerificarAsync(VersaoApp);
+        var r = await VerificadorAtualizacoes.VerificarAsync(VersaoApp);
         VerificarBtn.IsEnabled = true;
         if (r is null) { AtualizaStatus.Text = "Não foi possível verificar agora (sem internet ou ainda sem releases publicadas)."; return; }
         if (r.HaNova)

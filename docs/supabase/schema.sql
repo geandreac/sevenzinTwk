@@ -28,7 +28,8 @@ drop policy if exists "perfil: admin gerencia" on public.perfis;
 create policy "perfil: admin gerencia" on public.perfis
   for all using (public.e_admin()) with check (public.e_admin());
 
--- ao criar um auth.users, cria o perfil (papel/nome vêm do user_metadata; padrão 'usuario')
+-- ao criar um auth.users, cria o perfil SEMPRE como 'usuario'. O papel NUNCA vem do user_metadata: antes vinha,
+-- e qualquer cadastro com {"papel":"admin"} virava administrador.
 create or replace function public.ao_criar_usuario()
 returns trigger language plpgsql security definer
 set search_path = public as $$
@@ -38,11 +39,20 @@ begin
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1)),
-    coalesce(new.raw_user_meta_data->>'papel', 'usuario')
+    'usuario'
   )
   on conflict (id) do nothing;
   return new;
 end; $$;
+
+-- ADMINISTRADOR GLOBAL ÚNICO: o banco recusa papel 'admin' para qualquer e-mail que não seja o do dono,
+-- venha do app, do painel, de uma função ou de SQL direto.
+alter table public.perfis drop constraint if exists perfis_admin_unico;
+alter table public.perfis add constraint perfis_admin_unico
+  check (papel <> 'admin' or lower(email) = 'geandreac.dev@gmail.com');
+
+-- Painel (não é SQL): Authentication → Sign In / Providers → "Allow new users to sign up" DESLIGADO.
+-- Contas só são criadas pelo admin (app Admin → função criar-usuario, que usa a API administrativa).
 
 drop trigger if exists trg_ao_criar_usuario on auth.users;
 create trigger trg_ao_criar_usuario
@@ -66,5 +76,6 @@ create policy "acessos: admin le" on public.acessos for select using (public.e_a
 drop policy if exists "acessos: registrar" on public.acessos;
 create policy "acessos: registrar" on public.acessos for insert with check (true);
 
--- Dica: promova a SUA conta a admin depois de criá-la pelo painel do Supabase (Auth → Users):
---   update public.perfis set papel = 'admin' where email = 'voce@exemplo.com';
+-- Promova a conta do dono a admin depois de criá-la pelo painel (Auth → Users). A regra perfis_admin_unico só
+-- aceita este e-mail:
+--   update public.perfis set papel = 'admin' where lower(email) = 'geandreac.dev@gmail.com';

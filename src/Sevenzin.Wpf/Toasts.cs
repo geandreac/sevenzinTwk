@@ -167,6 +167,10 @@ public static class Toasts
 {
     public static void Mostrar(FrameworkElement origem, TipoToast tipo, string titulo, string mensagem, Action? desfazer = null)
     {
+        // Todo erro mostrado também fica em Notificações (o toast some em 3 s). Se a tela já registrou o mesmo erro
+        // com título próprio, AdicionarSeNovo não duplica. Registrar nunca pode impedir o aviso.
+        if (tipo == TipoToast.Erro)
+            try { NotificacoesStore.Padrao.AdicionarSeNovo("Erro", titulo, mensagem); } catch { }
         (Window.GetWindow(origem) as MainWindow)?.ToastHost.Adicionar(tipo, titulo, mensagem, desfazer);
     }
 }

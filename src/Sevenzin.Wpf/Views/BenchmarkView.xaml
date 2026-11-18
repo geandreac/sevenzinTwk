@@ -1,13 +1,14 @@
 <UserControl x:Class="Sevenzin.Wpf.Views.BenchmarkView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Margin="44,24,40,0">
+    <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0">
-            <TextBlock Text="Benchmark" Style="{StaticResource TituloTela}" Margin="0,8,0,2"/>
+            <TextBlock Text="TESTE INTERNO" Style="{StaticResource Eyebrow}"/>
+            <TextBlock Text="Benchmark" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <TextBlock Text="Benchmark de frametime interno e reproduzível: mede uma cena do próprio app (não um jogo externo). Serve para comparar o MESMO PC antes e depois de uma mudança. Sem administrador, sem anti-cheat." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                 <TextBlock Text="Quadros" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>

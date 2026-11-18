@@ -24,6 +24,8 @@ public partial class NotificacoesView : UserControl
         Loaded += (_, _) => Montar();
     }
 
+    public void Atualizar() => Montar();
+
     void Montar()
     {
         Lista.Children.Clear();

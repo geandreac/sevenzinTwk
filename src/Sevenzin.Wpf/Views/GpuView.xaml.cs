@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -8,344 +9,1064 @@ using Sevenzin.Diagnostics;
 
 namespace Sevenzin.Wpf.Views;
 
-/// <summary>Tela "GPU" — paridade com a tela de GPU do original (Perfil Gráfico + Ajustes de Driver +
-/// Auto NVIDIA Debloat), dentro dos limites da reconstrução segura. A detecção e os modos de vídeo são
-/// somente leitura; os "Ajustes do Driver" e os perfis aplicam SÓ tweaks de registro reversíveis do catálogo
-/// (HAGS, TdrDelay, power gating AMD, Game DVR, visual, mouse raw) — o original não usa NVAPI/NVML, então
-/// não há controle real de clock/memória/debloat do driver a reproduzir; essas partes ficam informativas.</summary>
+/// <summary>
+/// Tela "GPU" — layout de 2 colunas (Ajustes do Driver + 7 Perfis Gráficos exclusivos com status de Ray Tracing),
+/// modal sobreposto "Auto NVIDIA Debloat" (endpoints HTTPS oficiais NVIDIA, Authenticode, 7-Zip, setup.cfg),
+/// suporte dedicado a GPUs AMD (5 controles reversíveis) e Overclock NVIDIA dentro do envelope da VBIOS (`nvidia-smi`).
+/// </summary>
 public partial class GpuView : UserControl
 {
     readonly MotorTweaks _motor = new(new RegistroWindows());
+    IReadOnlyList<InfoGpu> _gpus = Array.Empty<InfoGpu>();
+    IReadOnlyList<string> _chavesNvidia = Array.Empty<string>();
+    IReadOnlyList<string> _chavesAmd = Array.Empty<string>();
+    CancellationTokenSource? _ctsDebloat;
+
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style SectionStyle => (Style)Application.Current.Resources["SectionLabel"];
     static Style SecButton => (Style)Application.Current.Resources["SecondaryButton"];
     static Style PriButton => (Style)Application.Current.Resources["PrimaryButton"];
     static Style Switch => (Style)Application.Current.Resources["ToggleSwitch"];
+    static Style DarkBoxStyle => (Style)Application.Current.Resources["DarkBox"];
+    static Style DarkComboStyle => (Style)Application.Current.Resources["DarkCombo"];
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Secondary => (Brush)Application.Current.Resources["TextSecondaryBrush"];
+    static Brush PrimaryText => (Brush)Application.Current.Resources["TextPrimaryBrush"];
     static Brush Warning => (Brush)Application.Current.Resources["WarningBrush"];
+    static Brush Danger => (Brush)Application.Current.Resources["DangerBrush"];
     static Style EyebrowStyle => (Style)Application.Current.Resources["Eyebrow"];
     static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
     static Brush SuccessBg => new SolidColorBrush((Color)Application.Current.Resources["SuccessBg"]);
+    static Brush BorderDefault => (Brush)Application.Current.Resources["BorderDefaultBrush"];
     static Brush BorderStrong => (Brush)Application.Current.Resources["BorderStrongBrush"];
+    static Brush Brand400 => (Brush)Application.Current.Resources["Brand400Brush"];
     static Brush Brand500 => (Brush)Application.Current.Resources["Brand500Brush"];
-
-    /// <summary>Perfis gráficos (adaptação segura): o original exibia esses nomes, mas sem NVAPI o efeito exato
-    /// de cada perfil não é recuperável. Cada perfil aplica um conjunto DOCUMENTADO de tweaks reversíveis do
-    /// catálogo (nada inventado de driver). "Básico" = remover qualquer perfil.</summary>
-    static readonly (string Nome, string Desc, string[] TweakIds)[] Perfis =
-    {
-        ("Básico", "Remove qualquer perfil aplicado (restaura os padrões).", Array.Empty<string>()),
-        ("Casual", "Visual mais leve: transparência, Aero Peek e animações desligadas.", new[] { "transparencia-off", "taskbar-transparencia-off", "aero-peek-off", "min-animate-off" }),
-        ("Competitivo", "Menos overhead: Game DVR e captura em segundo plano desligados.", new[] { "gamedvr-off", "gamedvr-captura-off" }),
-        ("FPS", "HAGS ligado + TDR Delay 8 s (recuperação de GPU travada).", new[] { "hags", "tdr-delay" }),
-        ("FPS 2.0", "FPS + Game DVR desligado.", new[] { "hags", "tdr-delay", "gamedvr-off", "gamedvr-captura-off" }),
-        ("Latência", "HAGS + TDR Delay + mouse sem aceleração (raw input).", new[] { "hags", "tdr-delay", "mouse-aceleracao-off", "mouse-limiar1-off", "mouse-limiar2-off" }),
-        ("Avançado", "HAGS + TDR + Game DVR off + mouse raw + visual leve.", new[] { "hags", "tdr-delay", "gamedvr-off", "gamedvr-captura-off", "mouse-aceleracao-off", "transparencia-off", "aero-peek-off" }),
-    };
+    static Brush BrandTint => (Brush)Application.Current.Resources["BrandTintBrush"];
+    static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
+    static Brush Surface3 => (Brush)Application.Current.Resources["Surface3Brush"];
 
     public GpuView()
     {
         InitializeComponent();
-        Loaded += async (_, _) =>
-        {
-            var gpus = await Task.Run(DiagnosticoGpu.Coletar);
-            Lista.Children.Clear();
-            if (gpus.Count == 0)
-            {
-                Lista.Children.Add(new TextBlock { Text = "Nenhum adaptador de vídeo detectado.", Foreground = Muted, Margin = new Thickness(2, 8, 0, 0) });
-                return;
-            }
-            foreach (var g in gpus) Lista.Children.Add(CartaoGpu(g));
-
-            Lista.Children.Add(Secao("AJUSTES DO DRIVER — ENERGIA E FUNCIONAMENTO"));
-            Lista.Children.Add(CartaoAjustesDriver(gpus));
-
-            Lista.Children.Add(Secao("PERFIL GRÁFICO — ESCOLHA UM"));
-            Lista.Children.Add(CartaoPerfilGrafico());
-
-            Lista.Children.Add(Secao("AUTO NVIDIA DEBLOAT"));
-            Lista.Children.Add(CartaoDebloat(gpus));
-
-            Lista.Children.Add(CartaoModosVideo());
-            Lista.Children.Add(CartaoRecomendacoes());
-        };
+        Loaded += async (_, _) => await RecarregarTelaAsync();
     }
 
-    static TextBlock Secao(string t) => new() { Text = t, Style = SectionStyle, Margin = new Thickness(0, 4, 0, 10) };
+    async Task RecarregarTelaAsync()
+    {
+        var dados = await Task.Run(() =>
+        {
+            var gpus = DiagnosticoGpu.Coletar();
+            var nvKeys = GpuDriverTweaks.ResolverChavesClasseDriver(FabricanteGpu.Nvidia);
+            var amdKeys = GpuDriverTweaks.ResolverChavesClasseDriver(FabricanteGpu.Amd);
+            var verDriver = GpuDriverTweaks.LerVersaoDriverClasse(FabricanteGpu.Nvidia)
+                         ?? gpus.FirstOrDefault(g => g.Fabricante == FabricanteGpu.Nvidia)?.VersaoDriver
+                         ?? gpus.FirstOrDefault()?.VersaoDriver;
+            GpuDriverTweaks.SincronizarComVersaoDriver(verDriver);
+            return (gpus, nvKeys, amdKeys, verDriver);
+        });
+
+        _gpus = dados.gpus;
+        _chavesNvidia = dados.nvKeys;
+        _chavesAmd = dados.amdKeys;
+
+        AtualizarCabecalhoTopo(_gpus);
+        Lista.Children.Clear();
+
+        if (_gpus.Count == 0)
+        {
+            Lista.Children.Add(new TextBlock
+            {
+                Text = "Nenhum adaptador de vídeo detectado.",
+                Foreground = Muted,
+                Margin = new Thickness(2, 8, 0, 0),
+            });
+            return;
+        }
+
+        // Grid principal de 2 colunas: Coluna Esquerda (Ajustes do Driver) + Coluna Direita (Perfil Gráfico)
+        var gridPrincipal = new Grid { Margin = new Thickness(0, 0, 0, 16) };
+        gridPrincipal.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.08, GridUnitType.Star) });
+        gridPrincipal.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(16) });
+        gridPrincipal.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
+
+        var colEsquerda = new StackPanel();
+        colEsquerda.Children.Add(Secao("AJUSTES DO DRIVER · ENERGIA E FUNCIONAMENTO"));
+        colEsquerda.Children.Add(CartaoAjustesDriver(_gpus));
+        Grid.SetColumn(colEsquerda, 0);
+        gridPrincipal.Children.Add(colEsquerda);
+
+        var colDireita = new StackPanel();
+        colDireita.Children.Add(Secao("PERFIL GRÁFICO · ESCOLHA UM"));
+        colDireita.Children.Add(CartaoPerfilGrafico(dados.verDriver));
+        Grid.SetColumn(colDireita, 2);
+        gridPrincipal.Children.Add(colDireita);
+
+        Lista.Children.Add(gridPrincipal);
+
+        // Overclock NVIDIA (nvidia-smi oficial)
+        Lista.Children.Add(Secao("OVERCLOCK (NVIDIA)"));
+        Lista.Children.Add(CartaoOverclock(_gpus));
+
+        // Detalhes de cada adaptador + Modos de vídeo
+        Lista.Children.Add(Secao("ADAPTADORES E MODOS DE VÍDEO"));
+        foreach (var g in _gpus) Lista.Children.Add(CartaoGpu(g));
+        Lista.Children.Add(CartaoModosVideo());
+    }
+
+    void AtualizarCabecalhoTopo(IReadOnlyList<InfoGpu> gpus)
+    {
+        var nv = gpus.FirstOrDefault(g => g.Fabricante == FabricanteGpu.Nvidia);
+        var amd = gpus.FirstOrDefault(g => g.Fabricante == FabricanteGpu.Amd);
+        var principal = nv ?? amd ?? gpus.FirstOrDefault();
+
+        if (principal is null)
+        {
+            TxtModeloTopo.Text = "Nenhuma GPU detectada";
+            PontoStatusTopo.Fill = Warning;
+            TxtSubstatusTopo.Text = "Sem adaptador de vídeo ativo";
+            return;
+        }
+
+        TxtModeloTopo.Text = principal.Adaptador;
+        PontoStatusTopo.Fill = Success;
+        TxtSubstatusTopo.Text = nv is not null
+            ? "Detectada – ajustes NVIDIA liberados"
+            : amd is not null
+                ? "Detectada – ajustes AMD liberados"
+                : "Detectada – diagnóstico somente leitura";
+    }
+
+    static TextBlock Secao(string t) => new() { Text = t, Style = SectionStyle, Margin = new Thickness(0, 2, 0, 10) };
     static Tweak? Tw(string id) => CatalogoTweaks.Todos.FirstOrDefault(t => t.Id == id);
 
-    // ─────────────────────────── Ajustes do Driver ───────────────────────────
+    // ─────────────────────────── Coluna Esquerda: Ajustes do Driver ───────────────────────────
 
     Border CartaoAjustesDriver(IReadOnlyList<InfoGpu> gpus)
     {
         var sp = new StackPanel();
-        sp.Children.Add(new TextBlock
-        {
-            Text = "Liga/desliga ajustes de driver do catálogo do original, todos reversíveis. Os de HKLM exigem administrador; cada aplicação tem confirmação.",
-            Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
-        });
-        sp.Children.Add(LinhaToggle(Tw("hags")!));
-        sp.Children.Add(LinhaToggle(Tw("tdr-delay")!));
+        bool temNvidia = gpus.Any(g => g.Fabricante == FabricanteGpu.Nvidia);
+        bool temAmd = gpus.Any(g => g.Fabricante == FabricanteGpu.Amd);
 
-        bool amd = gpus.Any(g => g.Fabricante == FabricanteGpu.Amd);
-        if (amd)
+        if (temNvidia)
         {
-            sp.Children.Add(new TextBlock
+            var gruposNv = GpuDriverTweaks.CriarGruposNvidia(_chavesNvidia);
+            // Subtítulos curtos fiéis à especificação da tela GPU
+            var subtitulosCurto = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                Text = "Economia de energia (AMD) — desliga o power gating dinâmico da GPU. Só aparece com GPU AMD; pode aumentar calor/consumo (meça A/B).",
-                Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0),
-            });
-            sp.Children.Add(LinhaGrupoAmd());
+                ["nv-economia-energia"] = "Menos estados ociosos no driver",
+                ["nv-power-gating"] = "Mantém blocos da GPU acordados",
+                ["nv-driver-perf"] = "Máscara de desempenho no driver",
+            };
+
+            for (int i = 0; i < gruposNv.Count; i++)
+            {
+                var grp = gruposNv[i];
+                var sub = subtitulosCurto.GetValueOrDefault(grp.Id, grp.Descricao);
+                sp.Children.Add(LinhaToggleGrupo(grp, sub, mostrarDivisor: true));
+            }
+
+            // Linha Auto NVIDIA Debloat -> botão Abrir
+            sp.Children.Add(LinhaAutoNvidiaDebloat(habilitado: true));
+        }
+        else if (temAmd)
+        {
+            var avisoLock = new Border
+            {
+                Background = Surface2,
+                BorderBrush = BorderStrong,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(12, 9, 12, 9),
+                Margin = new Thickness(0, 0, 0, 10),
+                Child = new TextBlock
+                {
+                    Text = "Somente as opções para AMD ficam disponíveis. Os controles da NVIDIA permanecem bloqueados.",
+                    Foreground = Secondary,
+                    FontSize = 12,
+                    TextWrapping = TextWrapping.Wrap,
+                },
+            };
+            sp.Children.Add(avisoLock);
+
+            var gruposAmd = GpuDriverTweaks.CriarGruposAmd(_chavesAmd);
+            for (int i = 0; i < gruposAmd.Count; i++)
+                sp.Children.Add(LinhaToggleGrupo(gruposAmd[i], gruposAmd[i].Descricao, mostrarDivisor: i < gruposAmd.Count - 1));
         }
         else
         {
             sp.Children.Add(new TextBlock
             {
-                Text = "Economia de energia (power gating) — disponível apenas com GPU AMD (nenhum adaptador AMD detectado).",
-                Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0),
+                Text = "Nenhum adaptador NVIDIA ou AMD dedicado detectado para ajustes específicos de classe de driver.",
+                Foreground = Muted,
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 10),
             });
         }
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
+
+        // Ajustes globais Windows GraphicsDrivers (HAGS / TDR Delay)
+        var sep = new Border { Height = 1, Background = BorderDefault, Margin = new Thickness(0, 10, 0, 8) };
+        sp.Children.Add(sep);
+        sp.Children.Add(new TextBlock { Text = "SISTEMA GRÁFICO WINDOWS", Style = EyebrowStyle, Margin = new Thickness(0, 2, 0, 4) });
+        if (Tw("hags") is { } hags) sp.Children.Add(LinhaToggleUnico(hags));
+        if (Tw("tdr-delay") is { } tdr) sp.Children.Add(LinhaToggleUnico(tdr));
+
+        return new Border { Style = CardStyle, Child = sp };
     }
 
-    /// <summary>Linha de toggle para um único tweak (HAGS, TdrDelay).</summary>
-    Border LinhaToggle(Tweak t)
+    Border LinhaToggleGrupo(GrupoDriverGpu grupo, string subtitulo, bool mostrarDivisor)
     {
-        var g = new Grid { Margin = new Thickness(0, 7, 0, 7) };
+        var raiz = new StackPanel();
+        var g = new Grid { Margin = new Thickness(0, 8, 0, 8) };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var left = new StackPanel { Margin = new Thickness(0, 0, 16, 0) };
-        left.Children.Add(new TextBlock { Text = t.Nome, FontSize = 14 });
-        left.Children.Add(new TextBlock { Text = t.Descricao + (t.ExigeAdmin ? "  ·  requer administrador" : ""), Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) });
-        Grid.SetColumn(left, 0);
-        g.Children.Add(left);
-        var sw = new ToggleButton { Style = Switch, IsChecked = _motor.Aplicado(t) };
-        sw.Click += (_, _) => AplicarToggle(sw, t, onApply: null);
-        Grid.SetColumn(sw, 1);
-        g.Children.Add(sw);
-        return new Border { Child = g };
-    }
 
-    /// <summary>Toggle agrupado do power gating AMD (10 valores do original).</summary>
-    Border LinhaGrupoAmd()
-    {
-        var ids = new[] { "amd-pstate-off", "amd-gmm-powergate-off", "amd-samu-powergate-off", "amd-vcn-powergate-off", "amd-drmdma-powergate-off", "amd-ulps-off", "amd-asic-lowpower-off", "amd-gpu-powerdown-off", "amd-sclk-deepsleep-off", "amd-power-containment-off" };
-        var tweaks = ids.Select(Tw).Where(t => t is not null).Cast<Tweak>().ToList();
-
-        var g = new Grid { Margin = new Thickness(0, 7, 0, 7) };
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var left = new StackPanel { Margin = new Thickness(0, 0, 16, 0) };
-        left.Children.Add(new TextBlock { Text = "Power gating AMD off (10 valores)", FontSize = 14 });
-        left.Children.Add(new TextBlock { Text = "Desliga DisableDynamicPstate, Disable*PowerGating, EnableUlps=0, PP_* — valores literais do original. Requer administrador.", Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) });
-        Grid.SetColumn(left, 0);
-        g.Children.Add(left);
-        var sw = new ToggleButton { Style = Switch, IsChecked = tweaks.All(_motor.Aplicado) };
-        sw.Click += (_, _) =>
+        var esq = new StackPanel { Margin = new Thickness(0, 0, 14, 0) };
+        esq.Children.Add(new TextBlock { Text = grupo.Nome, FontSize = 14, FontWeight = FontWeights.SemiBold });
+        esq.Children.Add(new TextBlock
         {
-            if (sw.IsChecked == true)
-            {
-                if (!ExigirAdmin()) { sw.IsChecked = false; return; }
-                if (MessageBox.Show("Desligar o power gating da GPU AMD? Pode aumentar calor/consumo. Reversível (desfazer restaura).", "Confirmação — AMD", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
-                { sw.IsChecked = false; return; }
-                foreach (var t in tweaks) _motor.Aplicar(t);
-                Toasts.Mostrar(this, TipoToast.Sucesso, "Power gating AMD desligado", "10 valores do original aplicados (reversível).", () => { foreach (var t in tweaks) _motor.Desfazer(t); sw.IsChecked = false; });
-            }
-            else foreach (var t in tweaks) _motor.Desfazer(t);
+            Text = subtitulo,
+            Foreground = Muted,
+            FontSize = 12,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 2, 0, 0),
+        });
+        Grid.SetColumn(esq, 0);
+        g.Children.Add(esq);
+
+        var sw = new ToggleButton
+        {
+            Style = Switch,
+            IsChecked = GpuDriverTweaks.GrupoAplicado(_motor, grupo),
+            VerticalAlignment = VerticalAlignment.Center,
+            ToolTip = grupo.Descricao,
         };
+        sw.Click += (_, _) => AlternarGrupoDriver(sw, grupo);
         Grid.SetColumn(sw, 1);
         g.Children.Add(sw);
-        return new Border { Child = g };
+
+        raiz.Children.Add(g);
+        if (mostrarDivisor)
+            raiz.Children.Add(new Border { Height = 1, Background = BorderDefault });
+        return new Border { Child = raiz };
     }
 
-    bool ExigirAdmin()
-    {
-        if (Elevacao.EhAdmin()) return true;
-        if (MessageBox.Show("Este ajuste mexe no sistema (HKLM) e exige administrador.\n\nReabrir o SevenzinTwks como administrador?", "Elevação", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
-            Elevacao.ReabrirComoAdmin();
-        return false;
-    }
-
-    void AplicarToggle(ToggleButton sw, Tweak t, Action? onApply)
+    void AlternarGrupoDriver(ToggleButton sw, GrupoDriverGpu grupo)
     {
         try
         {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso($"GPU: {grupo.Nome}");
+            bool exigeAdmin = grupo.Tweaks.Any(t => t.ExigeAdmin);
+            if (sw.IsChecked == true)
+            {
+                if (exigeAdmin && !ExigirAdmin()) { sw.IsChecked = false; return; }
+                var msg = $"Aplicar '{grupo.Nome}' ({grupo.Tweaks.Count} parâmetro(s) no registro do driver)?\n\n"
+                        + $"{grupo.Descricao}\n\n"
+                        + "Efeito: reduz estados de economia profunda/oscilação de clock; pode elevar consumo em repouso. Requer reinício para valer.\n"
+                        + "Reversão: desligue esta chave para restaurar os valores originais salvos no backup.";
+                if (MessageBox.Show(msg, $"Confirmação — {grupo.Nome}", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                {
+                    sw.IsChecked = false;
+                    return;
+                }
+                int n = GpuDriverTweaks.AplicarGrupo(_motor, grupo);
+                NotificacoesStore.Padrao.Adicionar("GPU", $"{grupo.Nome} ativado", $"{n} valor(es) aplicados (reversível).");
+                Toasts.Mostrar(this, TipoToast.Sucesso, $"{grupo.Nome} aplicado", $"{n} valor(es) gravados com backup. Reinicie depois.",
+                    () => { GpuDriverTweaks.DesativarGrupo(_motor, grupo); sw.IsChecked = false; });
+            }
+            else
+            {
+                if (exigeAdmin && !ExigirAdmin()) { sw.IsChecked = true; return; }
+                int desfeitos = GpuDriverTweaks.DesativarGrupo(_motor, grupo);
+                if (desfeitos == 0)
+                {
+                    sw.IsChecked = GpuDriverTweaks.GrupoAplicado(_motor, grupo);
+                    Toasts.Mostrar(this, TipoToast.Aviso, "Alteração bloqueada", $"O Windows/driver manteve '{grupo.Nome}' ativo.");
+                }
+                else
+                {
+                    NotificacoesStore.Padrao.Adicionar("GPU", $"{grupo.Nome} desativado", $"{desfeitos} valor(es) restaurados.");
+                    Toasts.Mostrar(this, TipoToast.Sucesso, $"{grupo.Nome} desativado", $"{desfeitos} valor(es) restaurados ao estado anterior/padrão.");
+                }
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            sw.IsChecked = GpuDriverTweaks.GrupoAplicado(_motor, grupo);
+            Toasts.Mostrar(this, TipoToast.Erro, "Sem permissão", "O sistema protegeu esta chave de classe do driver.");
+        }
+        catch (Exception ex)
+        {
+            sw.IsChecked = GpuDriverTweaks.GrupoAplicado(_motor, grupo);
+            Toasts.Mostrar(this, TipoToast.Erro, "Erro ao gravar ajuste", ex.Message);
+        }
+        finally
+        {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso(null);
+        }
+    }
+
+    Border LinhaAutoNvidiaDebloat(bool habilitado)
+    {
+        var g = new Grid { Margin = new Thickness(0, 10, 0, 4) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var esq = new StackPanel { Margin = new Thickness(0, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center };
+        esq.Children.Add(new TextBlock { Text = "Auto NVIDIA Debloat", FontSize = 14, FontWeight = FontWeights.SemiBold });
+        esq.Children.Add(new TextBlock
+        {
+            Text = "Remove bloat e instala driver limpo",
+            Foreground = Muted,
+            FontSize = 12,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 2, 0, 0),
+        });
+        Grid.SetColumn(esq, 0);
+        g.Children.Add(esq);
+
+        var btnAbrir = new Button
+        {
+            Style = SecButton,
+            Content = "Abrir",
+            Padding = new Thickness(16, 7, 16, 7),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsEnabled = habilitado,
+        };
+        btnAbrir.Click += (_, _) => AbrirModalDebloat();
+        Grid.SetColumn(btnAbrir, 1);
+        g.Children.Add(btnAbrir);
+
+        return new Border { Child = g };
+    }
+
+    Border LinhaToggleUnico(Tweak t)
+    {
+        var g = new Grid { Margin = new Thickness(0, 6, 0, 6) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var left = new StackPanel { Margin = new Thickness(0, 0, 14, 0) };
+        left.Children.Add(new TextBlock { Text = t.Nome, FontSize = 13.5 });
+        left.Children.Add(new TextBlock
+        {
+            Text = t.Descricao,
+            Foreground = Muted,
+            FontSize = 11.5,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 2, 0, 0),
+        });
+        Grid.SetColumn(left, 0);
+        g.Children.Add(left);
+        var sw = new ToggleButton { Style = Switch, IsChecked = _motor.Aplicado(t), VerticalAlignment = VerticalAlignment.Center };
+        sw.Click += (_, _) => AplicarToggleUnico(sw, t);
+        Grid.SetColumn(sw, 1);
+        g.Children.Add(sw);
+        return new Border { Child = g };
+    }
+
+    void AplicarToggleUnico(ToggleButton sw, Tweak t)
+    {
+        try
+        {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso($"GPU: {t.Nome}");
             if (sw.IsChecked == true)
             {
                 if (t.ExigeAdmin && !ExigirAdmin()) { sw.IsChecked = false; return; }
+                if (MessageBox.Show(_motor.Previa(t) + "\n\nAplicar agora?", "Confirmação — GPU", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes)
+                {
+                    sw.IsChecked = false;
+                    return;
+                }
                 _motor.Aplicar(t);
-                bool ok = _motor.Aplicado(t);
-                onApply?.Invoke();
-                Toasts.Mostrar(this, ok ? TipoToast.Sucesso : TipoToast.Aviso, ok ? "Ajuste aplicado" : "Ajuste não confirmado", t.Nome,
-                    ok ? (Action?)(() => { if (_motor.Desfazer(t)) sw.IsChecked = false; }) : null);
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Ajuste aplicado", t.Nome, () => { if (_motor.Desativar(t)) sw.IsChecked = false; });
             }
-            else if (!_motor.Desfazer(t))
+            else if (!_motor.Desativar(t))
             {
-                sw.IsChecked = true; // mantém "ligado": não havia backup (valor aplicado fora do SevenzinTwks)
-                Toasts.Mostrar(this, TipoToast.Aviso, "Sem backup para desfazer", $"'{t.Nome}' já estava aplicado antes do SevenzinTwks — não há valor anterior salvo para restaurar.");
+                sw.IsChecked = _motor.Aplicado(t);
+                Toasts.Mostrar(this, TipoToast.Aviso, "Alteração bloqueada", $"Não foi possível desativar '{t.Nome}'.");
+            }
+            else
+            {
+                NotificacoesStore.Padrao.Adicionar("GPU", $"'{t.Nome}' desativado", "Valor anterior ou padrão do Windows restaurado.");
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Ajuste desativado", t.Nome);
             }
         }
         catch (UnauthorizedAccessException)
         {
             sw.IsChecked = _motor.Aplicado(t);
-            var msg = t.Caminho.Contains("Windows Defender", StringComparison.OrdinalIgnoreCase)
-                ? "O Windows bloqueia a gravação nesta chave do Defender (Proteção contra adulteração)."
-                : "Sem permissão para gravar nesta chave. Reabra como administrador (botão direito → Executar como administrador).";
-            Toasts.Mostrar(this, TipoToast.Erro, "Chave protegida", msg);
-            MessageBox.Show(msg, "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Toasts.Mostrar(this, TipoToast.Erro, "Permissão insuficiente", "Chave protegida pelo Windows.");
+        }
+        catch (Exception ex)
+        {
+            sw.IsChecked = _motor.Aplicado(t);
+            Toasts.Mostrar(this, TipoToast.Erro, "Falha no ajuste", ex.Message);
+        }
+        finally
+        {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso(null);
         }
     }
 
-    // ─────────────────────────── Perfil Gráfico ───────────────────────────
+    // ─────────────────────────── Coluna Direita: 7 Perfis Gráficos Exclusivos ───────────────────────────
 
-    string[]? _perfilSelecionado;
-
-    Border CartaoPerfilGrafico()
+    Border CartaoPerfilGrafico(string? versaoDriverAtual)
     {
         var sp = new StackPanel();
-        var status = new TextBlock { Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10) };
-        var grid = new UniformGrid { Columns = 3 };
-        var cards = new List<(Border Card, string[] Ids)>();
+        var estadoInicial = GpuDriverTweaks.LerEstadoPerfil();
+        string? perfilAtivoId = estadoInicial.PerfilId;
 
-        foreach (var p in Perfis)
+        var listaCards = new List<(Border Card, System.Windows.Shapes.Ellipse RadioDot, PerfilGraficoGpu Perfil)>();
+        var txtStatus = new TextBlock
         {
-            var ids = p.TweakIds;
+            Foreground = Secondary,
+            FontSize = 12,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var btnRemover = new Button
+        {
+            Style = SecButton,
+            Content = "Remover perfil",
+            Padding = new Thickness(12, 6, 12, 6),
+            FontSize = 12,
+        };
+
+        void AtualizarVisualPerfis()
+        {
+            foreach (var (card, dot, p) in listaCards)
+            {
+                bool selecionado = string.Equals(p.Id, perfilAtivoId, StringComparison.OrdinalIgnoreCase);
+                card.BorderBrush = selecionado ? Brand500 : BorderStrong;
+                card.BorderThickness = new Thickness(selecionado ? 1.8 : 1);
+                card.Background = selecionado ? BrandTint : Surface2;
+                dot.Fill = selecionado ? Brand400 : Brushes.Transparent;
+            }
+
+            var ativo = GpuDriverTweaks.ObterPerfil(perfilAtivoId);
+            if (ativo is not null)
+            {
+                txtStatus.Text = ativo.TextoStatusAplicado;
+                btnRemover.IsEnabled = true;
+            }
+            else
+            {
+                txtStatus.Text = "Nenhum perfil gráfico ativo · selecione uma opção acima.";
+                btnRemover.IsEnabled = GpuDriverTweaks.PerfisGraficos
+                    .SelectMany(p => p.TweakIds)
+                    .Distinct()
+                    .Any(id => _motor.TemBackup(id));
+            }
+        }
+
+        foreach (var perfil in GpuDriverTweaks.PerfisGraficos)
+        {
+            var pLocal = perfil;
             var card = new Border
             {
-                Background = Surface2Brush(),
-                BorderThickness = new Thickness(1),
+                Background = Surface2,
                 BorderBrush = BorderStrong,
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(12, 10, 12, 10),
-                Margin = new Thickness(4),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(9),
+                Padding = new Thickness(12, 9, 12, 9),
+                Margin = new Thickness(0, 0, 0, 7),
                 Cursor = System.Windows.Input.Cursors.Hand,
             };
-            var cp = new StackPanel();
-            cp.Children.Add(new TextBlock { Text = p.Nome, FontSize = 13, FontWeight = FontWeights.SemiBold });
-            cp.Children.Add(new TextBlock { Text = p.Desc, Foreground = Muted, FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) });
-            card.Child = cp;
-            card.MouseLeftButtonUp += (_, _) => { _perfilSelecionado = ids; AtualizarSelecao(); };
-            grid.Children.Add(card);
-            cards.Add((card, ids));
-        }
-        sp.Children.Add(grid);
 
-        void AtualizarSelecao()
-        {
-            var sel = _perfilSelecionado ?? Array.Empty<string>();
-            foreach (var (c, ids) in cards)
+            var linha = new Grid();
+            linha.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            linha.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            linha.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var anel = new Grid { Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
+            anel.Children.Add(new System.Windows.Shapes.Ellipse { Width = 16, Height = 16, Stroke = BorderStrong, StrokeThickness = 1.5 });
+            var dot = new System.Windows.Shapes.Ellipse { Width = 8, Height = 8, Fill = Brushes.Transparent, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            anel.Children.Add(dot);
+            Grid.SetColumn(anel, 0);
+            linha.Children.Add(anel);
+
+            var textos = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            textos.Children.Add(new TextBlock { Text = pLocal.Nome, FontSize = 13.5, FontWeight = FontWeights.SemiBold });
+            textos.Children.Add(new TextBlock { Text = pLocal.Subtitulo, Foreground = Muted, FontSize = 11.5, Margin = new Thickness(0, 1, 0, 0) });
+            Grid.SetColumn(textos, 1);
+            linha.Children.Add(textos);
+
+            var badgeRt = new Border
             {
-                bool ativo = ids.SequenceEqual(sel);
-                c.BorderBrush = ativo ? Brand500 : BorderStrong;
-                c.BorderThickness = new Thickness(ativo ? 2 : 1);
-            }
-            var nome = sel.Length == 0 ? "Básico" : Perfis.FirstOrDefault(p => p.TweakIds.SequenceEqual(sel)).Nome;
-            bool aplicado = sel.Length > 0 && sel.All(id => Tw(id) is { } t && _motor.Aplicado(t));
-            status.Text = sel.Length == 0
-                ? "Básico selecionado — use 'Remover perfil' para restaurar os padrões."
-                : $"{nome}: {(aplicado ? "aplicado" : "clique em 'Aplicar perfil selecionado'.")}";
+                Background = Surface3,
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(7, 2, 7, 2),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = pLocal.RayTracingDisponivel ? "RT ON" : "RT OFF",
+                    Foreground = pLocal.RayTracingDisponivel ? Success : Warning,
+                    FontSize = 10.5,
+                    FontWeight = FontWeights.SemiBold,
+                },
+            };
+            Grid.SetColumn(badgeRt, 2);
+            linha.Children.Add(badgeRt);
+
+            card.Child = linha;
+            card.MouseLeftButtonUp += (_, _) =>
+            {
+                SelecionarEAplicarPerfil(pLocal, versaoDriverAtual, idNovo =>
+                {
+                    perfilAtivoId = idNovo;
+                    AtualizarVisualPerfis();
+                });
+            };
+
+            sp.Children.Add(card);
+            listaCards.Add((card, dot, pLocal));
         }
-        AtualizarSelecao();
 
-        var botoes = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
-        var aplicar = new Button { Style = PriButton, Content = "Aplicar perfil selecionado", Padding = new Thickness(14, 8, 14, 8), Margin = new Thickness(0, 0, 8, 0) };
-        aplicar.Click += (_, _) => AplicarPerfil(AtualizarSelecao);
-        var remover = new Button { Style = SecButton, Content = "Remover perfil", Padding = new Thickness(14, 8, 14, 8) };
-        remover.Click += (_, _) =>
+        // Rodapé do card de perfis: Status dinâmico + botão Remover perfil
+        var rodape = new Grid { Margin = new Thickness(0, 6, 0, 0) };
+        rodape.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        rodape.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        Grid.SetColumn(txtStatus, 0);
+        rodape.Children.Add(txtStatus);
+
+        btnRemover.Click += (_, _) =>
         {
-            int n = 0;
-            foreach (var (_, ids) in cards)
-                foreach (var id in ids)
-                    if (Tw(id) is { } t && _motor.TemBackup(id)) { _motor.Desfazer(t); n++; }
-            AtualizarSelecao();
-            Toasts.Mostrar(this, TipoToast.Sucesso, "Perfil removido", $"{n} valor(es) restaurado(s).");
+            int restaurados = RemoverTodosPerfis();
+            var drs = _gpus.Any(g => g.Fabricante == FabricanteGpu.Nvidia)
+                ? NvidiaDrs.RestaurarPadroesBaseProfile()
+                : new ResultadoDrsNvidia(false, false, 0, 0, "");
+            perfilAtivoId = null;
+            GpuDriverTweaks.SalvarEstadoPerfil(new EstadoPerfilGpu(null, versaoDriverAtual, null));
+            AtualizarVisualPerfis();
+            var msg = drs.Sucesso
+                ? $"Base Profile NVIDIA restaurado ao padrão ({drs.Aplicados} parâmetros) + {restaurados} ajuste(s) de sistema revertidos."
+                : $"{restaurados} ajuste(s) revertidos.";
+            NotificacoesStore.Padrao.Adicionar("GPU", "Perfil gráfico removido", msg);
+            Toasts.Mostrar(this, TipoToast.Sucesso, "Perfil removido", msg);
         };
-        botoes.Children.Add(aplicar);
-        botoes.Children.Add(remover);
-        sp.Children.Add(botoes);
-        sp.Children.Add(status);
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
+        Grid.SetColumn(btnRemover, 1);
+        rodape.Children.Add(btnRemover);
+
+        sp.Children.Add(rodape);
+        AtualizarVisualPerfis();
+        return new Border { Style = CardStyle, Child = sp };
     }
 
-    static Brush Surface2Brush() => (Brush)Application.Current.Resources["Surface2Brush"];
-
-    void AplicarPerfil(Action refresh)
+    void SelecionarEAplicarPerfil(PerfilGraficoGpu perfil, string? versaoDriverAtual, Action<string?> aoAtualizar)
     {
-        var ids = _perfilSelecionado ?? Array.Empty<string>();
-        if (ids.Length == 0) { Toasts.Mostrar(this, TipoToast.Aviso, "Nenhum ajuste", "Básico não aplica nada — use 'Remover perfil'."); return; }
-        var tweaks = ids.Select(Tw).Where(t => t is not null).Cast<Tweak>().ToList();
+        var tweaks = perfil.TweakIds.Select(Tw).Where(t => t is not null).Cast<Tweak>().ToList();
         if (tweaks.Any(t => t.ExigeAdmin) && !ExigirAdmin()) return;
-        if (MessageBox.Show($"Aplicar o perfil selecionado?\n\n{tweaks.Count} ajuste(s) reversível(eis) do catálogo serão aplicados (HAGS, TDR, Game DVR, visual, mouse raw). Desfazer restaura o anterior.",
-                "Confirmação — Perfil Gráfico", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes) return;
-        foreach (var t in tweaks) _motor.Aplicar(t);
-        refresh();
-        Toasts.Mostrar(this, TipoToast.Sucesso, "Perfil aplicado", $"{tweaks.Count} ajuste(s) aplicado(s) — reversível.");
+
+        bool temNvidia = _gpus.Any(g => g.Fabricante == FabricanteGpu.Nvidia);
+        var drsParams = NvidiaDrs.ObterParametrosPerfil(perfil.Id);
+        var resumoDrs = temNvidia
+            ? $"• Aplica {drsParams.Count} parâmetros 3D direto no Base Profile do driver NVIDIA (visível no NVIDIA Profile Inspector)\n"
+            : "";
+
+        var msg = $"Aplicar o perfil gráfico '{perfil.Nome}' ({perfil.Subtitulo})?\n\n"
+                + $"• {perfil.StatusRayTracing}\n"
+                + resumoDrs
+                + $"• {tweaks.Count} ajuste(s) de sistema aplicados com backup automático\n"
+                + $"• Manifesto .nip salvo em %LOCALAPPDATA%\\Sevenzin\\PerfisGpu\\{perfil.ArquivoNip}\n\n"
+                + "O perfil anterior será revertido antes de aplicar o novo. Continuar?";
+        if (MessageBox.Show(msg, $"Confirmação — Perfil {perfil.Nome}", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso($"Perfil GPU: {perfil.Nome}");
+            RemoverTodosPerfis();
+            foreach (var t in tweaks) _motor.Aplicar(t);
+            var caminhoNip = GpuDriverTweaks.ExportarNipLocal(perfil);
+            var resDrs = temNvidia
+                ? NvidiaDrs.AplicarNoBaseProfile(perfil.Id)
+                : new ResultadoDrsNvidia(false, false, 0, 0, "");
+
+            GpuDriverTweaks.SalvarEstadoPerfil(new EstadoPerfilGpu(perfil.Id, versaoDriverAtual, DateTime.UtcNow));
+            aoAtualizar(perfil.Id);
+
+            var detalheToast = resDrs.Sucesso
+                ? $"Driver NVIDIA atualizado ({resDrs.Aplicados} params no Profile Inspector) · {perfil.StatusRayTracing}"
+                : perfil.StatusRayTracing;
+            NotificacoesStore.Padrao.Adicionar("GPU", $"Perfil {perfil.Nome} aplicado",
+                $"{detalheToast} ({System.IO.Path.GetFileName(caminhoNip)})");
+            Toasts.Mostrar(this, TipoToast.Sucesso, $"Aplicado: {perfil.Nome}", detalheToast);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Mostrar(this, TipoToast.Erro, "Falha ao aplicar perfil", ex.Message);
+        }
+        finally
+        {
+            RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso(null);
+        }
     }
 
-    // ─────────────────────────── Debloat NVIDIA ───────────────────────────
-
-    static readonly string[] NvidiaBloatNomes =
+    int RemoverTodosPerfis()
     {
-        "NVIDIA GeForce Experience", "NVIDIA Broadcast", "NVIDIA FrameView SDK",
-        "NVIDIA GeForce NOW", "NVIDIA Canvas", "NVIDIA Omniverse",
-    };
+        int n = 0;
+        var todosIds = GpuDriverTweaks.PerfisGraficos.SelectMany(p => p.TweakIds).Distinct();
+        foreach (var id in todosIds)
+            if (Tw(id) is { } t && _motor.TemBackup(id) && _motor.Desfazer(t))
+                n++;
+        return n;
+    }
 
-    static List<string> NvidiaBloatInstalados()
+    // ─────────────────────────── Modal: Auto NVIDIA Debloat (NvClean) ───────────────────────────
+
+    void AbrirModalDebloat()
     {
-        var achados = new List<string>();
-        foreach (var raiz in new[] { @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" })
+        ModalDebloatConteudo.Children.Clear();
+        var gpuNv = _gpus.FirstOrDefault(g => g.Fabricante == FabricanteGpu.Nvidia);
+        var nomeGpu = gpuNv?.Adaptador ?? "NVIDIA GPU";
+        bool ehNotebook = NvidiaDebloat.EhNotebookGpu(nomeGpu);
+
+        // Cabeçalho do modal
+        var header = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.Children.Add(new TextBlock { Text = "Auto NVIDIA Debloat", FontSize = 18, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center });
+        var btnFechar = new Button { Style = SecButton, Content = "✕", Padding = new Thickness(10, 4, 10, 4) };
+        btnFechar.Click += (_, _) =>
         {
+            if (_ctsDebloat is not null)
+            {
+                if (MessageBox.Show("Há uma operação em andamento. Deseja cancelá-la e fechar?", "Cancelar Debloat", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                    return;
+                _ctsDebloat.Cancel();
+            }
+            ModalDebloatOverlay.Visibility = Visibility.Collapsed;
+        };
+        Grid.SetColumn(btnFechar, 1);
+        header.Children.Add(btnFechar);
+        ModalDebloatConteudo.Children.Add(header);
+
+        // Card de Identificação de Hardware (Modelo + DESKTOP/NOTEBOOK + GPU detectada)
+        var cardHw = new Border
+        {
+            Background = Surface2,
+            BorderBrush = BorderStrong,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(14, 10, 14, 10),
+            Margin = new Thickness(0, 0, 0, 14),
+        };
+        var gridHw = new Grid();
+        gridHw.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        gridHw.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var spHw = new StackPanel();
+        var linhaModelo = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
+        linhaModelo.Children.Add(new TextBlock { Text = nomeGpu, FontSize = 14, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 8, 0) });
+        linhaModelo.Children.Add(new Border
+        {
+            Background = Surface3,
+            CornerRadius = new CornerRadius(5),
+            Padding = new Thickness(7, 2, 7, 2),
+            Child = new TextBlock { Text = ehNotebook ? "NOTEBOOK" : "DESKTOP", FontSize = 10.5, FontWeight = FontWeights.SemiBold, Foreground = Brand400 },
+        });
+        spHw.Children.Add(linhaModelo);
+        var linhaDet = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
+        linhaDet.Children.Add(new System.Windows.Shapes.Ellipse { Width = 7, Height = 7, Fill = Success, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
+        linhaDet.Children.Add(new TextBlock { Text = "GPU detectada", Foreground = Success, FontSize = 11.5 });
+        spHw.Children.Add(linhaDet);
+        cardHw.Child = spHw;
+        ModalDebloatConteudo.Children.Add(cardHw);
+
+        // 1. FONTE DO DRIVER
+        ModalDebloatConteudo.Children.Add(new TextBlock { Text = "FONTE DO DRIVER", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 6) });
+        bool usarInstaladorLocal = false;
+        string caminhoInstaladorLocal = "";
+
+        var txtCaminhoLocal = new TextBlock { Text = "Escolher .exe baixado", Foreground = Muted, FontSize = 11.5, TextTrimming = TextTrimming.CharacterEllipsis };
+        var btnProcurar = new Button { Style = SecButton, Content = "procurar...", Padding = new Thickness(10, 4, 10, 4), FontSize = 11.5, Margin = new Thickness(8, 0, 0, 0) };
+
+        var cardFonteAuto = CriarCardSelecao("Baixar o mais recente", "Da NVIDIA para esta GPU (HTTPS oficial + verificação Authenticode)");
+        var cardFonteLocal = CriarCardSelecao("Já tenho o instalador", txtCaminhoLocal, btnProcurar);
+
+        // 2. CANAL
+        var painelCanal = new StackPanel { Margin = new Thickness(0, 6, 0, 10) };
+        painelCanal.Children.Add(new TextBlock { Text = "CANAL", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 6) });
+        var comboCanal = new ComboBox { Style = DarkComboStyle };
+        comboCanal.Items.Add(new ComboBoxItem { Content = "Game Ready — Para jogos – novos lançamentos", Tag = CanalDriverNvidia.GameReady });
+        comboCanal.Items.Add(new ComboBoxItem { Content = "Studio Driver — Para criação de conteúdo e estabilidade", Tag = CanalDriverNvidia.Studio });
+        comboCanal.SelectedIndex = 0;
+        painelCanal.Children.Add(comboCanal);
+
+        void AtualizarSelecaoFonte()
+        {
+            EstilizarCardSelecao(cardFonteAuto, !usarInstaladorLocal);
+            EstilizarCardSelecao(cardFonteLocal, usarInstaladorLocal);
+            painelCanal.Visibility = usarInstaladorLocal ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        cardFonteAuto.MouseLeftButtonUp += (_, _) => { usarInstaladorLocal = false; AtualizarSelecaoFonte(); };
+        cardFonteLocal.MouseLeftButtonUp += (_, _) => { usarInstaladorLocal = true; AtualizarSelecaoFonte(); };
+        btnProcurar.Click += (_, e) =>
+        {
+            e.Handled = true;
+            usarInstaladorLocal = true;
+            var dlg = new OpenFileDialog
+            {
+                Title = "Selecionar instalador oficial do driver NVIDIA (.exe)",
+                Filter = "Instalador NVIDIA (*.exe)|*.exe",
+                CheckFileExists = true,
+            };
+            if (dlg.ShowDialog() == true)
+            {
+                caminhoInstaladorLocal = dlg.FileName;
+                txtCaminhoLocal.Text = System.IO.Path.GetFileName(caminhoInstaladorLocal);
+                txtCaminhoLocal.Foreground = PrimaryText;
+            }
+            AtualizarSelecaoFonte();
+        };
+
+        var gridFonte = new UniformGrid { Columns = 2, Margin = new Thickness(0, 0, 0, 8) };
+        cardFonteAuto.Margin = new Thickness(0, 0, 5, 0);
+        cardFonteLocal.Margin = new Thickness(5, 0, 0, 0);
+        gridFonte.Children.Add(cardFonteAuto);
+        gridFonte.Children.Add(cardFonteLocal);
+        ModalDebloatConteudo.Children.Add(gridFonte);
+        ModalDebloatConteudo.Children.Add(painelCanal);
+        AtualizarSelecaoFonte();
+
+        // 3. PERFIL DE LIMPEZA (Seguro vs Avançado selecionado por padrão)
+        ModalDebloatConteudo.Children.Add(new TextBlock { Text = "PERFIL", Style = SectionStyle, Margin = new Thickness(0, 4, 0, 6) });
+        var perfilDebloat = PerfilDebloatNvidia.Avancado;
+        var cardSeguro = CriarCardSelecao("Seguro", "Tira GeForce Experience, NVIDIA App, Update, Telemetria.");
+        var cardAvancado = CriarCardSelecao("Avançado", "Remove tudo exceto driver e Painel de Controle.");
+        cardSeguro.Margin = new Thickness(0, 0, 5, 0);
+        cardAvancado.Margin = new Thickness(5, 0, 0, 0);
+
+        void AtualizarSelecaoPerfilDebloat()
+        {
+            EstilizarCardSelecao(cardSeguro, perfilDebloat == PerfilDebloatNvidia.Seguro);
+            EstilizarCardSelecao(cardAvancado, perfilDebloat == PerfilDebloatNvidia.Avancado);
+        }
+        cardSeguro.MouseLeftButtonUp += (_, _) => { perfilDebloat = PerfilDebloatNvidia.Seguro; AtualizarSelecaoPerfilDebloat(); };
+        cardAvancado.MouseLeftButtonUp += (_, _) => { perfilDebloat = PerfilDebloatNvidia.Avancado; AtualizarSelecaoPerfilDebloat(); };
+        AtualizarSelecaoPerfilDebloat();
+
+        var gridPerfil = new UniformGrid { Columns = 2, Margin = new Thickness(0, 0, 0, 12) };
+        gridPerfil.Children.Add(cardSeguro);
+        gridPerfil.Children.Add(cardAvancado);
+        ModalDebloatConteudo.Children.Add(gridPerfil);
+
+        // 4. REMOVER TAMBÉM (Checkboxes opcionais)
+        ModalDebloatConteudo.Children.Add(new TextBlock { Text = "REMOVER TAMBÉM", Style = SectionStyle, Margin = new Thickness(0, 2, 0, 6) });
+        var wrapExtras = new WrapPanel { Margin = new Thickness(0, 0, 0, 12) };
+        var chkDlss = new CheckBox { Content = "DLSS (NGX)", Margin = new Thickness(0, 0, 22, 6), ToolTip = "Remove o módulo NGX/DLSS. Mantenha desmarcado se usa DLSS em jogos." };
+        var chkPhysX = new CheckBox { Content = "PhysX", Margin = new Thickness(0, 0, 22, 6), ToolTip = "Remove o motor NVIDIA PhysX legado." };
+        var chkHdAudio = new CheckBox { Content = "HD Audio", Margin = new Thickness(0, 0, 0, 6), ToolTip = "Remove o driver de áudio HDMI/DisplayPort da GPU." };
+        wrapExtras.Children.Add(chkDlss);
+        wrapExtras.Children.Add(chkPhysX);
+        wrapExtras.Children.Add(chkHdAudio);
+        ModalDebloatConteudo.Children.Add(wrapExtras);
+
+        // 5. Avisos + Progresso + Log
+        var boxAvisos = new Border
+        {
+            Background = Surface2,
+            BorderBrush = BorderDefault,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12, 8, 12, 8),
+            Margin = new Thickness(0, 0, 0, 10),
+        };
+        var spAvisos = new StackPanel();
+        spAvisos.Children.Add(new TextBlock { Text = "• Instala automaticamente e apaga tudo no fim.", Foreground = Secondary, FontSize = 12 });
+        spAvisos.Children.Add(new TextBlock { Text = "• Vai instalar o driver. Reinicie depois.", Foreground = Warning, FontSize = 12, Margin = new Thickness(0, 3, 0, 0) });
+        boxAvisos.Child = spAvisos;
+        ModalDebloatConteudo.Children.Add(boxAvisos);
+
+        var barraProgresso = new ProgressBar
+        {
+            Height = 6,
+            Minimum = 0,
+            Maximum = 100,
+            Value = 0,
+            Visibility = Visibility.Collapsed,
+            Margin = new Thickness(0, 0, 0, 8),
+        };
+        var caixaLog = new TextBox
+        {
+            Style = DarkBoxStyle,
+            Height = 135,
+            IsReadOnly = true,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalContentAlignment = VerticalAlignment.Top,
+            FontFamily = new FontFamily("Consolas"),
+            FontSize = 11.5,
+            Visibility = Visibility.Collapsed,
+            Margin = new Thickness(0, 0, 0, 12),
+        };
+        ModalDebloatConteudo.Children.Add(barraProgresso);
+        ModalDebloatConteudo.Children.Add(caixaLog);
+
+        // Botão primário: Instalar limpo
+        var btnInstalar = new Button
+        {
+            Style = PriButton,
+            Content = "Instalar limpo",
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Padding = new Thickness(16, 11, 16, 11),
+        };
+        btnInstalar.Click += async (_, _) =>
+        {
+            if (!ExigirAdmin()) return;
+            if (usarInstaladorLocal && string.IsNullOrWhiteSpace(caminhoInstaladorLocal))
+            {
+                Toasts.Mostrar(this, TipoToast.Aviso, "Selecione o instalador", "Clique em 'procurar...' e escolha o arquivo .exe oficial da NVIDIA.");
+                return;
+            }
+
+            var canalEscolhido = (comboCanal.SelectedItem as ComboBoxItem)?.Tag is CanalDriverNvidia c
+                ? c : CanalDriverNvidia.GameReady;
+            var opcoes = new OpcoesNvidiaDebloat(
+                InstaladorLocal: usarInstaladorLocal ? caminhoInstaladorLocal : null,
+                Canal: canalEscolhido,
+                Perfil: perfilDebloat,
+                RemoverDlssNgx: chkDlss.IsChecked == true,
+                RemoverPhysX: chkPhysX.IsChecked == true,
+                RemoverHdAudio: chkHdAudio.IsChecked == true);
+
+            var resumoComp = NvidiaDebloat.MontarListaComponentesRemover(opcoes);
+            var confirmMsg = $"Iniciar o Auto NVIDIA Debloat e instalar o driver limpo?\n\n"
+                           + $"• Fonte: {(usarInstaladorLocal ? System.IO.Path.GetFileName(caminhoInstaladorLocal) : $"Download oficial NVIDIA ({canalEscolhido})")}\n"
+                           + $"• Perfil: {(perfilDebloat == PerfilDebloatNvidia.Avancado ? "Avançado" : "Seguro")} ({resumoComp.Count} componente(s) de bloat removidos)\n"
+                           + "• Protegidos (mantidos): Display.Driver, NvContainer, NVI2, Control Panel\n"
+                           + "• Comando de instalação: setup.exe -s -noreboot -clean -nofinish -passive\n\n"
+                           + "A tela poderá piscar durante a instalação. Reinicie o PC ao terminar. Continuar?";
+            if (MessageBox.Show(confirmMsg, "Confirmação — Auto NVIDIA Debloat", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+
+            btnInstalar.IsEnabled = false;
+            barraProgresso.Visibility = Visibility.Visible;
+            caixaLog.Visibility = Visibility.Visible;
+            caixaLog.Clear();
+
+            _ctsDebloat = new CancellationTokenSource();
+            int codigo;
             try
             {
-                using var k = Registry.LocalMachine.OpenSubKey(raiz);
-                if (k is null) continue;
-                foreach (var sub in k.GetSubKeyNames())
-                {
-                    using var sk = k.OpenSubKey(sub);
-                    if (sk?.GetValue("DisplayName") is string nome && NvidiaBloatNomes.Any(n => nome.Contains(n, StringComparison.OrdinalIgnoreCase)))
-                        achados.Add(nome);
-                }
+                codigo = await NvidiaDebloat.ExecutarAsync(
+                    nomeGpu,
+                    opcoes,
+                    linha => Dispatcher.Invoke(() =>
+                    {
+                        caixaLog.AppendText(linha + Environment.NewLine);
+                        caixaLog.ScrollToEnd();
+                    }),
+                    prog => Dispatcher.Invoke(() =>
+                    {
+                        if (prog.Percentual >= 0) barraProgresso.Value = prog.Percentual;
+                        btnInstalar.Content = prog.Concluido ? "Instalar limpo" : $"Etapa {prog.Etapa}/6 — {prog.Detalhe}";
+                    }),
+                    _ctsDebloat.Token);
             }
-            catch { }
-        }
-        return achados.Distinct().ToList();
+            finally
+            {
+                _ctsDebloat.Dispose();
+                _ctsDebloat = null;
+                btnInstalar.IsEnabled = true;
+                btnInstalar.Content = "Instalar limpo";
+            }
+
+            if (codigo == 0)
+            {
+                NotificacoesStore.Padrao.Adicionar("GPU", "Driver NVIDIA limpo instalado", "Reinicie o computador para concluir.");
+                Toasts.Mostrar(this, TipoToast.Sucesso, "Driver limpo instalado", "Reinicie o PC para concluir a ativação do driver.");
+                await RecarregarTelaAsync();
+            }
+            else if (codigo != -2)
+            {
+                Toasts.Mostrar(this, TipoToast.Erro, "Debloat não concluído", "Consulte o registro detalhado exibido na janela.");
+            }
+        };
+
+        ModalDebloatConteudo.Children.Add(btnInstalar);
+        ModalDebloatOverlay.Visibility = Visibility.Visible;
     }
 
-    Border CartaoDebloat(IReadOnlyList<InfoGpu> gpus)
+    Border CriarCardSelecao(string titulo, string subtitulo) =>
+        CriarCardSelecao(titulo, new TextBlock { Text = subtitulo, Foreground = Muted, FontSize = 11.5, TextWrapping = TextWrapping.Wrap }, null);
+
+    Border CriarCardSelecao(string titulo, UIElement subElemento, UIElement? acaoDireita)
     {
         var sp = new StackPanel();
-        bool nvidia = gpus.Any(g => g.Fabricante == FabricanteGpu.Nvidia);
-        if (!nvidia)
+        var topo = new Grid();
+        topo.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        topo.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        topo.Children.Add(new TextBlock { Text = titulo, FontSize = 13, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
+        if (acaoDireita is not null)
         {
-            sp.Children.Add(new TextBlock { Text = "Disponível apenas com GPU NVIDIA (nenhum adaptador NVIDIA detectado).", Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap });
+            Grid.SetColumn(acaoDireita, 1);
+            topo.Children.Add(acaoDireita);
+        }
+        sp.Children.Add(topo);
+        var wrapSub = new Border { Margin = new Thickness(0, 4, 0, 0), Child = subElemento };
+        sp.Children.Add(wrapSub);
+
+        return new Border
+        {
+            Background = Surface2,
+            BorderBrush = BorderStrong,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(9),
+            Padding = new Thickness(12, 10, 12, 10),
+            Cursor = System.Windows.Input.Cursors.Hand,
+            Child = sp,
+        };
+    }
+
+    void EstilizarCardSelecao(Border card, bool ativo)
+    {
+        card.BorderBrush = ativo ? Brand500 : BorderStrong;
+        card.BorderThickness = new Thickness(ativo ? 1.8 : 1);
+        card.Background = ativo ? BrandTint : Surface2;
+    }
+
+    bool ExigirAdmin()
+    {
+        if (Elevacao.EhAdmin()) return true;
+        if (MessageBox.Show("Este ajuste altera configurações de máquina (HKLM / driver) e exige administrador.\n\nReabrir o Sevenzin como administrador?",
+                "Elevação necessária", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+            Elevacao.ReabrirComoAdmin();
+        return false;
+    }
+
+    // ─────────────────────────── Overclock (NVIDIA) ───────────────────────────
+
+    Border CartaoOverclock(IReadOnlyList<InfoGpu> gpus)
+    {
+        var sp = new StackPanel();
+        bool temAmd = gpus.Any(g => g.Fabricante == FabricanteGpu.Amd);
+        if (!gpus.Any(g => g.Fabricante == FabricanteGpu.Nvidia) || !GpuOverclock.NvidiaDisponivel())
+        {
+            var aviso = temAmd
+                ? "Overclock por nvidia-smi disponível apenas com GPU NVIDIA. Para GPU AMD detectada, use os controles de Ajustes básicos / Power Gating / UMD na seção 'Ajustes do Driver' acima."
+                : "Disponível apenas com GPU NVIDIA e driver (nvidia-smi) instalado.";
+            sp.Children.Add(new TextBlock { Text = aviso, Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap });
             return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
         }
 
         sp.Children.Add(new TextBlock
         {
-            Text = "O original tinha um 'Auto NVIDIA Debloat' (remover apps de telemetria/overlay da NVIDIA). O SevenzinTwks não desinstala nada automaticamente: lista o que está instalado e abre 'Aplicativos instalados' para você decidir.",
+            Text = "Overclock dentro do envelope de fábrica (via nvidia-smi oficial): travar o clock sustenta o boost e o Power Limit ajusta o teto térmico/energético permitido pela VBIOS. Exige administrador, confirmação explícita e é 100% reversível.",
             Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
         });
 
-        var instalados = NvidiaBloatInstalados();
-        if (instalados.Count == 0)
-            sp.Children.Add(new TextBlock { Text = "Nenhum app de bloat NVIDIA detectado (GeForce Experience, Broadcast, etc.).", Foreground = Success, FontSize = 12, TextWrapping = TextWrapping.Wrap });
-        else
-            foreach (var n in instalados)
-                sp.Children.Add(new TextBlock { Text = "•  " + n, Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 3, 0, 0) });
+        var tele = new TextBlock { Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10) };
+        var plInfo = new TextBlock { Foreground = Muted, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 6) };
+        var plBox = new TextBox { Style = DarkBoxStyle, Width = 90, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+        GpuTelemetria? ultimaLeitura = null;
 
-        var abrir = new Button { Style = SecButton, Content = "Abrir Aplicativos instalados", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 12, 0, 0) };
-        abrir.Click += (_, _) =>
+        void AtualizarTele()
         {
-            try { Process.Start(new ProcessStartInfo("ms-settings:appsfeatures") { UseShellExecute = true }); }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning); }
+            var t = GpuOverclock.Ler();
+            ultimaLeitura = t;
+            if (t is null)
+            {
+                tele.Text = "Não foi possível ler a GPU (nvidia-smi indisponível).";
+                plInfo.Text = "";
+                return;
+            }
+            tele.Text = $"{t.Nome}\nClock: {t.ClockMHz} MHz (boost máx {t.ClockMaxMHz}) · Memória: {t.MemClockMHz}/{t.MemMaxMHz} MHz\nTemperatura: {t.TempC:0.#} °C · Uso: {t.UsoPct:0.#}% · Power: {t.PowerW:0.#} W / limite {t.PowerLimitW:0.#} W (padrão {t.PowerPadraoW:0.#} W · mín {t.PowerMinW:0.#} W · máx {t.PowerMaxW:0.#} W) · VRAM: {t.MemUsadaMB}/{t.MemTotalMB} MB";
+            if (string.IsNullOrWhiteSpace(plBox.Text))
+                plBox.Text = t.PowerLimitW.ToString("0", CultureInfo.InvariantCulture);
+            bool limiteMax = Math.Abs(t.PowerMaxW - t.PowerLimitW) < 0.5;
+            plInfo.Text = limiteMax
+                ? $"Power limit atual ({t.PowerLimitW:0.#} W) já está no teto de fábrica da VBIOS ({t.PowerMaxW:0.#} W); é possível reduzir (eficiência) ou restaurar o padrão ({t.PowerPadraoW:0.#} W)."
+                : $"Faixa permitida pela VBIOS desta placa: {t.PowerMinW:0.#} W até {t.PowerMaxW:0.#} W (padrão {t.PowerPadraoW:0.#} W).";
+        }
+        AtualizarTele();
+        sp.Children.Add(tele);
+
+        var botoes = new WrapPanel { Margin = new Thickness(0, 4, 0, 8) };
+        var att = new Button { Style = SecButton, Content = "Atualizar leitura", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        att.Click += (_, _) => AtualizarTele();
+
+        var travar = new Button { Style = PriButton, Content = "Travar boost (sustentado)", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        travar.Click += (_, _) =>
+        {
+            if (!ExigirAdmin()) return;
+            var t = GpuOverclock.Ler();
+            if (t is null) { Toasts.Mostrar(this, TipoToast.Erro, "GPU indisponível", "Não foi possível ler a GPU."); return; }
+            int mx = Math.Max(1000, t.ClockMaxMHz), mn = Math.Max(500, mx - 600);
+            if (MessageBox.Show($"Travar a faixa de clock da GPU ({t.Nome}) em {mn}–{mx} MHz?\n\nEfeito: sustenta o boost máximo durante jogos, aumentando consumo e temperatura em repouso.\nReversão: clique em 'Resetar clock' ou 'Restaurar padrão de fábrica'.\n\nContinuar?",
+                    "Confirmação — Boost sustentado (GPU)", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+            var r = GpuOverclock.TravarClock(mn, mx);
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("GPU", "Clock de boost travado", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Clock travado" : "Falha", r.Mensagem,
+                r.Ok ? (Action?)(() => { GpuOverclock.ResetarClock(); AtualizarTele(); }) : null);
+            AtualizarTele();
         };
-        sp.Children.Add(abrir);
+
+        var resetar = new Button { Style = SecButton, Content = "Resetar clock", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        resetar.Click += (_, _) =>
+        {
+            if (!ExigirAdmin()) return;
+            var r = GpuOverclock.ResetarClock();
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("GPU", "Clock resetado", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, "Clock resetado", r.Mensagem);
+            AtualizarTele();
+        };
+
+        var restaurar = new Button { Style = SecButton, Content = "Restaurar padrão de fábrica", Padding = new Thickness(12, 7, 12, 7), Margin = new Thickness(0, 0, 8, 6) };
+        restaurar.Click += (_, _) =>
+        {
+            if (!ExigirAdmin()) return;
+            var padrao = ultimaLeitura?.PowerPadraoW ?? 0;
+            if (MessageBox.Show($"Restaurar clock dinâmico (-rgc) e power limit de fábrica ({(padrao > 0 ? $"{padrao:0.#} W" : "padrão")})?",
+                    "Confirmação — Restaurar GPU", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes)
+                return;
+            var r = GpuOverclock.RestaurarPadrao(padrao);
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("GPU", "Overclock restaurado", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Padrão restaurado" : "Falha", r.Mensagem);
+            plBox.Text = "";
+            AtualizarTele();
+        };
+
+        botoes.Children.Add(att);
+        botoes.Children.Add(travar);
+        botoes.Children.Add(resetar);
+        botoes.Children.Add(restaurar);
+        sp.Children.Add(botoes);
+
+        sp.Children.Add(plInfo);
+        var linhaPl = new WrapPanel { Margin = new Thickness(0, 2, 0, 0) };
+        linhaPl.Children.Add(new TextBlock { Text = "Power limit (W):", Foreground = Secondary, FontSize = 12, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
+        linhaPl.Children.Add(plBox);
+        var aplicarPl = new Button { Style = SecButton, Content = "Aplicar Power Limit", Padding = new Thickness(12, 7, 12, 7) };
+        aplicarPl.Click += (_, _) =>
+        {
+            if (!ExigirAdmin()) return;
+            var t = ultimaLeitura ?? GpuOverclock.Ler();
+            if (t is null) { Toasts.Mostrar(this, TipoToast.Erro, "GPU indisponível", "Não foi possível ler a GPU."); return; }
+            if (!double.TryParse(plBox.Text?.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double watts))
+            {
+                Toasts.Mostrar(this, TipoToast.Aviso, "Valor inválido", "Informe o limite em watts (ex.: 160).");
+                return;
+            }
+            var erro = GpuOverclock.ValidarPowerLimit(watts, t);
+            if (erro is not null) { Toasts.Mostrar(this, TipoToast.Aviso, "Fora da faixa", erro); return; }
+            double anterior = t.PowerLimitW;
+            if (MessageBox.Show($"Ajustar o Power Limit de '{t.Nome}' de {anterior:0.#} W para {watts:0.#} W?\n\nReversível em 'Restaurar padrão de fábrica' ({t.PowerPadraoW:0.#} W).",
+                    "Confirmação — Power Limit", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+            var r = GpuOverclock.DefinirPowerLimit(watts);
+            if (r.Ok) NotificacoesStore.Padrao.Adicionar("GPU", $"Power limit ajustado ({watts:0.#} W)", r.Mensagem);
+            Toasts.Mostrar(this, r.Ok ? TipoToast.Sucesso : TipoToast.Erro, r.Ok ? "Power Limit aplicado" : "Falha", r.Mensagem,
+                r.Ok ? (Action?)(() => { GpuOverclock.DefinirPowerLimit(anterior); AtualizarTele(); }) : null);
+            AtualizarTele();
+        };
+        linhaPl.Children.Add(aplicarPl);
+        sp.Children.Add(linhaPl);
+
         return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
     }
 
-    // ─────────────────────────── detecção / modos (mantido) ───────────────────────────
+    // ─────────────────────────── Adaptadores e Modos de Vídeo ───────────────────────────
 
     static string NomeFab(FabricanteGpu f) => f switch
     {
@@ -361,7 +1082,7 @@ public partial class GpuView : UserControl
         var topo = new Grid();
         var esq = new StackPanel();
         esq.Children.Add(new TextBlock { Text = "PLACA DE VÍDEO", Style = EyebrowStyle });
-        esq.Children.Add(new TextBlock { Text = g.Adaptador, FontSize = 16, FontWeight = FontWeights.SemiBold });
+        esq.Children.Add(new TextBlock { Text = g.Adaptador, FontSize = 15.5, FontWeight = FontWeights.SemiBold });
         topo.Children.Add(esq);
         var selo = new Border { Background = SuccessBg, CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 3, 8, 3), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top };
         selo.Child = new TextBlock { Text = $"Detectada · {NomeFab(g.Fabricante)}", Foreground = Success, FontSize = 11, FontWeight = FontWeights.SemiBold };
@@ -384,7 +1105,7 @@ public partial class GpuView : UserControl
             b.Click += (_, _) => AbrirUrl(url);
             sp.Children.Add(b);
         }
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = sp };
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 12), Child = sp };
     }
 
     static UIElement Campo(string rotulo, string valor)
@@ -402,7 +1123,7 @@ public partial class GpuView : UserControl
     Border CartaoModosVideo()
     {
         var sp = new StackPanel();
-        sp.Children.Add(new TextBlock { Text = "Modos de vídeo suportados (somente leitura)", FontSize = 16, FontWeight = FontWeights.SemiBold });
+        sp.Children.Add(new TextBlock { Text = "Modos de vídeo suportados (somente leitura)", FontSize = 15.5, FontWeight = FontWeights.SemiBold });
 
         var dispositivos = LeitorModosVideo.Dispositivos();
         var alvos = dispositivos.Count > 0 ? dispositivos : new List<DispositivoVideo> { new("", "Exibição primária") };
@@ -435,27 +1156,7 @@ public partial class GpuView : UserControl
                 sp.Children.Add(new TextBlock { Text = $"… e mais {grupos - 12} resoluções.", Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 2, 0, 0) });
         }
 
-        sp.Children.Add(new TextBlock
-        {
-            Text = "O SevenzinTwks lista os modos, mas não altera a taxa de atualização por você — troque nas configurações de vídeo do Windows ou do driver.",
-            Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 10, 0, 0), TextWrapping = TextWrapping.Wrap,
-        });
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 6, 0, 0), Child = sp };
-    }
-
-    Border CartaoRecomendacoes()
-    {
-        var sp = new StackPanel();
-        sp.Children.Add(new TextBlock { Text = "RECOMENDAÇÕES SEGURAS (sugestões — nada é aplicado aqui)", Style = SectionStyle });
-        foreach (var t in new[]
-        {
-            "Mantenha o driver atualizado pela página oficial do fabricante (link acima).",
-            "Ligue o HAGS e meça antes/depois (A/B) — depende de GPU e driver.",
-            "Game DVR desligado reduz o overhead de gravação em jogos.",
-            "Os 'perfis gráficos' aplicam só tweaks de registro reversíveis — o original não tinha NVAPI/NVML, então não há controle real de clock/memória do driver a reproduzir.",
-        })
-            sp.Children.Add(new TextBlock { Text = "•  " + t, Foreground = Secondary, Margin = new Thickness(0, 4, 0, 0), TextWrapping = TextWrapping.Wrap });
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 6, 0, 0), Child = sp };
+        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 8), Child = sp };
     }
 
     static void AbrirUrl(string url)
