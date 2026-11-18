@@ -79,10 +79,12 @@ public sealed class MotorTweaks
         var anterior = t.Tipo == TipoValor.String
             ? new ValorAnterior(true, null, _reg.LerString(t.Colmeia, t.Caminho, t.NomeValor))
             : new ValorAnterior(false, _reg.LerDword(t.Colmeia, t.Caminho, t.NomeValor), null);
-        _backup[t.Id] = anterior;
-        SalvarBackup();
         if (t.Tipo == TipoValor.String) _reg.EscreverString(t.Colmeia, t.Caminho, t.NomeValor, t.ValorTexto);
         else _reg.EscreverDword(t.Colmeia, t.Caminho, t.NomeValor, t.ValorOtimizado);
+        // Registra o backup SÓ DEPOIS da gravação ter sucesso: um tweak cuja escrita falhou
+        // (ex.: chave protegida) não deve gerar um "Desfazer" fantasma.
+        _backup[t.Id] = anterior;
+        SalvarBackup();
         Auditar("aplicar", t, anterior);
         return new(t.Id, anterior.Dword, t.ValorOtimizado);
     }

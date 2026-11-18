@@ -176,7 +176,11 @@ public partial class ProtecaoView : UserControl
                 Toasts.Mostrar(this, confirmado ? TipoToast.Sucesso : TipoToast.Aviso, confirmado ? "Alteração aplicada" : "Alteração não confirmada", t.Nome,
                     confirmado ? (Action?)(() => { if (_motor.Desfazer(t)) Montar(); }) : null);
             }
-            else if (!_motor.Desfazer(t)) sw.IsChecked = true;
+            else if (!_motor.Desfazer(t))
+            {
+                sw.IsChecked = true; // mantém "ligado": não havia backup (valor aplicado fora do SevenzinTwks)
+                Toasts.Mostrar(this, TipoToast.Aviso, "Sem backup para desfazer", $"'{t.Nome}' já estava aplicado antes do SevenzinTwks — não há valor anterior salvo para restaurar.");
+            }
             else
             {
                 NotificacoesStore.Padrao.Adicionar("Proteção", $"'{t.Nome}' desfeito", "Valor anterior restaurado.");
@@ -187,7 +191,11 @@ public partial class ProtecaoView : UserControl
         catch (UnauthorizedAccessException)
         {
             sw.IsChecked = _motor.Aplicado(t);
-            MessageBox.Show("Esta otimização exige executar o SevenzinTwks como administrador.", "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
+            var msg = t.Caminho.Contains("Windows Defender", StringComparison.OrdinalIgnoreCase)
+                ? "O Windows bloqueia a gravação nesta chave do Defender (Proteção contra adulteração ativa). Desative-a em Segurança do Windows → Proteção contra vírus e ameaças → Configurações de proteção contra adulteração e tente de novo."
+                : "Sem permissão para gravar nesta chave do registro. Feche e reabra o SevenzinTwks como administrador (botão direito → Executar como administrador).";
+            Toasts.Mostrar(this, TipoToast.Erro, "Chave protegida", msg);
+            MessageBox.Show(msg, "Permissão", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
