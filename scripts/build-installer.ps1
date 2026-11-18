@@ -1,11 +1,11 @@
-# Compila o instalador do Sevenzin (User + Admin) com Inno Setup. Publica os portateis antes, se faltarem.
+# Compila o instalador dos CLIENTES (so o otimizador User) com Inno Setup. Publica o portatil antes, se faltar.
+# O app Admin e exclusivo do administrador e nunca entra no instalador.
 # Uso: powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1
 # (ASCII apenas: o Windows PowerShell 5.1 le .ps1 sem BOM como ANSI e quebra com acentos/traco longo.)
 $ErrorActionPreference = 'Stop'
 $raiz = Split-Path $PSScriptRoot -Parent
 $portateis = @(
-    (Join-Path $raiz 'dist\Sevenzin\Sevenzin.exe'),
-    (Join-Path $raiz 'dist\SevenzinAdmin\SevenzinAdmin.exe')
+    (Join-Path $raiz 'dist\Sevenzin\Sevenzin.exe')
 )
 $iss = Join-Path $PSScriptRoot 'Sevenzin.iss'
 

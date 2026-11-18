@@ -1,12 +1,11 @@
-; Instalador do Sevenzin (User + Admin) via Inno Setup 6.
-; Embrulha os portáteis self-contained de dist\ (gere-os antes com scripts\publish-portable.ps1):
-;   dist\Sevenzin\Sevenzin.exe  e  dist\SevenzinAdmin\SevenzinAdmin.exe
+; Instalador do SevenzinTwks para os CLIENTES: só o otimizador (User). O app Admin é exclusivo do
+; administrador (Geandre), fica só local e NUNCA entra neste instalador.
+; Embrulha o portátil self-contained dist\Sevenzin\Sevenzin.exe (gere com scripts\publish-portable.ps1).
 ; Compilar: scripts\build-installer.ps1  (ou abrir este .iss no Inno Setup e Build). Saída: dist\installer\.
 
 #define AppName "SevenzinTwks"
 #define AppVersion "1.0.0"
 #define AppExe "Sevenzin.exe"
-#define AdminExe "SevenzinAdmin.exe"
 #define AppPublisher "geandreac"
 
 [Setup]
@@ -39,11 +38,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "..\dist\Sevenzin\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\dist\SevenzinAdmin\{#AdminExe}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{group}\{#AppName} Admin"; Filename: "{app}\{#AdminExe}"
 Name: "{group}\Desinstalar {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 

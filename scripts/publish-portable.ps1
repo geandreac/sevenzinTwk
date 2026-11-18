@@ -17,6 +17,8 @@ foreach ($app in @(
     @{ Proj = 'src\Sevenzin.Wpf\Sevenzin.Wpf.csproj';     Saida = 'Sevenzin' },
     @{ Proj = 'src\Sevenzin.Admin\Sevenzin.Admin.csproj'; Saida = 'SevenzinAdmin' }
 )) {
+    # O app Admin e exclusivo do administrador e so existe na maquina dele (gitignored): fora dela, pula.
+    if (-not (Test-Path (Join-Path $raiz $app.Proj))) { Write-Host "== $($app.Saida): projeto ausente (so local) - pulado =="; continue }
     $out = Join-Path $dist $app.Saida
     Write-Host "== Publicando $($app.Saida) =="
     dotnet publish (Join-Path $raiz $app.Proj) @comum -o $out
