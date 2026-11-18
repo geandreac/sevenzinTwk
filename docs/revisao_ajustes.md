@@ -391,6 +391,25 @@ Divergência registrada em `validacao_paridade.md` §8.5.
 
 **Testes:** `dotnet build` 0/0 · `dotnet test` **209/209** (+2 `RedeGlobalTests`).
 
+## §19. Correções do dono: Desfazer, Limpeza Total, permissão admin e tela de GPU (17/11/2026)
+
+- **Desfazer (todos os ajustes/funcionalidades):** (a) `MotorTweaks.Aplicar` agora grava o backup **depois**
+  da escrita no registro — um tweak cuja escrita falha (ex.: chave protegida) não gera mais "Desfazer" fantasma;
+  (b) quando não há backup (valor aplicado **fora** do SevenzinTwks, ex.: resíduo do original), o toggle mantém
+  o estado e exibe toast "Sem backup para desfazer" em vez de voltar silenciosamente (Ajustes, Proteção e GPU).
+- **Tela Limpeza:** botão "Enviar à Lixeira os selecionados" → **"Limpeza Total"** na cor verde (`SuccessBrush`).
+- **Permissão admin:** causa-raiz confirmada em máquina real — as chaves `SOFTWARE\Microsoft\Windows Defender\*`
+  são **negadas até para admin elevado** (Proteção contra adulteração do Defender). Os tweaks `defender-rt-off` e
+  `defender-antispyware-off` falham com `UnauthorizedAccessException`. A mensagem "exige administrador" era
+  enganosa; agora distingue **chave protegida** (Defender/Tamper Protection) de **não elevado** (reabrir como admin).
+- **Tela GPU (paridade com o original):** novas seções — "AJUSTES DO DRIVER" (toggles funcionais HAGS/TdrDelay +
+  power gating AMD), "PERFIL GRÁFICO" (grade de 7 perfis: Básico/Casual/Competitivo/FPS/FPS 2.0/Latência/Avançado,
+  mapeados a tweaks reversíveis documentados) e "AUTO NVIDIA DEBLOAT" (diagnóstico: detecta apps NVIDIA e abre
+  "Aplicativos instalados"). **Limitação honesta:** o original não tem NVAPI/NVML (confirmado na RE), então não há
+  controle real de clock/memória/debloat do driver a reproduzir — essas partes ficam informativas/diagnóstico.
+
+**Testes:** `dotnet build` 0/0 · `dotnet test` **228/228**. Renders `gpu` e `limpeza` com exit 0.
+
 ### Validação visual (smoke, 13/11/2026)
 - Renders headless gerados para as 9 telas novas/alteradas: `assistente`, `midia`, `perfil`, `protecao`,
   `guias`, `notificacoes`, `windows`, `instaladores`, `jogos` — em `%TEMP%\opencode\renders\*.png`
