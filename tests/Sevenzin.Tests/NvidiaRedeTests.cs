@@ -8,6 +8,16 @@ namespace Sevenzin.Tests;
 public class NvidiaPainelControleTests
 {
     [Fact]
+    public void Processo_que_imprime_muito_nao_trava()
+    {
+        // ~200 KB na saída: com a saída redirecionada e não lida, isto travava para sempre (extração do 7-Zip).
+        var t = System.Threading.Tasks.Task.Run(() =>
+            NvidiaDebloat.RodarProcesso("cmd.exe", "/c for /L %i in (1,1,3000) do @echo linha de progresso do extrator %i", default));
+        Assert.True(t.Wait(TimeSpan.FromSeconds(60)), "o processo travou");
+        Assert.Equal(0, t.Result);
+    }
+
+    [Fact]
     public void Prefere_o_classico_depois_o_da_loja_e_null_sem_nenhum()
     {
         Assert.EndsWith("nvcplui.exe", Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(true, true)!.Value.Exe);

@@ -523,7 +523,7 @@ public static class NvidiaDebloat
 
             Log("==> Extraindo pacote do driver (1–2 min)...");
             onProgresso(new ProgressoNvidiaDebloat(2, 10, "Extraindo pacote..."));
-            int rcExtracao = RodarProcesso(extrator, $"x \"{fi.FullName}\" -o\"{pastaTemp}\" -y -bsp1 -bso0", ct);
+            int rcExtracao = RodarProcesso(extrator, $"x \"{fi.FullName}\" -o\"{pastaTemp}\" -y -bsp0 -bso0", ct);
             if (rcExtracao != 0)
             {
                 Log("[X] Falha ao extrair o pacote do driver NVIDIA.");
@@ -757,14 +757,14 @@ public static class NvidiaDebloat
         }
     }
 
-    static int RodarProcesso(string exe, string args, CancellationToken ct)
+    /// <summary>Roda e espera. Sem redirecionar a saída: redirecionar sem ler enche o buffer do pipe (~4 KB) e o
+    /// processo filho trava para sempre (era o que congelava a extração do 7-Zip, que imprime o progresso).</summary>
+    public static int RodarProcesso(string exe, string args, CancellationToken ct)
     {
         var psi = new ProcessStartInfo(exe, args)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
         };
         using var proc = Process.Start(psi) ?? throw new InvalidOperationException($"Falha ao iniciar {exe}");
         using var reg = ct.Register(() => { try { if (!proc.HasExited) proc.Kill(true); } catch { } });
