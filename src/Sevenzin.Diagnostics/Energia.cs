@@ -54,6 +54,17 @@ public static class GestorEnergia
     public static string? GuidAtivo() => ExtrairGuid(Rodar("/getactivescheme"));
     public static string? NomeAtivo() => ExtrairNome(Rodar("/getactivescheme"));
 
+    /// <summary>true se o plano ativo é o "SevenzinTwks"; null se não deu para ler. Só leitura.</summary>
+    public static bool? PlanoSevenzinAtivo()
+    {
+        try
+        {
+            var ativo = GuidAtivo();
+            return ativo is null ? null : GuidsPorNome(Rodar("/list"), Nome).Contains(ativo, StringComparer.OrdinalIgnoreCase);
+        }
+        catch { return null; }
+    }
+
     /// <summary>true = hibernação habilitada (HibernateEnabled=1); null = chave ausente/indeterminado. Só leitura.</summary>
     public static bool? HibernacaoAtiva()
     {
