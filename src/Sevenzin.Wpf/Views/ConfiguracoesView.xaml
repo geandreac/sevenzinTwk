@@ -42,17 +42,43 @@
                 <StackPanel x:Name="GeralPanel">
                     <TextBlock Text="INICIALIZAÇÃO" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,24">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,16,0">
-                                <TextBlock Text="Iniciar com o Windows" FontSize="14"/>
-                                <TextBlock Text="Abre o SevenzinTwks automaticamente como Administrador ao entrar no Windows." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <ToggleButton x:Name="SwInicio" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Inicio_Click"/>
-                        </Grid>
+                        <StackPanel>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Iniciar com o Windows" FontSize="14"/>
+                                    <TextBlock Text="Abre o SevenzinTwks automaticamente como Administrador ao entrar no Windows." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleButton x:Name="SwInicio" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Inicio_Click"/>
+                            </Grid>
+                            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,6,0,6"/>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Iniciar minimizado na bandeja" FontSize="14"/>
+                                    <TextBlock Text="Ao iniciar com o Windows, recolhe o aplicativo diretamente para a bandeja perto do relógio (Tray Icons)." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleButton x:Name="SwInicioMinimizado" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="InicioMinimizado_Click"/>
+                            </Grid>
+                            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,6,0,6"/>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Login automático" FontSize="14"/>
+                                    <TextBlock Text="Entra na conta automaticamente usando credenciais salvas sem travar na tela de login." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleButton x:Name="SwLoginAuto" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="LoginAuto_Click"/>
+                            </Grid>
+                        </StackPanel>
                     </Border>
 
                     <TextBlock Text="COMPORTAMENTO DO APLICATIVO" Style="{StaticResource SectionLabel}"/>

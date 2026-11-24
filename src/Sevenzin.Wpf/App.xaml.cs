@@ -13,7 +13,7 @@ public partial class App : Application
     public static RegistroRecuperacaoFalha? RecuperacaoRecente { get; set; }
     static int _relancando;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -51,6 +51,9 @@ public partial class App : Application
         // Em segundo plano: ler o log do Windows não pode atrasar a abertura.
         _ = Task.Run(() => MonitorReinicio.VerificarENotificar(NotificacoesStore.Padrao));
 
+        var prefs = PreferenciasUiStore.Padrao.Carregar();
+        bool deveIniciarMinimizado = StartupHelper.DeveIniciarMinimizado(e.Args, prefs.IniciarMinimizadoNaBandeja);
+
         // Verifica se houve fechamento inesperado na sessão anterior e registra em Notificações
         var recuperacao = RecuperacaoFalhaStore.Padrao.ConsumirPendente();
         bool veioDeAutoReabertura = Array.IndexOf(e.Args, "--recuperado") >= 0;
@@ -73,22 +76,48 @@ public partial class App : Application
                 {
                     Servicos.Sessao.Abrir(u);
                     RecuperacaoFalhaStore.Padrao.MarcarSessaoAtiva(u.Email);
-                    new MainWindow().Show();
+                    var mwRec = new MainWindow();
+                    if (deveIniciarMinimizado)
+                        mwRec.IniciarMinimizadoNaBandeja();
+                    else
+                        mwRec.Show();
                     return;
                 }
             }
         }
 
-        var login = new LoginWindow();
-        if (login.ShowDialog() == true && Servicos.Sessao.Valida)
+        // Tenta autenticação automática com credenciais salvas sem travar na tela de login
+        bool logado = false;
+        if (prefs.LoginAutomatico && CredenciaisLembradasStore.Padrao.TemCredenciais())
         {
-            RecuperacaoFalhaStore.Padrao.MarcarSessaoAtiva(Servicos.Sessao.Atual?.Usuario.Email);
-            new MainWindow().Show();
+            logado = await AutenticadorLoginAutomatico.TentarAsync(
+                maxTentativas: deveIniciarMinimizado ? 4 : 2,
+                intervaloMs: 1500);
+        }
+
+        if (!logado)
+        {
+            var login = new LoginWindow();
+            if (login.ShowDialog() == true && Servicos.Sessao.Valida)
+            {
+                RecuperacaoFalhaStore.Padrao.MarcarSessaoAtiva(Servicos.Sessao.Atual?.Usuario.Email);
+            }
+            else
+            {
+                RecuperacaoFalhaStore.Padrao.MarcarEncerramentoNormal();
+                Shutdown();
+                return;
+            }
+        }
+
+        var mw = new MainWindow();
+        if (deveIniciarMinimizado)
+        {
+            mw.IniciarMinimizadoNaBandeja();
         }
         else
         {
-            RecuperacaoFalhaStore.Padrao.MarcarEncerramentoNormal();
-            Shutdown();
+            mw.Show();
         }
     }
 

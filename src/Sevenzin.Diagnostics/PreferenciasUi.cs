@@ -2,10 +2,12 @@ using System.Text.Json;
 
 namespace Sevenzin.Diagnostics;
 
-/// <summary>Preferências de comportamento da janela (bandeja do sistema).</summary>
+/// <summary>Preferências de comportamento da janela e inicialização (bandeja do sistema, login automático).</summary>
 public sealed record PreferenciasUi(
     bool MinimizarParaBandeja = false,
-    bool FecharParaBandeja = false);
+    bool FecharParaBandeja = false,
+    bool IniciarMinimizadoNaBandeja = true,
+    bool LoginAutomatico = true);
 
 /// <summary>Armazenamento atômico local em `%LOCALAPPDATA%\Sevenzin\preferencias-ui.json`.</summary>
 public sealed class PreferenciasUiStore

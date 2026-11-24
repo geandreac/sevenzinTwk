@@ -29,6 +29,8 @@ public partial class ConfiguracoesView : UserControl
         var prefsUi = PreferenciasUiStore.Padrao.Carregar();
         SwMinBandeja.IsChecked = prefsUi.MinimizarParaBandeja;
         SwFecharBandeja.IsChecked = prefsUi.FecharParaBandeja;
+        SwInicioMinimizado.IsChecked = prefsUi.IniciarMinimizadoNaBandeja;
+        SwLoginAuto.IsChecked = prefsUi.LoginAutomatico;
         PastaTxt.Text = Pasta;
         VersaoTxt.Text = $"SevenzinTwks {VersaoApp.ToString(3)} · reconstrução segura (WPF)";
         var cfgAssistente = new ConfigAssistenteStore().Carregar();
@@ -124,11 +126,42 @@ public partial class ConfiguracoesView : UserControl
         return k?.GetValue(RunName) != null;
     }
 
+    void InicioMinimizado_Click(object sender, RoutedEventArgs e)
+    {
+        var antigo = PreferenciasUiStore.Padrao.Carregar();
+        var novo = antigo with { IniciarMinimizadoNaBandeja = SwInicioMinimizado.IsChecked == true };
+        PreferenciasUiStore.Padrao.Salvar(novo);
+        Toasts.Mostrar(
+            this,
+            TipoToast.Sucesso,
+            "Inicialização na bandeja atualizada",
+            novo.IniciarMinimizadoNaBandeja
+                ? "O SevenzinTwks iniciará recolhido nos Tray Icons."
+                : "O SevenzinTwks iniciará com a janela aberta na tela.");
+    }
+
+    void LoginAuto_Click(object sender, RoutedEventArgs e)
+    {
+        var antigo = PreferenciasUiStore.Padrao.Carregar();
+        var novo = antigo with { LoginAutomatico = SwLoginAuto.IsChecked == true };
+        PreferenciasUiStore.Padrao.Salvar(novo);
+        Toasts.Mostrar(
+            this,
+            TipoToast.Sucesso,
+            "Login automático atualizado",
+            novo.LoginAutomatico
+                ? "Login automático ativado — entra direto com as credenciais salvas."
+                : "Login automático desativado — sempre exibirá a tela de login.");
+    }
+
     void Bandeja_Click(object sender, RoutedEventArgs e)
     {
-        var novo = new PreferenciasUi(
-            MinimizarParaBandeja: SwMinBandeja.IsChecked == true,
-            FecharParaBandeja: SwFecharBandeja.IsChecked == true);
+        var antigo = PreferenciasUiStore.Padrao.Carregar();
+        var novo = antigo with
+        {
+            MinimizarParaBandeja = SwMinBandeja.IsChecked == true,
+            FecharParaBandeja = SwFecharBandeja.IsChecked == true,
+        };
         PreferenciasUiStore.Padrao.Salvar(novo);
 
         if (Window.GetWindow(this) is MainWindow mw)
@@ -154,7 +187,7 @@ public partial class ConfiguracoesView : UserControl
             if (SwInicio.IsChecked == true)
             {
                 using var p = Process.Start(new ProcessStartInfo("schtasks.exe",
-                    $"/Create /TN \"{NomeTarefaStartup}\" /TR \"\\\"{exe}\\\"\" /SC ONLOGON /RL HIGHEST /F")
+                    $"/Create /TN \"{NomeTarefaStartup}\" /TR \"\\\"{exe}\\\" --autostart\" /SC ONLOGON /RL HIGHEST /F")
                 {
                     CreateNoWindow = true,
                     UseShellExecute = false,
@@ -165,7 +198,7 @@ public partial class ConfiguracoesView : UserControl
                 if (p is null || p.ExitCode != 0)
                 {
                     using var k = Registry.CurrentUser.CreateSubKey(RunPath, writable: true);
-                    k.SetValue(RunName, $"\"{exe}\"", RegistryValueKind.String);
+                    k.SetValue(RunName, $"\"{exe}\" --autostart", RegistryValueKind.String);
                 }
             }
             else

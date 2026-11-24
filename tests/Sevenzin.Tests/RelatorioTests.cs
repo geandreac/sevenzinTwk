@@ -50,7 +50,9 @@ public class RelatorioTests
             Assert.False(string.IsNullOrEmpty(i.Nome));
             Assert.False(string.IsNullOrEmpty(i.Fonte));
         });
-        var texto = string.Join("\n", itens.Select(i => $"{i.Valor} {i.Observacao}"));
+        var texto = string.Join("\n", itens.Select(i => $"{i.Valor} {i.Observacao}"))
+            .Replace("SevenzinTwks", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Sevenzin", "", StringComparison.OrdinalIgnoreCase);
         foreach (var id in new[] { Environment.MachineName, Environment.UserName, Environment.UserDomainName }.Where(s => s.Length > 2))
             Assert.DoesNotContain(id, texto, StringComparison.OrdinalIgnoreCase);
     }

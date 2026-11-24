@@ -86,10 +86,22 @@ public partial class MainWindow : Window
     {
         if (App.ModoRender) return;
         var prefs = PreferenciasUiStore.Padrao.Carregar();
-        if (prefs.MinimizarParaBandeja || prefs.FecharParaBandeja)
+        if (prefs.MinimizarParaBandeja || prefs.FecharParaBandeja || !IsVisible)
             _bandeja.Exibir();
         else if (IsVisible)
             _bandeja.Ocultar();
+    }
+
+    /// <summary>
+    /// Inicia o SevenzinTwks diretamente na bandeja do sistema (perto do relógio)
+    /// sem abrir ou piscar a janela na tela do usuário.
+    /// </summary>
+    public void IniciarMinimizadoNaBandeja()
+    {
+        _bandeja.Exibir();
+        WindowState = WindowState.Minimized;
+        ShowInTaskbar = false;
+        Hide();
     }
 
     void MainWindow_StateChanged(object? sender, EventArgs e)
@@ -104,6 +116,7 @@ public partial class MainWindow : Window
 
     public void RestaurarDaBandeja()
     {
+        ShowInTaskbar = true;
         Show();
         if (WindowState == WindowState.Minimized)
             WindowState = WindowState.Normal;

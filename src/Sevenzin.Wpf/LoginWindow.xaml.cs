@@ -12,13 +12,6 @@ namespace Sevenzin.Wpf;
 /// Se não houver nenhuma conta e nenhum seed, permite criar o primeiro administrador (bootstrap).</summary>
 public partial class LoginWindow : Window
 {
-    static readonly string ArqEmail = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "ultimo_email.txt");
-    // Senha "lembrada" é guardada CIFRADA por DPAPI (escopo do usuário do Windows): só este usuário, nesta máquina,
-    // consegue decifrar. Nunca em texto puro. Serve apenas para preencher o login do próprio app.
-    static readonly string ArqSenha = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "senha_lembrada.bin");
-
     /// <summary>Ligado pelo app Admin antes de abrir o login, para diferenciar a tela (selo "Painel administrativo").</summary>
     public static bool ModoAdmin;
     const string SubtituloAdmin = "Área restrita para administradores";
@@ -68,8 +61,18 @@ public partial class LoginWindow : Window
         {
             try
             {
-                if (File.Exists(ArqEmail)) { Email.Text = File.ReadAllText(ArqEmail).Trim(); Lembrar.IsChecked = Email.Text.Length > 0; }
-                if (Lembrar.IsChecked == true && CarregarSenhaLembrada() is { } s) Senha.Password = s;
+                var (salvoEmail, salvoSenha) = CredenciaisLembradasStore.Padrao.Carregar();
+                if (!string.IsNullOrWhiteSpace(salvoEmail))
+                {
+                    Email.Text = salvoEmail;
+                    Lembrar.IsChecked = true;
+                    if (!string.IsNullOrEmpty(salvoSenha))
+                        Senha.Password = salvoSenha;
+                }
+                else
+                {
+                    Lembrar.IsChecked = true;
+                }
             }
             catch { }
         }
@@ -351,7 +354,7 @@ public partial class LoginWindow : Window
         if (!r.Ok) { Erro(r.Mensagem ?? "Não foi possível salvar a nova senha."); return; }
 
         // A senha "lembrada" (DPAPI) ficou velha: apaga para não preencher a antiga no próximo login.
-        try { if (File.Exists(ArqSenha)) File.Delete(ArqSenha); } catch { }
+        CredenciaisLembradasStore.Padrao.Limpar();
         RedefSenha.Clear(); RedefConfirmar.Clear(); RedefCodigo.Clear();
         _timerReenvio.Stop();
         Subtitulo.Text = "Tudo certo";
@@ -371,38 +374,14 @@ public partial class LoginWindow : Window
         (Email.Text.Length > 0 ? (Control)Senha : Email).Focus();
     }
 
-    /// <summary>Com "Lembrar de mim" marcado, guarda o e-mail e a senha (cifrada por DPAPI) para preencher o próximo
-    /// login. Desmarcado, apaga os dois. A senha nunca é gravada em texto puro.</summary>
+    /// <summary>Com "Lembrar de mim" marcado, guarda o e-mail e a senha (cifrada por DPAPI) para o próximo
+    /// login automático. Desmarcado, limpa as credenciais salvas. A senha nunca é gravada em texto puro.</summary>
     void LembrarCredenciais(string email, string senha)
     {
-        try
-        {
-            if (Lembrar.IsChecked == true)
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(ArqEmail)!);
-                File.WriteAllText(ArqEmail, email.Trim());
-                var cifrado = ProtectedData.Protect(Encoding.UTF8.GetBytes(senha), null, DataProtectionScope.CurrentUser);
-                File.WriteAllBytes(ArqSenha, cifrado);
-            }
-            else
-            {
-                if (File.Exists(ArqEmail)) File.Delete(ArqEmail);
-                if (File.Exists(ArqSenha)) File.Delete(ArqSenha);
-            }
-        }
-        catch { }
-    }
-
-    /// <summary>Decifra a senha lembrada (DPAPI, escopo do usuário). null se não há, está corrompida ou é de outro usuário/máquina.</summary>
-    static string? CarregarSenhaLembrada()
-    {
-        try
-        {
-            if (!File.Exists(ArqSenha)) return null;
-            var claro = ProtectedData.Unprotect(File.ReadAllBytes(ArqSenha), null, DataProtectionScope.CurrentUser);
-            return Encoding.UTF8.GetString(claro);
-        }
-        catch { return null; }
+        if (Lembrar.IsChecked == true)
+            CredenciaisLembradasStore.Padrao.Salvar(email, senha);
+        else
+            CredenciaisLembradasStore.Padrao.Limpar();
     }
 
     void Erro(string msg)
