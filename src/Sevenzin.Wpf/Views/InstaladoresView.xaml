@@ -6,8 +6,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Margin="0,8,0,12">
-            <TextBlock Text="SOFTWARE" Style="{StaticResource Eyebrow}"/>
+        <StackPanel Grid.Row="0" Margin="0,8,0,22">
             <TextBlock Text="Instaladores" Style="{StaticResource TituloTela}"/>
             <TextBlock Text="Só fontes oficiais. O download é verificado por assinatura (e hash, quando fixado) ANTES de permitir executar. Nada é baixado nem executado sem você — ao contrário do original." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>

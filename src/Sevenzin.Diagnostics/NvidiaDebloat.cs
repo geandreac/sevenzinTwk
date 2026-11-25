@@ -389,8 +389,8 @@ public static class NvidiaDebloat
     public static (string Exe, string Args)? ComandoPainelControle(bool legadoExiste, bool appLojaInstalado) =>
         legadoExiste ? (PainelLegado, "") : appLojaInstalado ? ("explorer.exe", PainelLoja) : null;
 
-    /// <summary>Abre o Painel de Controle NVIDIA após a instalação. Nunca lança: é só conveniência.</summary>
-    static void AbrirPainelControle(Action<string> log)
+    /// <summary>Abre o Painel de Controle NVIDIA (clássico `nvcplui.exe` ou app DCH da Microsoft Store). Nunca lança.</summary>
+    public static bool AbrirPainelControle(Action<string>? log = null)
     {
         try
         {
@@ -398,13 +398,31 @@ public static class NvidiaDebloat
                 RodarPowerShellLeitura("(Get-AppxPackage -Name NVIDIACorp.NVIDIAControlPanel).Name").Length > 0);
             if (cmd is null)
             {
-                log("  [!] Painel de Controle NVIDIA ainda não está instalado. Com driver DCH ele chega pela Microsoft Store após reiniciar.");
-                return;
+                log?.Invoke("  [!] Painel de Controle NVIDIA ainda não encontrado (driver DCH pode concluir registro pela Store).");
+                return false;
             }
             Process.Start(new ProcessStartInfo(cmd.Value.Exe, cmd.Value.Args) { UseShellExecute = true });
-            log("  [OK] Painel de Controle NVIDIA aberto.");
+            log?.Invoke("  [OK] Painel de Controle NVIDIA aberto.");
+            return true;
         }
-        catch (Exception e) { log("  [!] Não foi possível abrir o Painel de Controle NVIDIA: " + e.Message); }
+        catch (Exception e)
+        {
+            log?.Invoke("  [!] Não foi possível abrir o Painel de Controle NVIDIA: " + e.Message);
+            return false;
+        }
+    }
+
+    /// <summary>Tenta abrir o Painel de Controle NVIDIA após o reinício com breves tentativas enquanto serviços sobem.</summary>
+    public static async Task<bool> AbrirPainelControleComEsperaAsync(Action<string>? log = null, int maxTentativas = 4, int intervaloMs = 2000)
+    {
+        for (int i = 1; i <= maxTentativas; i++)
+        {
+            if (AbrirPainelControle(i == maxTentativas ? log : null))
+                return true;
+            if (i < maxTentativas)
+                await Task.Delay(intervaloMs);
+        }
+        return false;
     }
 
     static string RodarPowerShellLeitura(string comando)
@@ -617,9 +635,8 @@ public static class NvidiaDebloat
                 }
             }
             Log($"  [OK] Espaço temporário liberado: {FormatarTamanho(liberado)}");
-            AbrirPainelControle(Log);
-            Log($"[OK] Concluído com sucesso (log salvo em {arqLog}). Reinicie o computador.");
-            onProgresso(new ProgressoNvidiaDebloat(6, 100, "Concluído. Reinicie o PC.", Concluido: true));
+            Log($"[OK] Driver limpo instalado com sucesso (log salvo em {arqLog}). Preparando reinício para finalizar e abrir o Painel NVIDIA...");
+            onProgresso(new ProgressoNvidiaDebloat(6, 100, "Instalação concluída — reiniciando em 10s...", Concluido: true));
             return 0;
         }
         catch (OperationCanceledException)

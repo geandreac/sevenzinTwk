@@ -8,13 +8,24 @@
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0">
             <TextBlock Text="Ajustes" Style="{StaticResource TituloTela}" Margin="0,8,0,8"/>
-            <Border x:Name="ResumoPill" Background="{StaticResource Surface2Brush}" CornerRadius="8" Padding="12,5" HorizontalAlignment="Left" Margin="0,0,0,8">
-                <TextBlock x:Name="ResumoTxt" FontWeight="SemiBold" FontSize="13"/>
-            </Border>
-            <TextBlock x:Name="Contador" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,20"/>
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                    <TextBlock x:Name="ResumoTxt" FontWeight="SemiBold" FontSize="15"/>
+                    <TextBlock x:Name="Contador" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                </StackPanel>
+                <TextBox x:Name="BuscaBox" Grid.Column="1" Width="280" Style="{StaticResource DarkBox}" Tag="Buscar ajuste" TextChanged="Busca_Changed"
+                         VerticalAlignment="Center" Margin="0,0,16,0" AutomationProperties.Name="Buscar ajuste"/>
+            </Grid>
         </StackPanel>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,24">
-            <StackPanel x:Name="Lista"/>
+            <Grid>
+                <StackPanel x:Name="Lista"/>
+                <TextBlock x:Name="SemResultado" Visibility="Collapsed" Foreground="{StaticResource TextMutedBrush}" FontSize="13" Margin="0,8,0,0"/>
+            </Grid>
         </ScrollViewer>
     </Grid>
 </UserControl>

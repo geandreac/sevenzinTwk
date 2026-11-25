@@ -38,7 +38,7 @@ public partial class PerfilView : UserControl
         if (eu is null) { Lista.Children.Add(new TextBlock { Text = "Sem sessão ativa.", Foreground = Muted }); return; }
 
         // CONTA
-        Lista.Children.Add(new TextBlock { Text = "CONTA", Style = SectionStyle });
+        Lista.Children.Add(new TextBlock { Text = "Conta", Style = SectionStyle });
         var conta = new StackPanel();
         conta.Children.Add(Campo("E-mail", eu.Email));
         conta.Children.Add(Campo("Papel", eu.Papel == PapelUsuario.Administrador ? "Administrador" : "Usuário"));
@@ -46,7 +46,7 @@ public partial class PerfilView : UserControl
         Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = conta });
 
         // 2FA
-        Lista.Children.Add(new TextBlock { Text = "VERIFICAÇÃO EM DOIS FATORES (2FA)", Style = SectionStyle });
+        Lista.Children.Add(new TextBlock { Text = "Verificação em dois fatores", Style = SectionStyle });
         if (Servicos.UsaSupabase)
         {
             Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = Controle2FA.Criar() });
@@ -78,7 +78,7 @@ public partial class PerfilView : UserControl
 
         // LICENÇA
         var lic = _licenca.Carregar();
-        Lista.Children.Add(new TextBlock { Text = "LICENÇA LOCAL", Style = SectionStyle });
+        Lista.Children.Add(new TextBlock { Text = "Licença local", Style = SectionStyle });
         var li = new StackPanel();
         li.Children.Add(new TextBlock
         {
@@ -121,7 +121,7 @@ public partial class PerfilView : UserControl
         // CONVITES (só o ADMINISTRADOR ÚNICO — Geandre — vê e gera códigos)
         if (Servicos.Sessao.PodeAcessarAdmin)
         {
-            Lista.Children.Add(new TextBlock { Text = "CONVITES (ADMINISTRADOR ÚNICO)", Style = SectionStyle });
+            Lista.Children.Add(new TextBlock { Text = "Convites (administrador único)", Style = SectionStyle });
             var conv = new StackPanel();
             conv.Children.Add(new TextBlock
             {
@@ -140,7 +140,7 @@ public partial class PerfilView : UserControl
         }
 
         // RESUMO LOCAL
-        Lista.Children.Add(new TextBlock { Text = "RESUMO LOCAL", Style = SectionStyle });
+        Lista.Children.Add(new TextBlock { Text = "Resumo local", Style = SectionStyle });
         var res = new StackPanel();
         var catalogo = new CatalogoJogos();
         int capturas = Directory.Exists(CapturaTela.PastaCapturas) ? Directory.GetFiles(CapturaTela.PastaCapturas, "*.png").Length : 0;

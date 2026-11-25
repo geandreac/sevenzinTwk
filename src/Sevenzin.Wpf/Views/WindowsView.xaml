@@ -6,8 +6,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Margin="0,8,0,12">
-            <TextBlock Text="SISTEMA" Style="{StaticResource Eyebrow}"/>
+        <StackPanel Grid.Row="0" Margin="0,8,0,22">
             <TextBlock Text="Windows" Style="{StaticResource TituloTela}"/>
             <TextBlock Text="Informações do Windows e recomendações seguras. Toda mudança real é reversível, auditada e confirmada por você — na tela Ajustes. O construtor de ISO/debloat do programa original foi removido por segurança." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>

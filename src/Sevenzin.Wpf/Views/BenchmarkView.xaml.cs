@@ -28,9 +28,16 @@ public partial class BenchmarkView : UserControl
         });
     }
 
-    void Mostrar(ResumoFrametime r) => ResGrid.ItemsSource = new[]
+    double _fps;
+    void Mostrar(ResumoFrametime r)
     {
-        new LinhaKV("FPS médio", $"{r.FpsMedio:0.0}"),
+        bool primeira = Resultado.Visibility != Visibility.Visible;
+        Resultado.Visibility = Visibility.Visible;
+        if (primeira) Movimento.Entrar(Resultado);
+        Movimento.Contar(_fps, r.FpsMedio, v => FpsTxt.Text = $"{v:0.0}");
+        _fps = r.FpsMedio;
+        ResGrid.ItemsSource = new[]
+        {
         new LinhaKV("Frametime médio", $"{r.FrametimeMedioMs:0.00} ms"),
         new LinhaKV("Frametime p95", $"{r.P95Ms:0.00} ms"),
         new LinhaKV("Frametime p99", $"{r.P99Ms:0.00} ms"),
@@ -38,7 +45,8 @@ public partial class BenchmarkView : UserControl
         new LinhaKV("Desvio do frametime", $"{r.DesvioMs:0.00} ms"),
         new LinhaKV($"Stutters (> {r.StutterLimiarMs:0.0} ms)", r.Stutters.ToString()),
         new LinhaKV("Quadros medidos", r.Quadros.ToString()),
-    };
+        };
+    }
 }
 
 public sealed record LinhaKV(string Metrica, string Valor);

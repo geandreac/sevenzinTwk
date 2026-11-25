@@ -6,8 +6,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Margin="0,8,0,12">
-            <TextBlock Text="HARDWARE" Style="{StaticResource Eyebrow}"/>
+        <StackPanel Grid.Row="0" Margin="0,8,0,22">
             <TextBlock Text="BIOS / UEFI" Style="{StaticResource TituloTela}"/>
             <TextBlock Text="Diagnóstico somente leitura. O SevenzinTwks NÃO altera BIOS/UEFI, Secure Boot, TPM, ordem de boot, voltagem nem clocks — apenas informa e orienta." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>

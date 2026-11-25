@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Input;
 using System.Windows.Media;
 using Sevenzin.Diagnostics;
 
@@ -16,8 +15,6 @@ public partial class AjustesView : UserControl
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Secondary => (Brush)Application.Current.Resources["TextSecondaryBrush"];
     static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
-    static Brush SuccessBg => new SolidColorBrush((Color)Application.Current.Resources["SuccessBg"]);
-    static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
     static Style Switch => (Style)Application.Current.Resources["ToggleSwitch"];
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style SectionStyle => (Style)Application.Current.Resources["SectionLabel"];
@@ -29,20 +26,20 @@ public partial class AjustesView : UserControl
         InitializeComponent();
         foreach (var grupo in CatalogoTweaks.Todos.GroupBy(t => t.Categoria))
         {
-            Lista.Children.Add(new TextBlock { Text = grupo.Key.ToUpperInvariant(), Style = SectionStyle });
-            Lista.Children.Add(Cartao(grupo.Select(LinhaTweak)));
+            Lista.Children.Add(new TextBlock { Text = grupo.Key, Style = SectionStyle });
+            Lista.Children.Add(Cartao(grupo.Select(t => (LinhaTweak(t), $"{t.Nome} {t.Descricao} {t.Categoria}"))));
         }
         // Rede por adaptador (dinâmica): 5 tweaks por interface, valores do original, reversíveis.
-        Lista.Children.Add(new TextBlock { Text = "REDE (POR ADAPTADOR)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(new TextBlock { Text = "Rede por adaptador", Style = SectionStyle });
         Lista.Children.Add(CartaoRede());
         // Rede global (TCP): autotuning normal + CTCP, valores do original (netsh), reversível.
-        Lista.Children.Add(new TextBlock { Text = "REDE GLOBAL (TCP)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(new TextBlock { Text = "Rede global (TCP)", Style = SectionStyle });
         Lista.Children.Add(CartaoRedeGlobal());
         // Memória do sistema (MMAgent: Compressão de memória + Application PreLaunch) — reversível.
-        Lista.Children.Add(new TextBlock { Text = "MEMÓRIA DO SISTEMA (MMAGENT)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(new TextBlock { Text = "Memória do sistema (MMAgent)", Style = SectionStyle });
         Lista.Children.Add(CartaoMmAgent());
         // Offloads e economia de energia da placa de rede (NetAdapter cmdlets) — reversível.
-        Lista.Children.Add(new TextBlock { Text = "REDE AVANÇADA (OFFLOADS E ECONOMIA DO ADAPTADOR)", Style = SectionStyle, Margin = new Thickness(0, 6, 0, 10) });
+        Lista.Children.Add(new TextBlock { Text = "Rede avançada: offloads e economia do adaptador", Style = SectionStyle });
         Lista.Children.Add(CartaoOffloadsRede());
         AtualizarContador();
     }
@@ -267,17 +264,49 @@ public partial class AjustesView : UserControl
         }
     }
 
-    static Border Cartao(IEnumerable<UIElement> linhas)
+    static Border Cartao(IEnumerable<(UIElement Linha, string Busca)> linhas)
     {
         var sp = new StackPanel();
         bool primeiro = true;
-        foreach (var l in linhas)
+        foreach (var (l, busca) in linhas)
         {
-            if (!primeiro) sp.Children.Add(new Border { Height = 1, Background = (Brush)Application.Current.Resources["BorderDefaultBrush"], Margin = new Thickness(0, 4, 0, 4) });
-            sp.Children.Add(l);
+            // a divisória é a borda de cima da própria linha: some junto quando a busca esconde a linha
+            sp.Children.Add(new Border
+            {
+                Child = l, Tag = busca, BorderBrush = (Brush)Application.Current.Resources["BorderDefaultBrush"],
+                BorderThickness = new Thickness(0, primeiro ? 0 : 1, 0, 0), Padding = new Thickness(0, 4, 0, 4),
+            });
             primeiro = false;
         }
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 20), Child = sp };
+        return new Border { Style = CardStyle, Padding = new Thickness(18, 4, 18, 4), Margin = new Thickness(0, 0, 0, 24), Child = sp };
+    }
+
+    // Filtra as linhas pelo texto; seção sem resultado some com o título. Os cartões de rede/memória buscam pelo título.
+    void Busca_Changed(object sender, TextChangedEventArgs e)
+    {
+        var termo = BuscaBox.Text.Trim();
+        bool Bate(string s) => termo.Length == 0 || System.Globalization.CultureInfo.InvariantCulture.CompareInfo.IndexOf(s, termo,
+            System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreNonSpace) >= 0;
+        bool algum = false;
+        for (int i = 0; i + 1 < Lista.Children.Count; i += 2)
+        {
+            var titulo = (TextBlock)Lista.Children[i];
+            var cartao = (Border)Lista.Children[i + 1];
+            bool visivel = false;
+            if (cartao.Child is StackPanel sp && sp.Children.OfType<Border>().Where(b => b.Tag is string).ToList() is { Count: > 0 } linhas)
+                foreach (var b in linhas)
+                {
+                    bool v = Bate((string)b.Tag);
+                    b.Visibility = v ? Visibility.Visible : Visibility.Collapsed;
+                    b.BorderThickness = new Thickness(0, v && visivel ? 1 : 0, 0, 0);
+                    visivel |= v;
+                }
+            else visivel = Bate(titulo.Text);
+            titulo.Visibility = cartao.Visibility = visivel ? Visibility.Visible : Visibility.Collapsed;
+            algum |= visivel;
+        }
+        SemResultado.Text = $"Nenhum ajuste corresponde a \"{termo}\".";
+        SemResultado.Visibility = algum ? Visibility.Collapsed : Visibility.Visible;
     }
 
     UIElement LinhaTweak(Tweak t)
@@ -287,6 +316,7 @@ public partial class AjustesView : UserControl
         var g = LinhaBase(t.Nome, desc, out _);
 
         var sw = new ToggleButton { Style = Switch, VerticalAlignment = VerticalAlignment.Center, IsChecked = _motor.Aplicado(t) };
+        System.Windows.Automation.AutomationProperties.SetName(sw, t.Nome);
         var chip = ChipAplicado(sw, t);
         sw.Tag = new LinhaRef(t, chip);
         sw.Click += Toggle_Click;
@@ -304,11 +334,12 @@ public partial class AjustesView : UserControl
     Border ChipAplicado(ToggleButton sw, Tweak t)
     {
         var sp = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-        sp.Children.Add(new TextBlock { Text = "● Aplicado", Foreground = Success, FontSize = 11, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
-        var des = new TextBlock { Text = "Desfazer", Foreground = Secondary, FontSize = 11, Margin = new Thickness(8, 0, 0, 0), Cursor = Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, TextDecorations = TextDecorations.Underline };
-        des.MouseLeftButtonUp += (_, _) => { sw.IsChecked = false; Toggle_Click(sw, new RoutedEventArgs()); };
+        sp.Children.Add(new TextBlock { Text = "Aplicado", Foreground = Success, FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
+        var des = new Button { Content = "Desfazer", Style = (Style)Application.Current.Resources["LinkButton"], Foreground = Secondary, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+        System.Windows.Automation.AutomationProperties.SetName(des, $"Desfazer {t.Nome}");
+        des.Click += (_, _) => { sw.IsChecked = false; Toggle_Click(sw, new RoutedEventArgs()); };
         sp.Children.Add(des);
-        return new Border { Background = SuccessBg, CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Child = sp, Visibility = _motor.Aplicado(t) ? Visibility.Visible : Visibility.Collapsed };
+        return new Border { Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Child = sp, Visibility = _motor.Aplicado(t) ? Visibility.Visible : Visibility.Collapsed };
     }
 
     static Grid LinhaBase(string titulo, string descricao, out StackPanel left)
@@ -406,7 +437,6 @@ public partial class AjustesView : UserControl
         bool tudo = ativos == total && total > 0;
         ResumoTxt.Text = (tudo ? "Otimizado · " : "") + $"{ativos} de {total} ajustes ativos";
         ResumoTxt.Foreground = tudo ? Success : Secondary;
-        ResumoPill.Background = tudo ? SuccessBg : Surface2;
         Contador.Text = "Reversível e auditado · máquina (HKLM) pede admin · meça A/B antes de confiar no ganho";
     }
 }

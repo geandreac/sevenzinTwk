@@ -30,14 +30,14 @@ public partial class WindowsView : UserControl
         var itens = Relatorio.Coletar();
         string Val(string n) => itens.FirstOrDefault(i => i.Nome == n)?.Valor ?? "—";
 
-        Raiz.Children.Add(new TextBlock { Text = "ESTADO (SOMENTE LEITURA)", Style = SectionStyle });
+        Raiz.Children.Add(new TextBlock { Text = "Estado", Style = SectionStyle });
         var linhas = new StackPanel();
         linhas.Children.Add(Linha("Edição", Val("Windows")));
         linhas.Children.Add(Linha("Versão / build", Val("Versão / build")));
         linhas.Children.Add(Linha("Arquitetura", Val("Arquitetura")));
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = linhas });
 
-        Raiz.Children.Add(new TextBlock { Text = "RECOMENDAÇÕES SEGURAS (REVERSÍVEIS, EM AJUSTES)", Style = SectionStyle });
+        Raiz.Children.Add(new TextBlock { Text = "Recomendações seguras", Style = SectionStyle });
         var rec = new StackPanel();
         rec.Children.Add(Item("Telemetria e privacidade", "Reduzir coleta de dados, ID de publicidade e histórico de atividades. · reversível, baixo risco"));
         rec.Children.Add(Item("Efeitos visuais", "Desligar animações/transparências para a interface responder mais rápido. · reversível, cosmético"));
@@ -47,7 +47,7 @@ public partial class WindowsView : UserControl
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = rec });
 
         // Plano de energia "Sevenzin" (duplica o plano ativo + aplica os índices do original; fábrica intacta). Admin + reversível.
-        Raiz.Children.Add(new TextBlock { Text = "PLANO DE ENERGIA SEVENZINTWKS", Style = SectionStyle });
+        Raiz.Children.Add(new TextBlock { Text = "Plano de energia SevenzinTwks", Style = SectionStyle });
         var en = new StackPanel();
         _energiaLbl.Foreground = Secondary;
         AtualizarEnergia();
@@ -66,7 +66,7 @@ public partial class WindowsView : UserControl
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = en });
 
         // Hibernação (valor literal do original: HibernateEnabled=0).
-        Raiz.Children.Add(new TextBlock { Text = "HIBERNAÇÃO", Style = SectionStyle });
+        Raiz.Children.Add(new TextBlock { Text = "Hibernação", Style = SectionStyle });
         var hib = new StackPanel();
         var hibStatus = new TextBlock { Foreground = Secondary, FontSize = 12, TextWrapping = TextWrapping.Wrap };
         AtualizarHibernacao(hibStatus);
@@ -83,7 +83,7 @@ public partial class WindowsView : UserControl
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = hib });
 
         // Desinstalação assistida (Edge/OneDrive): instaladores OFICIAIS, confirmação explícita.
-        Raiz.Children.Add(new TextBlock { Text = "DESINSTALAÇÃO ASSISTIDA (EDGE / ONEDRIVE)", Style = SectionStyle });
+        Raiz.Children.Add(new TextBlock { Text = "Desinstalar Edge e OneDrive", Style = SectionStyle });
         var desinst = new StackPanel();
         desinst.Children.Add(new TextBlock
         {
@@ -98,11 +98,11 @@ public partial class WindowsView : UserControl
         desinst.Children.Add(desinstStatus);
         Raiz.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 24), Child = desinst });
 
-        Raiz.Children.Add(new TextBlock { Text = "ATIVAÇÃO DO WINDOWS (KMS CORPORATIVO)", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 10) });
+        Raiz.Children.Add(new TextBlock { Text = "Ativação do Windows (KMS corporativo)", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 10) });
         Raiz.Children.Add(CartaoAtivacao());
-        Raiz.Children.Add(new TextBlock { Text = "DPC / INTERRUPÇÕES (DIAGNÓSTICO)", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 10) });
+        Raiz.Children.Add(new TextBlock { Text = "DPC e interrupções", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 10) });
         Raiz.Children.Add(CartaoDpc());
-        Raiz.Children.Add(new TextBlock { Text = "MSI / IRQ (DIAGNÓSTICO SOMENTE LEITURA)", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 10) });
+        Raiz.Children.Add(new TextBlock { Text = "MSI e IRQ", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 10) });
         Raiz.Children.Add(CartaoMsiIrq());
 
         var sp = new StackPanel();

@@ -37,19 +37,19 @@ public partial class BiosView : UserControl
         grade.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(340) });
 
         var esq = new StackPanel();
-        esq.Children.Add(new TextBlock { Text = "ETAPAS (AÇÕES MANUAIS DO USUÁRIO — VARIAM POR FABRICANTE)", Style = SectionStyle });
+        esq.Children.Add(new TextBlock { Text = "Etapas manuais (variam por fabricante)", Style = SectionStyle });
         var passos = new StackPanel();
         passos.Children.Add(Passo(1, "Entrar no setup da BIOS/UEFI", "Reinicie e pressione a tecla do fabricante no POST (comum: Del, F2, F10 ou F12). A tecla aparece na tela inicial.", false));
-        passos.Children.Add(Passo(2, "Revisar ordem de boot e Secure Boot", "Confira no setup; mantenha o Secure Boot ligado por segurança. ⚠ Alto risco desligar — só com motivo claro.", true));
-        passos.Children.Add(Passo(3, "Configurar perfil de memória (XMP / EXPO / DOCP)", "Procure o perfil de memória e selecione o do seu kit. Melhora a frequência da RAM. ⚠ Potencialmente disruptivo: pode não dar boot se o kit/placa não suportar — anote os valores antes.", true));
-        passos.Children.Add(Passo(4, "Atualizar a BIOS", "Baixe a versão SÓ do site oficial do fabricante da placa e siga o procedimento dele. ⚠ Alto risco: queda de energia durante o flash pode inutilizar a placa. Use no-break se possível.", true));
+        passos.Children.Add(Passo(2, "Revisar ordem de boot e Secure Boot", "Confira no setup; mantenha o Secure Boot ligado por segurança. Alto risco desligar — só com motivo claro.", true));
+        passos.Children.Add(Passo(3, "Configurar perfil de memória (XMP / EXPO / DOCP)", "Procure o perfil de memória e selecione o do seu kit. Melhora a frequência da RAM. Potencialmente disruptivo: pode não dar boot se o kit/placa não suportar — anote os valores antes.", true));
+        passos.Children.Add(Passo(4, "Atualizar a BIOS", "Baixe a versão SÓ do site oficial do fabricante da placa e siga o procedimento dele. Alto risco: queda de energia durante o flash pode inutilizar a placa. Use no-break se possível.", true));
         esq.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 16), Child = passos });
         esq.Children.Add(Aviso());
         Grid.SetColumn(esq, 0);
         grade.Children.Add(esq);
 
         var specs = new StackPanel();
-        specs.Children.Add(new TextBlock { Text = "ESTADO DA PLATAFORMA (SOMENTE LEITURA)", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 6) });
+        specs.Children.Add(new TextBlock { Text = "Estado da plataforma", Style = SectionStyle, Margin = new Thickness(0, 0, 0, 6) });
         specs.Children.Add(Spec("BIOS / UEFI", Val("BIOS/UEFI"), null));
         specs.Children.Add(Spec("Placa-mãe", Val("Placa-mãe"), null));
         specs.Children.Add(SpecEstado("Secure Boot", SegurancaSistema.SecureBootAtivo(), "Ativo", "Desativado", "Indeterminado"));

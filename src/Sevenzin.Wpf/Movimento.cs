@@ -47,6 +47,61 @@ static class Movimento
         st.BeginAnimation(ScaleTransform.ScaleYProperty, Anim(0.96, 1, 220));
     }
 
+    /// <summary>O mesmo objeto chega de onde estava: parte de (<paramref name="dx"/>, <paramref name="dy"/>) e pousa no lugar.</summary>
+    public static void Viajar(UIElement el, double dx, double dy, int ms = 260)
+    {
+        if (!Ativo) { el.RenderTransform = null; return; }
+        var tt = new TranslateTransform(dx, dy);
+        el.RenderTransform = tt;
+        tt.BeginAnimation(TranslateTransform.XProperty, Anim(dx, 0, ms));
+        tt.BeginAnimation(TranslateTransform.YProperty, Anim(dy, 0, ms));
+    }
+
+    /// <summary>Abre ou fecha um painel pela altura (empurra o resto, não aparece do nada).</summary>
+    public static void Expandir(FrameworkElement el, bool abrir, int ms = 280)
+    {
+        if (!Ativo)
+        {
+            el.Visibility = abrir ? Visibility.Visible : Visibility.Collapsed;
+            return;
+        }
+        double de = el.Visibility == Visibility.Visible ? el.ActualHeight : 0, para = 0;
+        el.BeginAnimation(FrameworkElement.HeightProperty, null);
+        el.Visibility = Visibility.Visible;
+        el.ClipToBounds = true;
+        if (abrir)
+        {
+            double largura = (VisualTreeHelper.GetParent(el) as FrameworkElement)?.ActualWidth ?? double.PositiveInfinity;
+            el.Measure(new Size(largura, double.PositiveInfinity));
+            para = Math.Max(0, el.DesiredSize.Height - el.Margin.Top - el.Margin.Bottom);
+        }
+        var h = Anim(de, para, ms);
+        h.Completed += (_, _) =>
+        {
+            if (el.Tag is bool b && b != abrir) return; // já pediram o contrário
+            el.BeginAnimation(FrameworkElement.HeightProperty, null);
+            if (!abrir) el.Visibility = Visibility.Collapsed;
+        };
+        el.Tag = abrir;
+        el.BeginAnimation(FrameworkElement.HeightProperty, h);
+        el.BeginAnimation(UIElement.OpacityProperty, Anim(abrir ? 0 : 1, abrir ? 1 : 0, ms));
+    }
+
+    /// <summary>Leva um número do valor antigo ao novo (contador, anel). <paramref name="quadro"/> recebe cada valor.</summary>
+    public static void Contar(double de, double para, Action<double> quadro, int ms = 500)
+    {
+        if (!Ativo || de == para) { quadro(para); return; }
+        var relogio = System.Diagnostics.Stopwatch.StartNew();
+        EventHandler? passo = null;
+        passo = (_, _) =>
+        {
+            double t = Math.Min(1, relogio.Elapsed.TotalMilliseconds / ms);
+            quadro(de + (para - de) * (1 - Math.Pow(1 - t, 3)));
+            if (t >= 1) CompositionTarget.Rendering -= passo;
+        };
+        CompositionTarget.Rendering += passo;
+    }
+
     /// <summary>Saída curta (fade 120ms) e depois <paramref name="aoTerminar"/>. Não recebe cliques enquanto some.</summary>
     public static void Sair(UIElement el, Action aoTerminar, int ms = 120)
     {

@@ -7,8 +7,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="ATIVIDADE" Style="{StaticResource Eyebrow}"/>
-            <TextBlock Text="Notificações" FontSize="18" FontWeight="SemiBold"/>
             <TextBlock Text="Histórico local do que o SevenzinTwks fez nesta máquina: tweaks e instalações. Nada sai do PC." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
             <Button Style="{StaticResource SecondaryButton}" Content="Limpar histórico" HorizontalAlignment="Left" Margin="0,12,0,0" Click="Limpar_Click"/>
         </StackPanel>

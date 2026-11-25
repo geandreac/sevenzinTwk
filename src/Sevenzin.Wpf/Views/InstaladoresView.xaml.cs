@@ -27,7 +27,6 @@ public partial class InstaladoresView : UserControl
     static Style SectionStyle => (Style)Application.Current.Resources["SectionLabel"];
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
-    static Brush Borda => (Brush)Application.Current.Resources["BorderDefaultBrush"];
     static Brush Success => (Brush)Application.Current.Resources["SuccessBrush"];
     static Brush Danger => (Brush)Application.Current.Resources["DangerBrush"];
 
@@ -69,25 +68,24 @@ public partial class InstaladoresView : UserControl
         _filtro = cat;
         foreach (var p in _pills) p.Style = (string?)p.Tag == _filtro ? Primario : Secundario;
         RenderCatalogo();
+        Movimento.Entrar(_catalogoHost, 6);
     }
 
     void RenderCatalogo()
     {
         _catalogoHost.Children.Clear();
         var itens = _filtro is null ? CatalogoUtilitarios.Todos : CatalogoUtilitarios.Todos.Where(u => u.Categoria == _filtro);
-        foreach (var u in itens) _catalogoHost.Children.Add(Cartao(u));
+        _catalogoHost.Children.Add(Ui.Grupo(itens.Select(Linha)));
     }
 
     static UIElement CriarIconeAplicativo(Utilitario u)
     {
         var caixa = new Border
         {
-            Width = 54,
-            Height = 54,
-            CornerRadius = new CornerRadius(12),
+            Width = 44,
+            Height = 44,
+            CornerRadius = new CornerRadius(10),
             Background = Surface2,
-            BorderBrush = Borda,
-            BorderThickness = new Thickness(1),
             Margin = new Thickness(0, 0, 16, 0),
             VerticalAlignment = VerticalAlignment.Top,
         };
@@ -105,8 +103,8 @@ public partial class InstaladoresView : UserControl
             var img = new Image
             {
                 Source = bmp,
-                Width = 36,
-                Height = 36,
+                Width = 28,
+                Height = 28,
                 Stretch = Stretch.Uniform,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -129,44 +127,45 @@ public partial class InstaladoresView : UserControl
         return caixa;
     }
 
-    Border Cartao(Utilitario u)
+    UIElement Linha(Utilitario u)
     {
         var grid = new Grid();
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var icone = CriarIconeAplicativo(u);
         Grid.SetColumn(icone, 0);
         grid.Children.Add(icone);
 
         var sp = new StackPanel();
-        sp.Children.Add(new TextBlock { Text = u.Nome, FontSize = 15, FontWeight = FontWeights.SemiBold });
+        sp.Children.Add(new TextBlock { Text = u.Nome, FontSize = 14, FontWeight = FontWeights.SemiBold });
         sp.Children.Add(new TextBlock { Text = u.Descricao, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap });
         var publisher = u.PublisherEsperado is { } p ? $"Assinatura esperada: {p}" : "Assinatura Authenticode exigida na verificação.";
-        sp.Children.Add(new TextBlock { Text = publisher, Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 4, 0, 0) });
+        sp.Children.Add(new TextBlock { Text = publisher, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 4, 0, 0) });
 
         var status = new TextBlock { FontSize = 12, Margin = new Thickness(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
 
-        var acoes = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
-        var baixar = new Button { Style = Primario, Content = "Baixar e verificar", Margin = new Thickness(0, 0, 8, 6), Padding = new Thickness(12, 7, 12, 7) };
-        var abrir = new Button { Style = Secundario, Content = "Abrir página oficial", Margin = new Thickness(0, 0, 8, 6), Padding = new Thickness(12, 7, 12, 7) };
-        var executar = new Button { Style = Primario, Content = "Executar instalador", Margin = new Thickness(0, 0, 8, 6), Padding = new Thickness(12, 7, 12, 7), Visibility = Visibility.Collapsed };
+        var acoes = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16, 0, 0, 0) };
+        var baixar = new Button { Style = Secundario, Content = "Baixar e verificar", Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(12, 7, 12, 7) };
+        var abrir = new Button { Style = (Style)Application.Current.Resources["LinkButton"], Content = "Página oficial" };
+        var executar = new Button { Style = Primario, Content = "Executar instalador", Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(12, 7, 12, 7), Visibility = Visibility.Collapsed };
 
         baixar.Click += async (_, _) => await BaixarEVerificar(u, status, baixar, executar);
         abrir.Click += (_, _) => AbrirUrl(u.UrlOficial);
         executar.Click += (_, _) => Executar((string?)executar.Tag);
 
-        acoes.Children.Add(baixar);
         acoes.Children.Add(abrir);
+        acoes.Children.Add(baixar);
         acoes.Children.Add(executar);
-
-        sp.Children.Add(acoes);
+        Grid.SetColumn(acoes, 2);
+        grid.Children.Add(acoes);
         sp.Children.Add(status);
 
         Grid.SetColumn(sp, 1);
         grid.Children.Add(sp);
 
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = grid };
+        return grid;
     }
 
     async Task BaixarEVerificar(Utilitario u, TextBlock status, Button baixar, Button executar)
@@ -192,7 +191,7 @@ public partial class InstaladoresView : UserControl
             var r = VerificadorDownload.Verificar(destino, u);
             if (r == ResultadoVerificacao.Ok)
             {
-                status.Text = $"✔ Verificado ({Path.GetFileName(destino)} — assinatura confere). Você pode executar.";
+                status.Text = $"Verificado ({Path.GetFileName(destino)} — assinatura confere). Você pode executar.";
                 status.Foreground = Success;
                 executar.Tag = destino;
                 executar.Visibility = Visibility.Visible;
@@ -202,7 +201,7 @@ public partial class InstaladoresView : UserControl
             }
             else
             {
-                status.Text = $"✖ Verificação falhou: {Motivo(r)}. O arquivo NÃO será oferecido para execução.";
+                status.Text = $"Verificação falhou: {Motivo(r)}. O arquivo NÃO será oferecido para execução.";
                 status.Foreground = Danger;
                 _fila.Marcar(new ItemFila(u.Nome, urlRef, EstadoFila.Falhou, Motivo(r), null));
                 NotificacoesStore.Padrao.Adicionar("Instaladores", $"'{u.Nome}' reprovado na verificação", Motivo(r));
@@ -256,7 +255,7 @@ public partial class InstaladoresView : UserControl
     Border CartaoWinget()
     {
         var sp = new StackPanel();
-        sp.Children.Add(new TextBlock { Text = "INSTALAÇÃO RÁPIDA (WINGET)", Style = SectionStyle });
+        sp.Children.Add(new TextBlock { Text = "Instalação rápida (winget)", Style = SectionStyle });
         sp.Children.Add(new TextBlock
         {
             Text = "Instala pelos IDs oficiais do winget (lista fechada do original). Cada item pede confirmação; o andamento aparece na fila abaixo.",
@@ -312,7 +311,7 @@ public partial class InstaladoresView : UserControl
     Border CartaoFila()
     {
         var sp = new StackPanel();
-        sp.Children.Add(new TextBlock { Text = "FILA DE DOWNLOADS (salva localmente)", Style = SectionStyle });
+        sp.Children.Add(new TextBlock { Text = "Fila de downloads", Style = SectionStyle });
         _filaLista = new StackPanel();
         sp.Children.Add(_filaLista);
 

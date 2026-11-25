@@ -16,7 +16,12 @@ public partial class InventarioView : UserControl
             var linhas = (await Task.Run(Relatorio.Coletar)).Select(i => new LinhaInv(i)).ToList();
             var view = new ListCollectionView(linhas);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(LinhaInv.Categoria)));
+            view.MoveCurrentToPosition(-1);
             Grade.ItemsSource = view;
+            Grade.SelectedIndex = -1;
+            Carregando.Visibility = Visibility.Collapsed;
+            Grade.Visibility = Visibility.Visible;
+            Movimento.Entrar(Grade, 0);
         };
     }
 }
@@ -41,7 +46,7 @@ public sealed class LinhaInv
         Obs = i.Observacao ?? "";
         (Tipo, var chave) = i.Tipo switch
         {
-            Confianca.Fato => ("Fato", "SuccessBrush"),
+            Confianca.Fato => ("Fato", "TextSecondaryBrush"),
             Confianca.Inferencia => ("Inferência", "WarningBrush"),
             _ => ("Hipótese", "TextMutedBrush"),
         };

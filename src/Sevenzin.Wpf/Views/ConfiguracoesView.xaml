@@ -9,38 +9,29 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <TextBlock Text="SEU SEVENZIN" Foreground="{StaticResource Brand400Brush}" FontSize="11" FontWeight="SemiBold" Margin="0,8,0,4"/>
-            <TextBlock Text="Configurações" Style="{StaticResource TituloTela}"/>
+            <TextBlock Text="Configurações" Style="{StaticResource TituloTela}" Margin="0,8,0,0"/>
             <TextBlock Text="Preferências, conta, notificações, telemetria e benchmark reunidos em um só lugar." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
 
-            <WrapPanel Orientation="Horizontal" Margin="0,20,0,0">
-                <Border x:Name="TabGeral" Tag="0" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
-                    <TextBlock Text="Geral" FontSize="14"/>
-                </Border>
-                <Border x:Name="TabPref" Tag="1" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
-                    <TextBlock Text="Preferências" FontSize="14"/>
-                </Border>
-                <Border x:Name="TabPerfil" Tag="2" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
-                    <TextBlock Text="Perfil" FontSize="14"/>
-                </Border>
-                <Border x:Name="TabNotificacoes" Tag="3" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
-                    <TextBlock Text="Notificações" FontSize="14"/>
-                </Border>
-                <Border x:Name="TabTelemetria" Tag="4" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,26,0" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
-                    <TextBlock Text="Telemetria" FontSize="14"/>
-                </Border>
-                <Border x:Name="TabBenchmark" Tag="5" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="0,0,0,10" Cursor="Hand" MouseLeftButtonDown="Tab_Click">
-                    <TextBlock Text="Benchmark" FontSize="14"/>
-                </Border>
-            </WrapPanel>
-            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,0,0,22"/>
+            <Grid Margin="0,16,0,22">
+                <Border Height="1" Background="{StaticResource BorderDefaultBrush}" VerticalAlignment="Bottom"/>
+                <StackPanel x:Name="Abas" Orientation="Horizontal">
+                    <RadioButton x:Name="TabGeral" Tag="0" GroupName="AbasConfig" Style="{StaticResource Aba}" Content="Geral" Checked="Tab_Click"/>
+                    <RadioButton x:Name="TabPref" Tag="1" GroupName="AbasConfig" Style="{StaticResource Aba}" Content="Preferências" Checked="Tab_Click"/>
+                    <RadioButton x:Name="TabPerfil" Tag="2" GroupName="AbasConfig" Style="{StaticResource Aba}" Content="Perfil" Checked="Tab_Click"/>
+                    <RadioButton x:Name="TabNotificacoes" Tag="3" GroupName="AbasConfig" Style="{StaticResource Aba}" Content="Notificações" Checked="Tab_Click"/>
+                    <RadioButton x:Name="TabTelemetria" Tag="4" GroupName="AbasConfig" Style="{StaticResource Aba}" Content="Telemetria" Checked="Tab_Click"/>
+                    <RadioButton x:Name="TabBenchmark" Tag="5" GroupName="AbasConfig" Style="{StaticResource Aba}" Content="Benchmark" Checked="Tab_Click"/>
+                </StackPanel>
+                <Border x:Name="Sublinhado" Height="2" Width="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" CornerRadius="1" Background="{StaticResource Brand500Brush}"
+                        Visibility="Hidden" IsHitTestVisible="False"/>
+            </Grid>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,24">
             <Grid>
                 <!-- 0: GERAL -->
                 <StackPanel x:Name="GeralPanel">
-                    <TextBlock Text="INICIALIZAÇÃO" Style="{StaticResource SectionLabel}"/>
+                    <TextBlock Text="Inicialização" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,24">
                         <StackPanel>
                             <Grid Margin="0,4,0,4">
@@ -81,7 +72,7 @@
                         </StackPanel>
                     </Border>
 
-                    <TextBlock Text="COMPORTAMENTO DO APLICATIVO" Style="{StaticResource SectionLabel}"/>
+                    <TextBlock Text="Comportamento do aplicativo" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <Grid Margin="0,4,0,4">
@@ -114,7 +105,7 @@
 
                 <!-- 1: PREFERÊNCIAS -->
                 <StackPanel x:Name="PrefPanel" Visibility="Collapsed">
-                    <TextBlock Text="ASSISTENTE (OPCIONAL)" Style="{StaticResource SectionLabel}"/>
+                    <TextBlock Text="Assistente (opcional)" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,24">
                         <StackPanel>
                             <TextBlock Text="Endpoint do assistente (HTTPS)" FontSize="14"/>
@@ -128,7 +119,7 @@
                                        Text="Nenhum endpoint configurado."/>
                         </StackPanel>
                     </Border>
-                    <TextBlock Text="DADOS E PRIVACIDADE" Style="{StaticResource SectionLabel}"/>
+                    <TextBlock Text="Dados e privacidade" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,24">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -140,10 +131,10 @@
                                 <TextBlock x:Name="PastaTxt" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
                                 <TextBlock Text="Backup/auditoria dos tweaks, perfis e relatórios. Nada sai do PC sem ação explícita sua." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="Abrir pasta" VerticalAlignment="Center" Click="AbrirPasta_Click"/>
+                            <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="Abrir pasta" VerticalAlignment="Center" Click="AbrirPasta_Click"/>
                         </Grid>
                     </Border>
-                    <TextBlock Text="SOBRE" Style="{StaticResource SectionLabel}"/>
+                    <TextBlock Text="Sobre" Style="{StaticResource SectionLabel}"/>
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <TextBlock x:Name="VersaoTxt"/>
@@ -155,7 +146,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock x:Name="AtualizaStatus" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,16,0"
                                            Foreground="{StaticResource TextMutedBrush}" FontSize="12"
-                                           Text="Verifica a release mais recente no GitHub. Nada é baixado automaticamente."/>
+                                           Text="Verifica a release mais recente no GitHub. Nada é baixado sem você confirmar."/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button x:Name="AbrirReleaseBtn" Style="{StaticResource PrimaryButton}" Content="Baixar atualização"
                                             Visibility="Collapsed" Margin="0,0,8,0" Click="AbrirRelease_Click"/>

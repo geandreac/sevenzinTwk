@@ -93,12 +93,12 @@
                             WindowChrome.IsHitTestVisibleInChrome="True">
                     <Button x:Name="AvisoAtualizaBtn" Visibility="Collapsed" Click="IrParaAtualizacao_Click" Cursor="Hand"
                             Background="Transparent" BorderThickness="0" Margin="0,0,12,0" VerticalAlignment="Center"
-                            ToolTip="Atualização Disponível" AutomationProperties.Name="Atualização disponível">
+                            ToolTip="Baixar a nova versão, instalar e reabrir o app" Tag="Reiniciar para atualizar" AutomationProperties.Name="Atualização disponível">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <StackPanel Orientation="Horizontal" Background="Transparent">
                                     <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Atualização disponível" Margin="6,0,0,0" FontSize="12"
+                                    <TextBlock Text="{TemplateBinding Tag}" Margin="6,0,0,0" FontSize="12"
                                                Foreground="{StaticResource SuccessBrush}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </ControlTemplate>
@@ -121,8 +121,7 @@
                         </Button.Template>
                     </Button>
                 </StackPanel>
-                <TextBlock x:Name="TituloBarra" Text="Início" Margin="24,0,0,0" FontSize="13"
-                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                <Border/>
             </DockPanel>
             <ContentControl x:Name="Host" Grid.Row="1"/>
         </Grid>

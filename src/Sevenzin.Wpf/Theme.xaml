@@ -79,10 +79,10 @@
         <Setter Property="Margin" Value="0,0,0,4"/>
     </Style>
 
-    <!-- Rótulo de seção (MONITORES AO VIVO, SISTEMA...) -->
+    <!-- Rótulo de seção (frase normal, sem caixa alta) -->
     <Style x:Key="SectionLabel" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
@@ -211,6 +211,157 @@
         <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <!-- Tag = texto de dica, visível só com o campo vazio. Foco: a borda azul surge em fade. -->
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8"/>
+                        <Border x:Name="foco" BorderBrush="{StaticResource Brand400Brush}" BorderThickness="1.5" CornerRadius="8" Opacity="0"/>
+                        <TextBlock x:Name="dica" Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Margin="{TemplateBinding Padding}"
+                                   Padding="2,0,0,0" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   TextTrimming="CharacterEllipsis" Visibility="Collapsed"/>
+                        <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Focusable="False"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="dica" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource TextDisabledBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="foco" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14"/>
+                                </Storyboard></BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="foco" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14"/>
+                                </Storyboard></BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Link dentro de textos e avisos (botão sem caixa) -->
+    <Style x:Key="LinkButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource Brand400Brush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="6,5"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocoVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <TextBlock x:Name="t" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" FontWeight="SemiBold"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="t" Property="TextDecorations" Value="Underline"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Aba (Configurações): o sublinhado VIAJA da aba anterior para a nova (MoverSublinhado). -->
+    <Style x:Key="Aba" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Margin" Value="0,0,26,0"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocoVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border Background="Transparent" Padding="0,6,0,12">
+                        <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" FontWeight="{TemplateBinding FontWeight}" FontSize="{TemplateBinding FontSize}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Atalho: linha clicável com nome e seta; no hover a seta anda na própria direção. -->
+    <Style x:Key="Atalho" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="46"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocoVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" Background="{StaticResource Surface1Brush}" CornerRadius="10" Padding="14,0">
+                        <DockPanel>
+                            <Path x:Name="seta" DockPanel.Dock="Right" Data="M0,0 L4,4 L0,8" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.5"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center">
+                                <Path.RenderTransform><TranslateTransform/></Path.RenderTransform>
+                            </Path>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource Surface2Brush}"/>
+                            <Setter TargetName="seta" Property="Stroke" Value="{StaticResource Brand400Brush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="seta" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="3" Duration="0:0:0.15"/>
+                                </Storyboard></BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="seta" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="0" Duration="0:0:0.15"/>
+                                </Storyboard></BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Barra de progresso do tema (antes: a cromada clara do Windows) -->
+    <Style TargetType="ProgressBar">
+        <Setter Property="Height" Value="6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Border x:Name="PART_Track" Background="{StaticResource Surface3Brush}" CornerRadius="3"/>
+                        <Border x:Name="PART_Indicator" Background="{StaticResource Brand500Brush}" CornerRadius="3" HorizontalAlignment="Left"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Item do ComboBox escuro -->
@@ -261,13 +412,30 @@
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border x:Name="bd" Background="{StaticResource Surface2Brush}"
                                             BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1" CornerRadius="8">
-                                        <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
+                                        <Path x:Name="seta" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                               Data="M0,0 L4,4 L8,0" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
-                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" RenderTransformOrigin="0.5,0.5">
+                                            <Path.RenderTransform><RotateTransform/></Path.RenderTransform>
+                                        </Path>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
                                             <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource TextMutedBrush}"/>
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="True">
+                                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Brand400Brush}"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard><Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="seta" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" To="180" Duration="0:0:0.18"/>
+                                                </Storyboard></BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard><Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="seta" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" To="0" Duration="0:0:0.18"/>
+                                                </Storyboard></BeginStoryboard>
+                                            </Trigger.ExitActions>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -278,7 +446,7 @@
                                           ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
                                           Margin="12,0,32,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                         <Popup Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True"
-                               Focusable="False" PopupAnimation="Slide">
+                               Focusable="False" PopupAnimation="Fade">
                             <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderStrongBrush}"
                                     BorderThickness="1" CornerRadius="8" Margin="0,4,0,0"
                                     MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
@@ -365,7 +533,19 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="RowBackground" Value="{StaticResource Surface1Brush}"/>
-        <Setter Property="AlternatingRowBackground" Value="{StaticResource Surface2Brush}"/>
+        <Setter Property="IsSynchronizedWithCurrentItem" Value="False"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocoVisual}"/>
+        <Setter Property="RowStyle">
+            <Setter.Value>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
         <Setter Property="GridLinesVisibility" Value="Horizontal"/>
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BorderDefaultBrush}"/>
@@ -432,8 +612,10 @@
                                 Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1"/>
                         <Border x:Name="ligado" CornerRadius="12" Background="{StaticResource Brand500Brush}" Opacity="0"/>
                         <Ellipse x:Name="thumb" Width="18" Height="18" Fill="{StaticResource TextMutedBrush}"
-                                 HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0">
-                            <Ellipse.RenderTransform><TranslateTransform/></Ellipse.RenderTransform>
+                                 HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <TransformGroup><ScaleTransform/><TranslateTransform/></TransformGroup>
+                            </Ellipse.RenderTransform>
                         </Ellipse>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -442,7 +624,7 @@
                             <Trigger.EnterActions>
                                 <BeginStoryboard><Storyboard>
                                     <DoubleAnimation Storyboard.TargetName="ligado" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
-                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
+                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.X)">
                                         <SplineDoubleKeyFrame KeyTime="0:0:0.18" Value="20" KeySpline="0.25,0.8 0.25,1"/>
                                     </DoubleAnimationUsingKeyFrames>
                                 </Storyboard></BeginStoryboard>
@@ -450,7 +632,7 @@
                             <Trigger.ExitActions>
                                 <BeginStoryboard><Storyboard>
                                     <DoubleAnimation Storyboard.TargetName="ligado" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
-                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
+                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.X)">
                                         <SplineDoubleKeyFrame KeyTime="0:0:0.18" Value="0" KeySpline="0.25,0.8 0.25,1"/>
                                     </DoubleAnimationUsingKeyFrames>
                                 </Storyboard></BeginStoryboard>
@@ -458,6 +640,18 @@
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource Brand400Brush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" To="1.18" Duration="0:0:0.1"/>
+                                </Storyboard></BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard><Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.16"/>
+                                </Storyboard></BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>
@@ -584,7 +778,7 @@
                                 Background="{StaticResource Surface2Brush}"
                                 BorderBrush="{StaticResource BorderStrongBrush}"
                                 BorderThickness="1" Opacity="0"/>
-                        <Border x:Name="selBg" CornerRadius="10"
+                        <Border x:Name="selBg" CornerRadius="10" IsHitTestVisible="False"
                                 Background="{StaticResource BrandTintBrush}"
                                 BorderBrush="#3D258CF4"
                                 BorderThickness="1" Opacity="0"/>
@@ -616,16 +810,16 @@
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="selBg" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16"/>
-                                        <DoubleAnimation Storyboard.TargetName="accent" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16"/>
+                                        <DoubleAnimation Storyboard.TargetName="selBg" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="accent" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.06"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="selBg" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/>
-                                        <DoubleAnimation Storyboard.TargetName="accent" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="selBg" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0"/>
+                                        <DoubleAnimation Storyboard.TargetName="accent" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>

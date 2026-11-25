@@ -37,7 +37,6 @@ public partial class JogosView : UserControl
     static Brush Borda => (Brush)Application.Current.Resources["BorderDefaultBrush"];
     static Brush SuccessBg => new SolidColorBrush((Color)Application.Current.Resources["SuccessBg"]);
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
-    static Style EyebrowStyle => (Style)Application.Current.Resources["Eyebrow"];
     static Style SectionLabel => (Style)Application.Current.Resources["SectionLabel"];
 
     public JogosView()
@@ -87,7 +86,7 @@ public partial class JogosView : UserControl
     Border CartaoDetectados()
     {
         var sp = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
-        sp.Children.Add(new TextBlock { Text = "JOGOS DETECTADOS (STEAM/EPIC)", Style = SectionLabel });
+        sp.Children.Add(new TextBlock { Text = "Jogos detectados (Steam e Epic)", Style = SectionLabel });
         sp.Children.Add(new TextBlock
         {
             Text = "Só leitura: o Sevenzin procura instalações nos manifestos locais (nada é executado). Adicionar cria o perfil — aplicar continua sendo manual ou pelo \"Aplicar ao abrir\".",
@@ -112,7 +111,7 @@ public partial class JogosView : UserControl
     Border CartaoPrioridadeProcesso()
     {
         var sp = new StackPanel();
-        sp.Children.Add(new TextBlock { Text = "PRIORIDADE DE PROCESSO EM EXECUÇÃO (AVANÇADO)", Style = SectionLabel });
+        sp.Children.Add(new TextBlock { Text = "Prioridade de um processo aberto", Style = SectionLabel });
         sp.Children.Add(new TextBlock
         {
             Text = "Ajuste temporário da classe de prioridade de um processo aberto (não persiste após fechar). Processos críticos do Windows são bloqueados contra Tempo Real.",
@@ -359,7 +358,6 @@ public partial class JogosView : UserControl
 
         var cab = new Grid();
         var hesq = new StackPanel();
-        hesq.Children.Add(new TextBlock { Text = "OTIMIZAÇÕES DO JOGO", Style = EyebrowStyle });
         hesq.Children.Add(new TextBlock { Text = j.Nome, FontSize = 18, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         cab.Children.Add(hesq);
         var fechar = new Button { Style = Secundario, Content = "Fechar", HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Padding = new Thickness(10, 5, 10, 5) };
@@ -383,7 +381,7 @@ public partial class JogosView : UserControl
         if (Hibrido) grade.Children.Add(Tile("Núcleos P (CPU Sets)", j.CpuSetsPCores ? "Preferir P-cores" : "Padrão", j.CpuSetsPCores, () => { AlternarCpuSets(j); RenderPerfil(); }));
         card.Children.Add(grade);
 
-        card.Children.Add(new TextBlock { Text = "EXECUTÁVEL DO JOGO", Style = SectionLabel, Margin = new Thickness(0, 10, 0, 2) });
+        card.Children.Add(new TextBlock { Text = "Executável do jogo", Style = SectionLabel, Margin = new Thickness(0, 10, 0, 2) });
         card.Children.Add(new TextBlock { Text = j.Executavel, Foreground = Muted, FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = j.Executavel });
 
         var rodape = new WrapPanel { Margin = new Thickness(0, 16, 0, 0) };

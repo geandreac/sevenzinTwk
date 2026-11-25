@@ -79,7 +79,7 @@ public partial class MainWindow : Window
             TipoToast.Aviso,
             "Reaberto após fechamento inesperado",
             $"Motivo: {rec.Motivo} · registrado em Notificações.",
-            () => SelecionarAba("notificacoes"));
+            () => SelecionarAba("notificacoes"), "Ver detalhes");
     }
 
     public void SincronizarIconeBandeja()
@@ -153,10 +153,50 @@ public partial class MainWindow : Window
         var versao = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
         var r = await VerificadorAtualizacoes.VerificarAsync(versao);
         if (r is not null && r.HaNova)
+        {
+            _atualizacao = r;
             AvisoAtualizaBtn.Visibility = Visibility.Visible;
+        }
     }
 
-    void IrParaAtualizacao_Click(object sender, RoutedEventArgs e) => SelecionarAba("preferencias");
+    ResultadoAtualizacao? _atualizacao;
+    bool _atualizando;
+
+    async void IrParaAtualizacao_Click(object sender, RoutedEventArgs e)
+    {
+        if (_atualizacao is { Sha256: not null } r)
+            await AtualizarEReiniciarAsync(r, t => AvisoAtualizaBtn.Tag = t);
+        else
+            SelecionarAba("preferencias");
+    }
+
+    /// <summary>"Reiniciar para atualizar": confirma, baixa o Setup da release, confere o SHA-256, fecha o app,
+    /// instala e reabre a versão nova.</summary>
+    public async Task AtualizarEReiniciarAsync(ResultadoAtualizacao r, Action<string> status)
+    {
+        if (_atualizando || r.UrlInstalador is null || r.Sha256 is null) return;
+        if (MessageBox.Show(this, $"Atualizar o SevenzinTwks de {r.VersaoAtual} para {r.VersaoRemota}?\n\n" +
+                "O instalador oficial será baixado do GitHub e conferido. O app fecha, a nova versão é instalada e ele reabre sozinho. Seus ajustes e sua conta são mantidos.",
+                "Reiniciar para atualizar", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
+        _atualizando = true;
+        try
+        {
+            status("Baixando…");
+            var progresso = new Progress<(long Baixados, long? Total)>(p =>
+                { if (_atualizando && p.Total is > 0) status($"Baixando {p.Baixados * 100 / p.Total}%"); });
+            var setup = await AtualizadorApp.BaixarInstaladorAsync(r.UrlInstalador, r.NomeInstalador, r.Sha256, progresso);
+            if (!AtualizadorApp.IniciarAtualizacaoEReiniciar(setup, r.Sha256))
+                throw new InvalidOperationException("Não foi possível iniciar a instalação.");
+            EncerrarCompletamente();
+        }
+        catch (Exception ex)
+        {
+            _atualizando = false;
+            status("Tentar atualizar de novo");
+            Toasts.Mostrar(this, TipoToast.Erro, "Falha ao atualizar", ex.Message);
+        }
+    }
 
     void Sair_Click(object sender, RoutedEventArgs e) => ForcarRelogin();
 
@@ -296,7 +336,6 @@ public partial class MainWindow : Window
         if (Servicos.Sessao.Atual is not null && Servicos.Sessao.Renovar() is null) { ForcarRelogin(); return; }
 
         var tag = (Nav.SelectedItem as ListBoxItem)?.Tag as string;
-        if (tag is not null) TituloBarra.Text = Itens.First(i => i.Tag == tag).Rotulo;
         var subConfig = _subAbaConfigPendente;
         _subAbaConfigPendente = null;
 
@@ -315,7 +354,22 @@ public partial class MainWindow : Window
             "inventario" => new InventarioView(),
             _ => new InicioView(),
         };
-        Movimento.Entrar(Host);
+        int indice = Nav.SelectedIndex;
+        Movimento.Entrar(Host, indice < _indiceAnterior ? -10 : 10); // a tela chega do lado para onde a navegação andou
+        ViajarSelecao(_indiceAnterior, indice);
+        _indiceAnterior = indice;
+    }
+
+    int _indiceAnterior;
+
+    // A pílula e o marcador do item escolhido partem da posição do item anterior (um objeto só, não dois em fade).
+    void ViajarSelecao(int de, int para)
+    {
+        if (de == para || Nav.ItemContainerGenerator.ContainerFromIndex(de) is not ListBoxItem a
+            || Nav.ItemContainerGenerator.ContainerFromIndex(para) is not ListBoxItem b || !a.IsLoaded || !b.IsLoaded) return;
+        double dy = a.TranslatePoint(new Point(), b).Y;
+        foreach (var nome in new[] { "selBg", "accent" })
+            if (b.Template.FindName(nome, b) is UIElement el) Movimento.Viajar(el, 0, dy);
     }
 
     void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

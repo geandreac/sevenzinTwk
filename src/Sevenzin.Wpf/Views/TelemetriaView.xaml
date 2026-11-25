@@ -9,8 +9,6 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <TextBlock Text="MEDIÇÃO LOCAL" Style="{StaticResource Eyebrow}"/>
-            <TextBlock Text="Telemetria" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <TextBlock Text="Sessão iniciada e encerrada por você. Mede uma série temporal (CPU, clock, memória) e o próprio overhead. Sem gravar tela nem ler memória de outros apps." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                 <TextBlock Text="Duração (s)" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
@@ -25,8 +23,9 @@
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,8,8,8">
             <StackPanel>
-                <TextBlock Text="SESSÃO ATUAL" Style="{StaticResource SectionLabel}"/>
-                <Border Style="{StaticResource Card}" Padding="0" Margin="0,0,0,20" ClipToBounds="True">
+                <StackPanel x:Name="SessaoBloco" Visibility="Collapsed">
+                <TextBlock Text="Sessão atual" Style="{StaticResource SectionLabel}"/>
+                <Border Style="{StaticResource Card}" Padding="0" Margin="0,0,0,24" ClipToBounds="True">
                     <DataGrid x:Name="SumGrid" Style="{StaticResource DarkGrid}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Métrica" Binding="{Binding Metrica}" Width="1.8*"/>
@@ -40,8 +39,10 @@
                     </DataGrid>
                 </Border>
 
-                <TextBlock x:Name="AbLbl" Text="COMPARAÇÃO A/B — nenhuma linha de base definida" Style="{StaticResource SectionLabel}"/>
-                <Border Style="{StaticResource Card}" Padding="0" ClipToBounds="True">
+                </StackPanel>
+                <StackPanel x:Name="AbBloco" Visibility="Collapsed">
+                <TextBlock x:Name="AbLbl" Text="Comparação A/B: nenhuma linha de base definida" Style="{StaticResource SectionLabel}"/>
+                <Border x:Name="AbCartao" Style="{StaticResource Card}" Padding="0" ClipToBounds="True" Visibility="Collapsed">
                     <DataGrid x:Name="AbGrid" Style="{StaticResource DarkGrid}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Métrica" Binding="{Binding Metrica}" Width="1.6*"/>
@@ -60,6 +61,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
 

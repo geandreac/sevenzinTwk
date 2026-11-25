@@ -17,7 +17,7 @@ public partial class TelemetriaView : UserControl
     public TelemetriaView()
     {
         InitializeComponent();
-        _timer.Tick += (_, _) => CapturaLbl.Text = $"●  Capturando…  {(int)(DateTime.UtcNow - _inicio).TotalSeconds}s";
+        _timer.Tick += (_, _) => CapturaLbl.Text = $"Capturando…  {(int)(DateTime.UtcNow - _inicio).TotalSeconds}s";
     }
 
     void Medir_Click(object sender, RoutedEventArgs e)
@@ -35,7 +35,7 @@ public partial class TelemetriaView : UserControl
         DurBox.IsEnabled = IntBox.IsEnabled = false;
         BtnMedir.Content = "Parar";
         CapturaLbl.Visibility = Visibility.Visible;
-        CapturaLbl.Text = "●  Capturando…  0s";
+        CapturaLbl.Text = "Capturando…  0s";
         StatusLbl.Text = "Sessão de telemetria em andamento.";
         _timer.Start();
 
@@ -57,6 +57,7 @@ public partial class TelemetriaView : UserControl
         BtnMedir.Content = "Iniciar medição";
         DurBox.IsEnabled = IntBox.IsEnabled = true;
         _ultimo = r;
+        if (r.Amostras > 0 && SessaoBloco.Visibility != Visibility.Visible) { SessaoBloco.Visibility = Visibility.Visible; Movimento.Entrar(SessaoBloco); }
         SumGrid.ItemsSource = r.Metricas.Select(m => new LinhaResumo(m)).ToList();
         BtnBase.IsEnabled = r.Amostras > 0;
         StatusLbl.Text = r.Amostras == 0
@@ -70,13 +71,16 @@ public partial class TelemetriaView : UserControl
         if (_ultimo is not { Amostras: > 0 } b) return;
         _baseline = b;
         AbGrid.ItemsSource = null;
-        AbLbl.Text = $"COMPARAÇÃO A/B — base: {b.Amostras} amostras, {b.Inicio.ToLocalTime():HH:mm}. Aplique uma mudança e meça de novo.";
+        AbCartao.Visibility = Visibility.Collapsed;
+        AbBloco.Visibility = Visibility.Visible;
+        AbLbl.Text = $"Comparação A/B: base: {b.Amostras} amostras, {b.Inicio.ToLocalTime():HH:mm}. Aplique uma mudança e meça de novo.";
     }
 
     void MostrarAB(ResumoTelemetria baseR, ResumoTelemetria novo)
     {
+        AbCartao.Visibility = Visibility.Visible;
         AbGrid.ItemsSource = ComparacaoAB.Comparar(baseR, novo).Select(c => new LinhaAB(c)).ToList();
-        AbLbl.Text = $"COMPARAÇÃO A/B — base ({baseR.Amostras}) × atual ({novo.Amostras}) · \"Inconclusivo\" = |Δ| dentro do ruído";
+        AbLbl.Text = $"Comparação A/B: base ({baseR.Amostras}) × atual ({novo.Amostras}) · \"Inconclusivo\" = |Δ| dentro do ruído";
     }
 
     static int Clamp(string texto, int min, int max, int padrao) =>

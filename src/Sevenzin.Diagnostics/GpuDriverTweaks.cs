@@ -416,9 +416,9 @@ public static class GpuDriverTweaks
         string.IsNullOrWhiteSpace(id) ? null : PerfisGraficos.FirstOrDefault(p => p.Id.Equals(id.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Gera um manifesto `.nip` (XML compatível com NVIDIA Profile Inspector) sincronizado 1:1 com os parâmetros DRS reais do perfil.</summary>
-    public static XDocument GerarNipXml(PerfilGraficoGpu perfil)
+    public static XDocument GerarNipXml(PerfilGraficoGpu perfil, InfoGpu? gpu = null)
     {
-        var drsParams = NvidiaDrs.ObterParametrosPerfil(perfil.Id);
+        var drsParams = NvidiaDrs.ObterParametrosPerfil(perfil.Id, gpu);
         int dxr = perfil.RayTracingDisponivel ? 1 : 0;
 
         XElement Setting(string name, uint id, uint val) => new("ProfileSetting",
@@ -441,12 +441,12 @@ public static class GpuDriverTweaks
                     settingsElem)));
     }
 
-    public static string ExportarNipLocal(PerfilGraficoGpu perfil, string? pastaBase = null)
+    public static string ExportarNipLocal(PerfilGraficoGpu perfil, string? pastaBase = null, InfoGpu? gpu = null)
     {
         var raiz = pastaBase ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin", "PerfisGpu");
         Directory.CreateDirectory(raiz);
         var caminho = Path.Combine(raiz, perfil.ArquivoNip);
-        var doc = GerarNipXml(perfil);
+        var doc = GerarNipXml(perfil, gpu);
         using var sw = new StreamWriter(caminho, false, Encoding.Unicode);
         doc.Save(sw);
         return caminho;

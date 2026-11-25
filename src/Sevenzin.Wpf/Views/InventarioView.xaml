@@ -1,24 +1,33 @@
 <UserControl x:Class="Sevenzin.Wpf.Views.InventarioView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="Reticencias" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+        </Style>
+    </UserControl.Resources>
     <Grid Margin="44,24,40,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0">
-            <TextBlock Text="HARDWARE E SISTEMA" Style="{StaticResource Eyebrow}" Margin="0,8,0,4"/>
-            <TextBlock Text="Meu PC" Style="{StaticResource TituloTela}" Margin="0,0,0,2"/>
+            <TextBlock Text="Meu PC" Style="{StaticResource TituloTela}" Margin="0,8,0,4"/>
             <TextBlock Text="Somente leitura · origem e grau de confiança de cada dado do seu computador, sem identificadores pessoais." Foreground="{StaticResource TextSecondaryBrush}"/>
         </StackPanel>
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0" Margin="0,16,0,16" ClipToBounds="True">
-            <DataGrid x:Name="Grade" Style="{StaticResource DarkGrid}">
+            <Grid>
+            <TextBlock x:Name="Carregando" Text="Lendo o hardware…" Foreground="{StaticResource TextMutedBrush}" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <DataGrid x:Name="Grade" Style="{StaticResource DarkGrid}" Visibility="Hidden">
                 <DataGrid.GroupStyle>
                     <GroupStyle>
                         <GroupStyle.HeaderTemplate>
                             <DataTemplate>
                                 <Border Background="{StaticResource Surface2Brush}" Padding="12,8">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{StaticResource Brand400Brush}"/>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
                                 </Border>
                             </DataTemplate>
                         </GroupStyle.HeaderTemplate>
@@ -26,20 +35,26 @@
                 </DataGrid.GroupStyle>
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Item" Binding="{Binding Nome}" Width="1.8*"/>
-                    <DataGridTextColumn Header="Valor" Binding="{Binding Valor}" Width="3*"/>
+                    <DataGridTextColumn Header="Valor" Binding="{Binding Valor}" Width="3*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Reticencias}">
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                     <DataGridTextColumn Header="Confiança" Binding="{Binding Tipo}" Width="1.1*">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="{Binding Cor}"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter Property="VerticalAlignment" Value="Center"/>
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="Fonte" Binding="{Binding Fonte}" Width="1.4*"/>
-                    <DataGridTextColumn Header="Observação" Binding="{Binding Obs}" Width="1.6*"/>
+                    <DataGridTextColumn Header="Fonte" Binding="{Binding Fonte}" Width="1.7*" ElementStyle="{StaticResource Reticencias}"/>
+                    <DataGridTextColumn Header="Observação" Binding="{Binding Obs}" Width="1.9*" ElementStyle="{StaticResource Reticencias}"/>
                 </DataGrid.Columns>
             </DataGrid>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

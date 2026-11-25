@@ -51,6 +51,11 @@ public partial class App : Application
         // Em segundo plano: ler o log do Windows não pode atrasar a abertura.
         _ = Task.Run(() => MonitorReinicio.VerificarENotificar(NotificacoesStore.Padrao));
 
+        // Pós-reinício do Auto NVIDIA Debloat: aplica os ajustes do NVIDIA Profile Inspector e abre o Painel de Controle NVIDIA.
+        var posDebloat = PosDebloatNvidiaStore.Padrao.ConsumirPendente();
+        if (posDebloat is not null)
+            _ = Task.Run(() => ExecutarPosReinicioNvidiaAsync(posDebloat));
+
         var prefs = PreferenciasUiStore.Padrao.Carregar();
         bool deveIniciarMinimizado = StartupHelper.DeveIniciarMinimizado(e.Args, prefs.IniciarMinimizadoNaBandeja);
 
@@ -143,7 +148,7 @@ public partial class App : Application
                         TipoToast.Aviso,
                         "Erro contido sem fechar",
                         $"Motivo: {motivo}",
-                        () => mw.SelecionarAba("notificacoes"));
+                        () => mw.SelecionarAba("notificacoes"), "Ver detalhes");
                 }
                 catch { }
             }
@@ -171,6 +176,49 @@ public partial class App : Application
             if (e.IsTerminating && Interlocked.Exchange(ref _relancando, 1) == 0)
                 Elevacao.RelancarParaRecuperacao();
         };
+    }
+
+    static async Task ExecutarPosReinicioNvidiaAsync(EstadoPosDebloatNvidia estado)
+    {
+        try
+        {
+            await Task.Delay(1500);
+            PosDebloatNvidiaStore.RemoverTarefa();
+            var gpuNv = DiagnosticoGpu.Coletar().FirstOrDefault(g => g.Fabricante == FabricanteGpu.Nvidia);
+            var perfil = GpuDriverTweaks.ObterPerfil(estado.PerfilId) ?? GpuDriverTweaks.ObterPerfil("fps2")!;
+
+            var motor = new MotorTweaks(new RegistroWindows());
+            foreach (var tid in perfil.TweakIds)
+            {
+                // Já ativo: reaplicar trocaria o backup pelo valor otimizado e o Desfazer perderia o original.
+                if (CatalogoTweaks.Todos.FirstOrDefault(t => t.Id == tid) is { } tw && !motor.Aplicado(tw))
+                    try { motor.Aplicar(tw); } catch { }
+            }
+
+            GpuDriverTweaks.ExportarNipLocal(perfil, null, gpuNv);
+            var resDrs = NvidiaDrs.AplicarNoBaseProfile(perfil.Id, gpuNv);
+            var verDrs = NvidiaDrs.VerificarBaseProfile(perfil.Id, gpuNv);
+            if (resDrs.Sucesso)
+                GpuDriverTweaks.SalvarEstadoPerfil(new EstadoPerfilGpu(perfil.Id,
+                    GpuDriverTweaks.LerVersaoDriverClasse(FabricanteGpu.Nvidia) ?? gpuNv?.VersaoDriver, DateTime.UtcNow));
+
+            bool painelAberto = await NvidiaDebloat.AbrirPainelControleComEsperaAsync();
+            var resumoPainel = painelAberto
+                ? "Painel de Controle NVIDIA aberto."
+                : "Painel de Controle NVIDIA ainda está sendo provisionado pela Store.";
+
+            NotificacoesStore.Padrao.Adicionar(
+                "GPU",
+                $"Pós-reinício NVIDIA concluído ({perfil.Nome})",
+                $"{(resDrs.Sucesso ? verDrs.Resumo : resDrs.Mensagem)} · {resumoPainel}");
+        }
+        catch (Exception ex)
+        {
+            NotificacoesStore.Padrao.Adicionar(
+                "GPU",
+                "Aviso no pós-reinício NVIDIA",
+                $"Não foi possível concluir automaticamente os ajustes pós-boot: {ExtrairMotivoClaro(ex)}");
+        }
     }
 
     static string ExtrairMotivoClaro(Exception ex)

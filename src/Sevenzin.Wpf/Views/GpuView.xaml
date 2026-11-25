@@ -10,13 +10,12 @@
             </Grid.RowDefinitions>
 
             <!-- Cabeçalho superior: Título + Subtítulo à esquerda, Status da GPU à direita -->
-            <Grid Grid.Row="0" Margin="0,6,0,16">
+            <Grid Grid.Row="0" Margin="0,8,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="HARDWARE" Style="{StaticResource Eyebrow}"/>
                     <TextBlock Text="GPU" Style="{StaticResource TituloTela}"/>
                     <TextBlock Text="Ajustes de driver para a sua placa de vídeo."
                                Foreground="{StaticResource TextSecondaryBrush}"
@@ -49,11 +48,6 @@
                 <StackPanel x:Name="Lista"/>
             </ScrollViewer>
 
-            <!-- Rodapé informativo -->
-            <TextBlock Grid.Row="2"
-                       Text="Aplique somente os ajustes adequados ao seu uso."
-                       Foreground="{StaticResource TextMutedBrush}"
-                       FontSize="11.5" Margin="2,6,0,0"/>
         </Grid>
 
         <!-- Modal sobreposto: Auto NVIDIA Debloat -->

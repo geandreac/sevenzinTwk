@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
 using Sevenzin.Diagnostics;
@@ -14,10 +13,11 @@ public partial class ConfiguracoesView : UserControl
 {
     const string RunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string RunName = "Sevenzin";
-    const string NomeTarefaStartup = "SevenzinTwksStartup";
+    const string NomeTarefaStartup = PosDebloatNvidiaStore.TarefaAutostart;
     static readonly string Pasta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sevenzin");
 
-    Border[] _tabs = Array.Empty<Border>();
+    RadioButton[] _tabs = Array.Empty<RadioButton>();
+    int _abaAtual = -1;
     FrameworkElement[] _paineis = Array.Empty<FrameworkElement>();
 
     public ConfiguracoesView(string? abaInicial = null)
@@ -37,6 +37,7 @@ public partial class ConfiguracoesView : UserControl
         AssistenteTxt.Text = cfgAssistente.EndpointUrl ?? "";
         AtualizarStatusAssistente();
         SelecionarSubAba(abaInicial ?? "geral");
+        Abas.SizeChanged += (_, _) => MoverSublinhado(animar: false);
     }
 
     public void SelecionarSubAba(string chave)
@@ -89,22 +90,38 @@ public partial class ConfiguracoesView : UserControl
         AtualizarStatusAssistente();
     }
 
-    void Tab_Click(object sender, MouseButtonEventArgs e) => SelecionarAba(int.Parse((string)((Border)sender).Tag));
+    void Tab_Click(object sender, RoutedEventArgs e)
+    {
+        if (_tabs.Length > 0) SelecionarAba(int.Parse((string)((RadioButton)sender).Tag));
+    }
 
     void SelecionarAba(int i)
     {
-        for (int k = 0; k < _tabs.Length; k++)
-        {
-            bool ativo = k == i;
-            _tabs[k].BorderBrush = ativo ? (Brush)Application.Current.Resources["Brand500Brush"] : Brushes.Transparent;
-            if (_tabs[k].Child is TextBlock t)
-            {
-                t.Foreground = (Brush)Application.Current.Resources[ativo ? "TextPrimaryBrush" : "TextMutedBrush"];
-                t.FontWeight = ativo ? FontWeights.SemiBold : FontWeights.Normal;
-            }
-            _paineis[k].Visibility = ativo ? Visibility.Visible : Visibility.Collapsed;
-        }
+        if (i == _abaAtual) return;
+        int anterior = _abaAtual;
+        _abaAtual = i;
+        _tabs[i].IsChecked = true;
+        for (int k = 0; k < _paineis.Length; k++)
+            _paineis[k].Visibility = k == i ? Visibility.Visible : Visibility.Collapsed;
         if (i == 3) NotificacoesSubView.Atualizar();
+        if (anterior < 0) return;
+        Movimento.Viajar(_paineis[i], i > anterior ? 16 : -16, 0);
+        MoverSublinhado(animar: true);
+    }
+
+    // Um sublinhado só: desliza e muda de largura até a aba escolhida.
+    void MoverSublinhado(bool animar)
+    {
+        var aba = _tabs[_abaAtual];
+        if (aba.ActualWidth <= 0) return;
+        double x = aba.TranslatePoint(new Point(), Abas).X, deX = Sublinhado.Margin.Left, deL = Sublinhado.Width;
+        bool primeiro = Sublinhado.Visibility != Visibility.Visible;
+        Sublinhado.Visibility = Visibility.Visible;
+        Movimento.Contar(primeiro || !animar ? 1 : 0, 1, t =>
+        {
+            Sublinhado.Margin = new Thickness(deX + (x - deX) * t, 0, 0, 0);
+            Sublinhado.Width = deL + (aba.ActualWidth - deL) * t;
+        }, 260);
     }
 
     static bool StartupLigado()
@@ -239,6 +256,7 @@ public partial class ConfiguracoesView : UserControl
 
     static Version VersaoApp => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
     string? _urlRelease;
+    ResultadoAtualizacao? _atualizacao;
 
     async void Verificar_Click(object sender, RoutedEventArgs e)
     {
@@ -251,14 +269,24 @@ public partial class ConfiguracoesView : UserControl
         if (r.HaNova)
         {
             _urlRelease = r.Url;
+            _atualizacao = r;
+            AbrirReleaseBtn.Content = r.Sha256 is null ? "Baixar atualização" : "Reiniciar para atualizar";
             AbrirReleaseBtn.Visibility = r.Url.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-            AtualizaStatus.Text = $"Nova versão disponível: {r.VersaoRemota} (você tem {r.VersaoAtual}). O download abre a página da release no navegador.";
+            AtualizaStatus.Text = $"Nova versão disponível: {r.VersaoRemota} (você tem {r.VersaoAtual})." +
+                (r.Sha256 is null ? " O download abre a página da release no navegador." : "");
         }
         else AtualizaStatus.Text = $"Você está na versão mais recente ({r.VersaoAtual}).";
     }
 
-    void AbrirRelease_Click(object sender, RoutedEventArgs e)
+    async void AbrirRelease_Click(object sender, RoutedEventArgs e)
     {
+        if (_atualizacao is { Sha256: not null } r && Window.GetWindow(this) is MainWindow mw)
+        {
+            AbrirReleaseBtn.IsEnabled = VerificarBtn.IsEnabled = false;
+            await mw.AtualizarEReiniciarAsync(r, t => AtualizaStatus.Text = t);
+            AbrirReleaseBtn.IsEnabled = VerificarBtn.IsEnabled = true;
+            return;
+        }
         if (string.IsNullOrEmpty(_urlRelease)) return;
         try { Process.Start(new ProcessStartInfo(_urlRelease) { UseShellExecute = true }); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Warning); }

@@ -16,7 +16,6 @@ public partial class LimpezaView : UserControl
     static Brush Muted => (Brush)Application.Current.Resources["TextMutedBrush"];
     static Brush Secondary => (Brush)Application.Current.Resources["TextSecondaryBrush"];
     static Brush Surface2 => (Brush)Application.Current.Resources["Surface2Brush"];
-    static Style CardStyle => (Style)Application.Current.Resources["Card"];
     static Style SecButton => (Style)Application.Current.Resources["SecondaryButton"];
 
     sealed record Controles(CheckBox Selecao, TextBlock Tamanho);
@@ -26,14 +25,14 @@ public partial class LimpezaView : UserControl
     public LimpezaView()
     {
         InitializeComponent();
-        foreach (var a in Limpeza.Alvos) Lista.Children.Add(Cartao(a));
+        Lista.Children.Add(Ui.Grupo(Limpeza.Alvos.Select(Linha), 8));
         if (!Elevacao.EhAdmin() && Limpeza.Alvos.Any(a => a.ExigeAdmin))
             AdminBtn.Visibility = Visibility.Visible;
     }
 
     void Admin_Click(object sender, RoutedEventArgs e) => Elevacao.ReabrirComoAdmin();
 
-    Border Cartao(AlvoLimpeza a)
+    UIElement Linha(AlvoLimpeza a)
     {
         var g = new Grid();
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -52,7 +51,8 @@ public partial class LimpezaView : UserControl
         }
         esq.Children.Add(titulo);
         esq.Children.Add(new TextBlock { Text = a.Descricao, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap });
-        var tam = new TextBlock { Text = bloqueadoPorAdmin ? "Reabra como administrador para medir e limpar." : "—", Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) };
+        var tam = new TextBlock { Text = bloqueadoPorAdmin ? "Reabra como administrador para medir e limpar." : "", Foreground = Secondary, FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 6, 0, 0), Visibility = bloqueadoPorAdmin ? Visibility.Visible : Visibility.Collapsed };
+        System.Windows.Documents.Typography.SetNumeralAlignment(tam, FontNumeralAlignment.Tabular);
         esq.Children.Add(tam);
 
         var chk = new CheckBox
@@ -82,7 +82,7 @@ public partial class LimpezaView : UserControl
         }
 
         _ctrl[a.Id] = new Controles(chk, tam);
-        return new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 12), Child = g };
+        return g;
     }
 
     async Task ExecutarAnaliseAsync()
@@ -97,9 +97,10 @@ public partial class LimpezaView : UserControl
                 _ctrl[a.Id].Tamanho.Text = "Reabra como administrador para medir e limpar.";
                 continue;
             }
+            MostrarTamanho(a.Id, "Medindo…");
             var r = await Task.Run(() => Limpeza.Analisar(a.Id));
             _ultima[a.Id] = r;
-            _ctrl[a.Id].Tamanho.Text = $"{Tam(r.Bytes)} · {r.Itens} item(ns)";
+            MostrarTamanho(a.Id, $"{Tam(r.Bytes)} · {r.Itens} item(ns)");
         }
         AnalisarBtn.IsEnabled = true;
         LimparBtn.IsEnabled = true;
@@ -107,6 +108,14 @@ public partial class LimpezaView : UserControl
     }
 
     async void Analisar_Click(object sender, RoutedEventArgs e) => await ExecutarAnaliseAsync();
+
+    double _totalMostrado;
+
+    void MostrarTamanho(CategoriaLimpeza id, string texto)
+    {
+        _ctrl[id].Tamanho.Text = texto;
+        _ctrl[id].Tamanho.Visibility = Visibility.Visible;
+    }
 
     void AtualizarResumo()
     {
@@ -119,7 +128,10 @@ public partial class LimpezaView : UserControl
             ResumoTxt.Text = "Clique em Analisar para medir ou em Limpeza Total para excluir direto do computador.";
             return;
         }
-        ResumoTxt.Text = $"Selecionado para exclusão direta: {Tam(bytes)} em {itens} item(ns) (pula a Lixeira).";
+        TotalTxt.Visibility = Visibility.Visible;
+        Movimento.Contar(_totalMostrado, bytes, v => TotalTxt.Text = Tam((long)v));
+        _totalMostrado = bytes;
+        ResumoTxt.Text = $"em {itens} item(ns) selecionados. A exclusão é direta e pula a Lixeira.";
     }
 
     async void Limpar_Click(object sender, RoutedEventArgs e)
@@ -150,10 +162,11 @@ public partial class LimpezaView : UserControl
             RecuperacaoFalhaStore.Padrao.DefinirOperacaoEmCurso("Limpeza Total");
             foreach (var a in selecionados)
             {
+                MostrarTamanho(a.Id, "Limpando…");
                 var r = await Task.Run(() => Limpeza.LimparPermanente(a.Id));
                 totItens += r.Itens; totErros += r.Erros; totBytes += r.Bytes;
                 _ultima[a.Id] = await Task.Run(() => Limpeza.Analisar(a.Id));
-                _ctrl[a.Id].Tamanho.Text = $"{Tam(_ultima[a.Id].Bytes)} · {_ultima[a.Id].Itens} item(ns)";
+                MostrarTamanho(a.Id, $"{Tam(_ultima[a.Id].Bytes)} · {_ultima[a.Id].Itens} item(ns)");
             }
         }
         finally
@@ -186,7 +199,7 @@ public partial class LimpezaView : UserControl
 
         var r = Limpeza.LimparPermanente(a.Id);
         _ultima[a.Id] = Limpeza.Analisar(a.Id);
-        _ctrl[a.Id].Tamanho.Text = $"{Tam(_ultima[a.Id].Bytes)} · {_ultima[a.Id].Itens} item(ns)";
+        MostrarTamanho(a.Id, $"{Tam(_ultima[a.Id].Bytes)} · {_ultima[a.Id].Itens} item(ns)");
         AtualizarResumo();
         NotificacoesStore.Padrao.Adicionar("Limpeza", "Lixeira esvaziada", r.Mensagem + " (ação permanente)");
         Toasts.Mostrar(this, r.Erros == 0 ? TipoToast.Sucesso : TipoToast.Erro, r.Erros == 0 ? "Lixeira esvaziada" : "Falha ao esvaziar", r.Mensagem);
