@@ -43,6 +43,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         JanelaArredondada.Arredondar(this);
+        JanelaMaximizada.Aplicar(this);
 
         _bandeja = new BandejaSistema(
             aoRestaurar: RestaurarDaBandeja,
@@ -106,6 +107,12 @@ public partial class MainWindow : Window
 
     void MainWindow_StateChanged(object? sender, EventArgs e)
     {
+        // Vale também para Win+↑ e duplo clique na barra: o botão sempre mostra a ação que fará.
+        bool max = WindowState == WindowState.Maximized;
+        MaxBtn.ToolTip = max ? "Restaurar" : "Maximizar";
+        MaxIcone.Visibility = max ? Visibility.Collapsed : Visibility.Visible;
+        RestaurarIcone.Visibility = max ? Visibility.Visible : Visibility.Collapsed;
+        System.Windows.Automation.AutomationProperties.SetName(MaxBtn, (string)MaxBtn.ToolTip);
         if (App.ModoRender) return;
         if (WindowState == WindowState.Minimized && PreferenciasUiStore.Padrao.Carregar().MinimizarParaBandeja)
         {
@@ -377,7 +384,6 @@ public partial class MainWindow : Window
     void Max_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        MaxBtn.ToolTip = WindowState == WindowState.Maximized ? "Restaurar" : "Maximizar";
     }
 
     void Close_Click(object sender, RoutedEventArgs e)

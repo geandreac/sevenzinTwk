@@ -79,13 +79,18 @@
             </Grid.RowDefinitions>
             <DockPanel Grid.Row="0">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource ChromeButton}" Click="Min_Click" ToolTip="Minimizar">
+                    <Button Style="{StaticResource ChromeButton}" Click="Min_Click" ToolTip="Minimizar" AutomationProperties.Name="Minimizar">
                         <Path Data="M0,0 H11"/>
                     </Button>
-                    <Button x:Name="MaxBtn" Style="{StaticResource ChromeButton}" Click="Max_Click" ToolTip="Maximizar">
-                        <Rectangle Width="10.5" Height="10.5" RadiusX="2" RadiusY="2"/>
+                    <Button x:Name="MaxBtn" Style="{StaticResource ChromeButton}" Click="Max_Click" ToolTip="Maximizar" AutomationProperties.Name="Maximizar">
+                        <Grid>
+                            <Rectangle x:Name="MaxIcone" Width="10.5" Height="10.5" RadiusX="2" RadiusY="2"/>
+                            <!-- restaurar: dois quadrados sobrepostos, o padrão do Windows -->
+                            <Path x:Name="RestaurarIcone" Visibility="Collapsed" Width="11" Height="11"
+                                  Data="M0,3 H8 V11 H0 Z M3,3 V0 H11 V8 H8"/>
+                        </Grid>
                     </Button>
-                    <Button Style="{StaticResource ChromeButton}" Click="Close_Click" ToolTip="Fechar">
+                    <Button Style="{StaticResource ChromeButton}" Click="Close_Click" ToolTip="Fechar" AutomationProperties.Name="Fechar">
                         <Path Data="M0,0 L10,10 M10,0 L0,10"/>
                     </Button>
                 </StackPanel>
