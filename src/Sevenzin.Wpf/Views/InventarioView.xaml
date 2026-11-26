@@ -21,7 +21,10 @@
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0" Margin="0,16,0,16" ClipToBounds="True">
             <Grid>
             <TextBlock x:Name="Carregando" Text="Lendo o hardware…" Foreground="{StaticResource TextMutedBrush}" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            <DataGrid x:Name="Grade" Style="{StaticResource DarkGrid}" Visibility="Hidden">
+            <!-- Com agrupamento o WPF desliga a virtualização e monta todas as linhas de uma vez: religada aqui. -->
+            <DataGrid x:Name="Grade" Style="{StaticResource DarkGrid}" Visibility="Hidden"
+                      VirtualizingPanel.IsVirtualizingWhenGrouping="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.ScrollUnit="Pixel" EnableRowVirtualization="True">
                 <DataGrid.GroupStyle>
                     <GroupStyle>
                         <GroupStyle.HeaderTemplate>

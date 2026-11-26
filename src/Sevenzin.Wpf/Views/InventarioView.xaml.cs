@@ -21,7 +21,6 @@ public partial class InventarioView : UserControl
             Grade.SelectedIndex = -1;
             Carregando.Visibility = Visibility.Collapsed;
             Grade.Visibility = Visibility.Visible;
-            Movimento.Entrar(Grade, 0);
         };
     }
 }
