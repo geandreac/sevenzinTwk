@@ -1,82 +1,125 @@
-# Sevenzin — otimizador de PC (reconstrução segura)
+<p align="center">
+  <img src="docs/adicionais/Logo/SevenzinTwks_discord_1024.png" alt="Logo do SevenzinTwks" width="160">
+</p>
 
-Aplicativo de **diagnóstico e otimização** do Windows, em WPF (.NET 8), que **reconstrói de forma segura** um
-programa analisado por engenharia reversa. O princípio é simples: **medir antes de otimizar**, só leitura primeiro,
-tudo **reversível, auditado e confirmado** por você.
+<h1 align="center">SevenzinTwks</h1>
 
-> **Princípio de operação:** toda alteração no Windows tem **explicação, confirmação explícita e reversão**
-> (prévia, backup, desfazer e auditoria no motor de tweaks). Nenhuma otimização roda sem o usuário pedir.
-> As telas avançadas (UAC, Defender, ISO/USB, assistente) entram por fases — ver `docs/revisao_ajustes.md`.
+<p align="center">
+  <b>Otimização de PC para jogos, com segurança: mede antes, explica cada ajuste e desfaz com um clique.</b><br>
+  Windows 10 e 11 · 64 bits
+</p>
+
+<p align="center">
+  <a href="https://discord.gg/W7wC4dWNYc"><b>Comprar acesso no Discord</b></a> ·
+  <a href="https://github.com/geandreac/sevenzinTwk/releases/latest">Baixar a versão mais recente</a>
+</p>
+
+---
+
+## O que é
+
+O SevenzinTwks é um otimizador de Windows feito para quem joga e quer o PC mais rápido **sem arriscar o sistema**.
+
+A maioria dos otimizadores aplica dezenas de mudanças de uma vez, sem dizer o que fez, e deixa você sem caminho de
+volta. O SevenzinTwks trabalha ao contrário:
+
+| Princípio | Na prática |
+|---|---|
+| **Medir antes de otimizar** | Mostra o estado real do PC (CPU, GPU, memória, latência, boot) antes de qualquer mudança. Quando um dado não está disponível, aparece "—", nunca um número inventado. |
+| **Cada ajuste é explicado** | Todo item diz o que muda, o risco e se precisa reiniciar. |
+| **Tudo tem volta** | Backup do valor anterior, botão de desfazer e histórico de tudo o que foi aplicado. |
+| **Ponto de restauração** | Antes de otimizar, o app cria um ponto de restauração do Windows e confere se ele foi criado de verdade. |
+| **Você decide** | Nada é alterado, baixado ou executado sem a sua confirmação. Nada é enviado pela internet em segundo plano. |
 
 ## Funcionalidades
 
-- **Login + Admin** por e-mail e senha: hash **bcrypt**, sessão com expiração/renovação/logout, proteção de rota por
-  papel (administrador × usuário), proteção contra força bruta e seed do primeiro admin por variável de ambiente.
-- **Início** — monitores ao vivo de CPU (`GetSystemTimes`), GPU, memória e latência (leituras reais; "—" quando a
-  métrica é indisponível, nunca um valor forjado) + faixa de sistema + atalhos.
-- **Ajustes** — otimizações **reversíveis** com prévia, backup do estado anterior, desfazer e auditoria.
-- **GPU** — diagnóstico somente leitura (sem DDU, sem alterar flags do driver), **modos de vídeo suportados**
-  (resolução × Hz via DEVMODE, só listagem) + link oficial do fabricante.
-- **Instaladores** — utilitários de **fontes oficiais** com verificação por assinatura/hash antes de executar e
-  **fila persistida** em JSON local (sobrevive a reinícios).
-- **Jogos** — perfil por jogo **temporário** (afinidade/prioridade revertidas ao fechar) + **working set e timer de
-  1 ms opt-in** com aviso, também revertidos ao fechar + **detecção automática de jogos Steam/Epic instalados**
-  (só leitura; adicionar ao catálogo não aplica nada).
-- **Capturas** — 4 modos (tela inteira/monitor/região/janela) + editor de anotações; salva local por padrão; envio
-  só com webhook configurado e confirmação por envio.
-- **Assistente** — conversa por endpoint HTTPS **configurado por você**; cada mensagem é enviada só quando você
-  aperta Enviar; contexto do PC só com consentimento.
-- **Windows** — estado só leitura + plano de energia "Sevenzin" (duplicável/restaurável) + **análise de ISO do
-  Windows somente leitura** (edições, apps e features via DISM).
-- **BIOS** — tela **informativa e segura** (estado só leitura + instruções com classificação de risco).
-- **Inventário / Telemetria / Benchmark** — inventário com grau de confiança (Fato/Inferência), medição A/B e
-  benchmark de frametime interno.
+### Uso diário
 
-## Arquitetura
+- **Início:** painel ao vivo de CPU, memória e latência, com gráficos em tempo real, resumo do sistema e um botão
+  "Otimizar" que mostra antes a lista exata do que será aplicado.
+- **Ajustes:** 84 otimizações reversíveis, organizadas por tema: desempenho, jogos, GPU, mouse, rede, memória,
+  visual, privacidade, telemetria e segurança. Cada uma liga e desliga com um toque, com prévia, backup e desfazer.
+- **Jogos:** perfil por jogo, com prioridade, afinidade de núcleos (P-cores, sem o Core 0, sem SMT, 1º CCD) e modo de
+  compatibilidade. Tudo é **temporário**: volta ao normal quando o jogo fecha. Também detecta os jogos instalados na
+  Steam e na Epic e diz o quanto o PC está pronto para jogar.
 
-- `src/Sevenzin.Diagnostics/` — biblioteca de coleta e lógica, **sem UI** (WMI, contadores de performance, motor de
-  tweaks reversível, autenticação). Testável de forma isolada.
-- `src/Sevenzin.Wpf/` — aplicativo **WPF** (tema escuro alinhado ao Figma, tipografia Inter, ícone oficial "S em raio").
-- `src/Sevenzin.Admin/` — **app Admin separado** (auditoria de tweaks, log de acessos, segurança) — local, não
-  publicado no GitHub.
-- `src/Sevenzin.Report/` — runner de linha de comando (`relatorio-pc.md`/`.json`, self-test).
-- `tests/Sevenzin.Tests/` — **201 testes** automatizados (motor de tweaks, autenticação + MFA, GPU, inventário,
-  modos de vídeo, CPU, timer, fila, detecção de jogos, DISM, assistente…).
-- `docs/` — análise do original, design system, paridade funcional e revisões.
+### Hardware
 
-## Como usar
+- **GPU:** ajustes de driver NVIDIA e AMD, 7 perfis gráficos prontos, instalação do driver NVIDIA sem os
+  componentes extras (direto dos servidores oficiais, com assinatura conferida) e overclock dentro dos limites da
+  própria placa.
+- **Meu PC:** inventário completo do hardware, com a origem e o grau de confiança de cada informação, sem coletar
+  dados pessoais.
+- **BIOS:** diagnóstico da plataforma (Secure Boot, TPM, modo de boot) e orientações seguras. O app **não altera** a
+  BIOS: só informa.
 
-Requisitos: **.NET SDK 8** no Windows.
+### Sistema
 
-```bash
-# compilar
-dotnet build src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
+- **Windows:** informações do sistema, programas que abrem com o Windows (liga e desliga cada um, com o tempo de boot
+  medido), timers de boot e plano de energia próprio do SevenzinTwks.
+- **Instaladores:** 69 programas de fontes oficiais em 5 grupos (jogos e comunidade, desempenho e diagnóstico,
+  drivers e componentes, aplicativos essenciais, sistema e criação), com busca e filtros. Cada download tem a
+  **assinatura digital conferida** antes de liberar a execução. Há também a instalação rápida pelo WinGet, com o
+  andamento de cada pacote.
+- **Limpeza:** analisa e remove temporários, caches e a Lixeira, sem tocar em arquivos pessoais.
+- **Proteção:** mostra o estado real de UAC, Defender, SmartScreen, isolamento de núcleo, Windows Update, Secure Boot e
+  TPM. Os ajustes desta tela são de risco alto, por isso exigem confirmação explícita e podem ser desfeitos.
 
-# rodar o app
-dotnet run --project src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
+### Medição e conta
 
-# testes
+- **Benchmark e Telemetria:** benchmark de frametime e sessões de medição de CPU, clock e memória, para comparar o
+  **mesmo PC antes e depois** de uma mudança, em vez de confiar em promessa.
+- **Conta e segurança:** login com e-mail e senha, verificação em duas etapas (app autenticador) e atualização
+  automática pelo próprio app.
+
+## Como adquirir e instalar
+
+1. **Compre o acesso.** Entre no Discord do SevenzinTwks e fale com o **Geandre**:
+   **https://discord.gg/W7wC4dWNYc**. Depois da compra, você recebe o seu login (e-mail e senha).
+2. **Baixe o instalador.** Na página de [versões](https://github.com/geandreac/sevenzinTwk/releases/latest), baixe o
+   arquivo `SevenzinTwks-<versão>-setup.exe`. Se preferir não instalar, use o
+   `SevenzinTwks-<versão>-portable-win-x64.zip`.
+3. **Instale.** Abra o instalador e confirme a permissão de administrador. Ela é necessária porque várias
+   otimizações mexem em configurações do sistema.
+4. **Entre com a sua conta.** Use o login recebido no Discord. Recomendamos ativar a verificação em duas etapas em
+   **Configurações › Perfil**.
+5. **Comece medindo.** Veja o painel do **Início**, depois use **Otimizar** ou escolha os ajustes um a um em
+   **Ajustes**. O ponto de restauração é criado antes, automaticamente.
+
+**Requisitos:** Windows 10 ou 11 de 64 bits e permissão de administrador. Não é preciso instalar .NET nem outro
+componente: tudo vem no instalador.
+
+**Atualizações:** o app avisa quando há versão nova. Você também pode buscar em **Configurações › Preferências ›
+Buscar atualizações**.
+
+**Suporte:** dúvidas, problemas e sugestões vão para o [Discord](https://discord.gg/W7wC4dWNYc).
+
+> **Sobre os ganhos:** o desempenho de cada PC depende do hardware, dos drivers e dos jogos. Por isso o SevenzinTwks
+> não promete números: ele mede o antes e o depois para você ver o resultado no seu próprio computador.
+
+---
+
+## Para desenvolvedores
+
+Projeto em **WPF / .NET 8**. A lógica fica numa biblioteca sem interface, testável de forma isolada.
+
+| Pasta | Conteúdo |
+|---|---|
+| `src/Sevenzin.Diagnostics/` | Motor sem UI: coleta de hardware, motor de ajustes reversíveis, instaladores verificados, autenticação |
+| `src/Sevenzin.Wpf/` | Aplicativo WPF (telas, tema e componentes) |
+| `src/Sevenzin.Report/` | Gerador de relatório do PC por linha de comando |
+| `tests/Sevenzin.Tests/` | Testes automatizados (xUnit) |
+| `docs/` | Design system, catálogo de otimizações, roteiros de teste e planos |
+
+Requer o **.NET SDK 8** no Windows:
+
+```powershell
+dotnet build src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug
 dotnet test
+dotnet run --project src\Sevenzin.Wpf\Sevenzin.Wpf.csproj -c Debug
 ```
 
-Ao abrir pela primeira vez, o app pede para **criar o primeiro administrador** (e-mail + senha forte: ≥12 caracteres,
-com maiúsculas/minúsculas, número e símbolo). Depois disso, o login passa a ser normal.
+As contas ficam no servidor: para entrar no app, mesmo compilado localmente, é preciso um login válido.
 
-Para provisionar o admin sem interface (ex.: em uma instalação de escola), defina antes de abrir:
-
-```bash
-set SEVENZIN_ADMIN_EMAIL=admin@suaescola.edu
-set SEVENZIN_ADMIN_SENHA=UmaSenhaForte#2026
-```
-
-> ⚠️ A tela **Ajustes** altera o registro do Windows de verdade (reversível e auditado, pede administrador). Teste em
-> uma máquina/VM que você controla e, de preferência, com um ponto de restauração criado.
-
-## Como clonar
-
-```bash
-git clone https://github.com/geandreac/sevenzinTwk.git
-cd sevenzinTwk
-dotnet build src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
-dotnet run --project src/Sevenzin.Wpf/Sevenzin.Wpf.csproj -c Debug
-```
+> A tela **Ajustes** altera o registro do Windows de verdade (com backup e desfazer). Para desenvolver, prefira uma
+> máquina virtual ou um PC de testes.
