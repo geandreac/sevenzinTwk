@@ -352,11 +352,18 @@ public partial class InicioView : UserControl
             previa.Append($"\n{g.Key.ToUpperInvariant()}\n");
             foreach (var i in g) previa.Append($"  • {i.Nome}{(i.Risco.Length > 0 ? $" — risco {i.Risco}" : "")}\n");
         }
+        if (PreferenciasUiStore.Padrao.Carregar().CriarPontoAntesDeOtimizar)
+            previa.Append("\nAntes de aplicar, será criado um ponto de restauração do Windows (30 s a alguns minutos).\n");
         previa.Append("\n\"Desfazer tudo\" reverte este lote. Alguns ajustes (HAGS, inicialização rápida) só valem depois de reiniciar o PC.\n\nContinuar?");
         if (MessageBox.Show(previa.ToString(), "Otimizar para jogos", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
 
         _otimizarBtn.IsEnabled = _desfazerBtn.IsEnabled = false;
+        if (!await PontoAntes.GarantirAsync(this, "otimizar para jogos", t => _prontSub.Text = t))
+        {
+            await ReavaliarAsync();
+            return;
+        }
         _prontSub.Text = $"Aplicando {pend.Count} ajuste(s)…";
         var fab = _fabricante;
         var r = await System.Threading.Tasks.Task.Run(() =>

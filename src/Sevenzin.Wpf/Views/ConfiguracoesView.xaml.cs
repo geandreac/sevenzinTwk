@@ -31,6 +31,11 @@ public partial class ConfiguracoesView : UserControl
         SwFecharBandeja.IsChecked = prefsUi.FecharParaBandeja;
         SwInicioMinimizado.IsChecked = prefsUi.IniciarMinimizadoNaBandeja;
         SwLoginAuto.IsChecked = prefsUi.LoginAutomatico;
+        SwPontoAntes.IsChecked = prefsUi.CriarPontoAntesDeOtimizar;
+        SwBloquearSemPonto.IsChecked = prefsUi.BloquearSemPonto;
+        BloquearLinha.Visibility = prefsUi.CriarPontoAntesDeOtimizar ? Visibility.Visible : Visibility.Collapsed;
+        PontoAviso.Text = PontoAntes.AvisoBackup;
+        if (!App.ModoRender) _ = AtualizarPontoAsync();
         PastaTxt.Text = Pasta;
         VersaoTxt.Text = $"SevenzinTwks {VersaoApp.ToString(3)} · reconstrução segura (WPF)";
         var cfgAssistente = new ConfigAssistenteStore().Carregar();
@@ -141,6 +146,51 @@ public partial class ConfiguracoesView : UserControl
         catch { }
         using var k = Registry.CurrentUser.OpenSubKey(RunPath);
         return k?.GetValue(RunName) != null;
+    }
+
+    void Ponto_Click(object sender, RoutedEventArgs e)
+    {
+        var novo = PreferenciasUiStore.Padrao.Carregar() with
+        {
+            CriarPontoAntesDeOtimizar = SwPontoAntes.IsChecked == true,
+            BloquearSemPonto = SwBloquearSemPonto.IsChecked == true,
+        };
+        PreferenciasUiStore.Padrao.Salvar(novo);
+        // "Bloquear" só faz sentido com o ponto ligado: recolhe junto, em vez de ficar cinza.
+        if ((BloquearLinha.Visibility == Visibility.Visible) != novo.CriarPontoAntesDeOtimizar)
+            Movimento.Expandir(BloquearLinha, novo.CriarPontoAntesDeOtimizar, 220);
+    }
+
+    async Task AtualizarPontoAsync()
+    {
+        var e = await Task.Run(PontoRestauracao.LerEstado);
+        var motivo = PontoRestauracao.Avaliar(e, DateTime.UtcNow);
+        string ultimo = e.Ultimo is { } u ? $"Último ponto: {u.CriadoUtc.ToLocalTime():dd/MM/yyyy 'às' HH:mm} (\"{u.Descricao}\")." : "Nenhum ponto de restauração encontrado.";
+        PontoStatus.Text = motivo switch
+        {
+            MotivoPonto.Nenhum or MotivoPonto.LimiteDeFrequencia => $"Proteção do Sistema ativa. {ultimo}",
+            _ => $"{PontoRestauracao.Explicar(motivo, e)} {ultimo}",
+        };
+        bool ok = motivo is MotivoPonto.Nenhum or MotivoPonto.LimiteDeFrequencia;
+        PontoStatus.Foreground = (Brush)Application.Current.Resources[ok ? "TextPrimaryBrush" : "WarningBrush"];
+        PontoPonto.Fill = (Brush)Application.Current.Resources[ok ? "SuccessBrush" : "WarningBrush"];
+    }
+
+    async void PontoAgora_Click(object sender, RoutedEventArgs e)
+    {
+        if (MessageBox.Show("Criar agora um ponto de restauração do Windows?\n\nLeva de 30 s a alguns minutos. " + PontoAntes.AvisoBackup,
+                "Criar ponto de restauração", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+        PontoAgoraBtn.IsEnabled = false;
+        PontoAgoraBtn.Content = "Criando…";
+        PontoStatus.Text = "Criando ponto de restauração… pode levar alguns minutos.";
+        PontoStatus.Foreground = (Brush)Application.Current.Resources["TextPrimaryBrush"];
+        PontoPonto.Fill = (Brush)Application.Current.Resources["Brand500Brush"];
+        var r = await Task.Run(() => PontoRestauracao.Criar("SevenzinTwks — ponto manual"));
+        PontoAgoraBtn.IsEnabled = true;
+        PontoAgoraBtn.Content = "Criar ponto agora";
+        NotificacoesStore.Padrao.Adicionar("Proteção", r.Criado ? "Ponto de restauração criado" : "Ponto de restauração não criado", r.Mensagem);
+        Toasts.Mostrar(this, r.Criado ? TipoToast.Sucesso : TipoToast.Aviso, r.Criado ? "Ponto de restauração criado" : "Ponto não criado", r.Mensagem);
+        await AtualizarPontoAsync();
     }
 
     void InicioMinimizado_Click(object sender, RoutedEventArgs e)

@@ -7,7 +7,9 @@ public sealed record PreferenciasUi(
     bool MinimizarParaBandeja = false,
     bool FecharParaBandeja = false,
     bool IniciarMinimizadoNaBandeja = true,
-    bool LoginAutomatico = true);
+    bool LoginAutomatico = true,
+    bool CriarPontoAntesDeOtimizar = true,
+    bool BloquearSemPonto = true);
 
 /// <summary>Armazenamento atômico local em `%LOCALAPPDATA%\Sevenzin\preferencias-ui.json`.</summary>
 public sealed class PreferenciasUiStore

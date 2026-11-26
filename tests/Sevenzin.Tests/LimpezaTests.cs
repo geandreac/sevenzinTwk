@@ -23,6 +23,13 @@ public class LimpezaTests
     }
 
     [Fact]
+    public void Prefetch_vem_desmarcado_porque_apagar_deixa_a_abertura_dos_programas_mais_lenta()
+    {
+        Assert.All(Limpeza.Alvos, a => Assert.Equal(a.Id != CategoriaLimpeza.Prefetch, a.MarcadoPorPadrao));
+        Assert.Contains("mais lentas", Limpeza.Alvos.Single(a => a.Id == CategoriaLimpeza.Prefetch).Descricao);
+    }
+
+    [Fact]
     public void TamanhoPasta_soma_recursivamente_pulando_nada_de_fixture()
     {
         var raiz = Path.Combine(Path.GetTempPath(), "sevenzin_lt_" + Guid.NewGuid().ToString("N"));

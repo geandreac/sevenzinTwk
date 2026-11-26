@@ -951,6 +951,13 @@ public partial class GpuView : UserControl
             barraProgresso.Visibility = Visibility.Visible;
             caixaLog.Visibility = Visibility.Visible;
             caixaLog.Clear();
+            // O driver é trocado: ponto de restauração antes (cobre drivers; o Windows volta ao driver anterior).
+            if (!await PontoAntes.GarantirAsync(this, "instalar o driver NVIDIA limpo", t => caixaLog.AppendText(t + Environment.NewLine)))
+            {
+                btnInstalar.IsEnabled = true;
+                caixaLog.AppendText("Cancelado: o driver não foi alterado." + Environment.NewLine);
+                return;
+            }
 
             _ctsDebloat = new CancellationTokenSource();
             int codigo;

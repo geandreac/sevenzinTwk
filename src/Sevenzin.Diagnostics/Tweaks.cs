@@ -370,7 +370,7 @@ public static class CatalogoTweaks
         new Tweak("paginacao-off", "Kernel residente (DisablePagingExecutive)", "Mantém o núcleo do sistema na RAM (DisablePagingExecutive=1, valor do original).", "Memória",
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "DisablePagingExecutive", 1, "Médio — mais RAM usada; meça A/B", true),
         new Tweak("large-cache-on", "Cache grande de sistema (LargeSystemCache)", "Amplia o cache de arquivos do sistema (LargeSystemCache=1, valor do original).", "Memória",
-            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "LargeSystemCache", 1, "Médio — pode piorar em pouca RAM; meça A/B", true),
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "LargeSystemCache", 1, "Médio — configuração pensada para servidores de arquivos: em PC de jogos pode reservar RAM para cache e piorar jogos e programas, principalmente com pouca RAM; não recomendado, meça A/B", true),
 
         // ── Visual (HKCU, cosmético; valores do original) ──
         new Tweak("transparencia-off", "Desligar transparência", "Desativa a transparência das janelas (EnableTransparency=0, valor do original).", "Visual",
@@ -434,5 +434,13 @@ public static class CatalogoTweaks
             Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverrideMask", 33554435, "ALTO — ativa a máscara de desligamento Spectre/Meltdown; requer reinício", true, true),
         new Tweak("wu-drivers-off", "Impedir atualização automática de drivers pelo Windows Update", "Define ExcludeWUDriversInQualityUpdate=1 (valor literal do original) para evitar sobrescrever drivers de GPU/rede.", "Segurança",
             Colmeia.MaquinaLocal, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "ExcludeWUDriversInQualityUpdate", 1, "ALTO — drivers passam a exigir atualização manual", true, true),
+
+        // ── Estudo de materiais (docs/estudo-otimizacao-materiais.md): só itens com benefício plausível e reversíveis ──
+        new Tweak("game-mode-on", "Modo de Jogo do Windows", "Garante o Modo de Jogo ligado (AutoGameModeEnabled=1): o Windows prioriza o jogo em foco e adia tarefas de fundo, como instalações do Windows Update. Já vem ligado no Windows 11; isto só desfaz quem o desligou.", "Jogos",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\GameBar", "AutoGameModeEnabled", 1, "Baixo — padrão do Windows", false),
+        new Tweak("power-throttling-off", "Desligar o power throttling", "PowerThrottlingOff=1: o Windows deixa de reduzir a CPU de processos em segundo plano (OBS, Discord, navegador com stream) em CPUs híbridas e notebooks. Em desktop ligado na tomada o efeito é pequeno; em notebook aumenta o consumo da bateria.", "Desempenho",
+            Colmeia.MaquinaLocal, @"SYSTEM\CurrentControlSet\Control\Power\PowerThrottling", "PowerThrottlingOff", 1, "Médio — mais consumo e calor; em notebook, menos bateria; meça A/B", true),
+        new Tweak("apps-segundo-plano-off", "Desligar apps da Microsoft Store em segundo plano", "GlobalUserDisabled=1: apps da Microsoft Store deixam de rodar e atualizar sozinhos em segundo plano. Programas comuns (.exe) não são afetados.", "Desempenho",
+            Colmeia.UsuarioAtual, @"Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 1, "Baixo — apps da Store não atualizam nem notificam em segundo plano", false),
     };
 }

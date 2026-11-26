@@ -100,6 +100,53 @@
                             </Grid>
                         </StackPanel>
                     </Border>
+                    <TextBlock Text="Proteção do sistema" Style="{StaticResource SectionLabel}" Margin="0,24,0,10"/>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Criar ponto de restauração antes de otimizar" FontSize="14"/>
+                                    <TextBlock Text="Antes de &quot;Otimizar para jogos&quot;, do Auto NVIDIA Debloat e da restauração de timers de boot. Leva de 30 s a alguns minutos." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleButton x:Name="SwPontoAntes" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Ponto_Click"
+                                              AutomationProperties.Name="Criar ponto de restauração antes de otimizar"/>
+                            </Grid>
+                            <StackPanel x:Name="BloquearLinha">
+                                <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,6,0,6"/>
+                                <Grid Margin="0,4,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,16,0">
+                                        <TextBlock Text="Bloquear a otimização se o ponto falhar" FontSize="14"/>
+                                        <TextBlock Text="Se o Windows não criar o ponto, a otimização só continua depois da sua confirmação explícita." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <ToggleButton x:Name="SwBloquearSemPonto" Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" Click="Ponto_Click"
+                                                  AutomationProperties.Name="Bloquear a otimização se o ponto falhar"/>
+                                </Grid>
+                            </StackPanel>
+                            <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,6,0,6"/>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <DockPanel>
+                                        <Ellipse x:Name="PontoPonto" Width="8" Height="8" Margin="0,5,8,0" VerticalAlignment="Top" Fill="{StaticResource TextMutedBrush}"/>
+                                        <TextBlock x:Name="PontoStatus" Text="Lendo a Proteção do Sistema…" FontSize="13" TextWrapping="Wrap"/>
+                                    </DockPanel>
+                                    <TextBlock x:Name="PontoAviso" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="16,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button x:Name="PontoAgoraBtn" Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="Criar ponto agora" VerticalAlignment="Center" Click="PontoAgora_Click"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                     <TextBlock Text="As alterações são salvas automaticamente." Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,12,0,0"/>
                 </StackPanel>
 

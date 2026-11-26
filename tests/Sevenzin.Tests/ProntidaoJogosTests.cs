@@ -84,12 +84,12 @@ public class ProntidaoJogosTests
         var motor = Motor();
         var itens = ProntidaoJogos.Montar(motor, FabricanteGpu.Nvidia, null, true, (null, null), Array.Empty<GrupoDriverGpu>());
         var pend = ProntidaoJogos.Pendentes(itens, incluirRecomendados: false);
-        Assert.Equal(10, pend.Count); // os 10 necessários do catálogo (sem AMD, sem plano na bateria)
+        Assert.Equal(11, pend.Count); // os 11 necessários do catálogo (sem AMD, sem plano na bateria)
 
         var r = ProntidaoJogos.AplicarLote(pend, i => i.Id == "fast-startup-off"
             ? throw new InvalidOperationException("sem permissão")
             : ProntidaoJogos.Executar(i.Id, true, motor, Array.Empty<GrupoDriverGpu>()));
-        Assert.Equal(9, r.Aplicados.Count);
+        Assert.Equal(10, r.Aplicados.Count);
         Assert.Equal("sem permissão", r.Falhas.Single().Motivo);
 
         var depois = ProntidaoJogos.Montar(motor, FabricanteGpu.Nvidia, null, true, (null, null), Array.Empty<GrupoDriverGpu>());

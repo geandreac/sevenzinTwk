@@ -8,7 +8,8 @@ public enum CategoriaLimpeza { TempUsuario, CacheMiniaturas, Lixeira, TempSistem
 /// <summary>Uma categoria de limpeza. <see cref="Permanente"/> só é verdadeiro para a Lixeira (esvaziar é
 /// irreversível); as demais vão PARA a Lixeira e podem ser restauradas. <see cref="ExigeAdmin"/> marca os
 /// alvos de sistema (HKLM-equivalente em disco): pastas de <c>%SystemRoot%</c> que só limpam como admin.</summary>
-public sealed record AlvoLimpeza(CategoriaLimpeza Id, string Nome, string Descricao, bool Permanente, bool ExigeAdmin = false);
+/// <see cref="MarcadoPorPadrao"/> = falso para o que limpar costuma piorar o desempenho (o usuário marca se quiser).
+public sealed record AlvoLimpeza(CategoriaLimpeza Id, string Nome, string Descricao, bool Permanente, bool ExigeAdmin = false, bool MarcadoPorPadrao = true);
 
 public sealed record ResultadoAnalise(long Bytes, int Itens);
 public sealed record ResultadoLimpeza(int Itens, long Bytes, int Erros, string Mensagem);
@@ -33,7 +34,7 @@ public static class Limpeza
         new AlvoLimpeza(CategoriaLimpeza.CacheWindowsUpdate, "Cache do Windows Update",
             "Downloads antigos em SoftwareDistribution\\Download. O Windows Update rebaixa o que precisar.", false, ExigeAdmin: true),
         new AlvoLimpeza(CategoriaLimpeza.Prefetch, "Prefetch",
-            "Arquivos *.pf de %SystemRoot%\\Prefetch. O Windows regenera automaticamente.", false, ExigeAdmin: true),
+            "Arquivos *.pf de %SystemRoot%\\Prefetch. Não recomendado: o Windows usa esses arquivos para abrir programas e jogos mais rápido; depois de apagados, as próximas aberturas ficam mais lentas até ele refazê-los. Por isso vem desmarcado.", false, ExigeAdmin: true, MarcadoPorPadrao: false),
     };
 
     // ---- Análise (somente leitura) ----

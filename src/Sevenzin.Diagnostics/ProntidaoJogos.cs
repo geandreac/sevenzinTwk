@@ -30,6 +30,8 @@ public static class ProntidaoJogos
         ("gamedvr-off", "Windows", NivelProntidao.Necessario, null),
         ("gamedvr-captura-off", "Windows", NivelProntidao.Necessario, null),
         ("fast-startup-off", "Windows", NivelProntidao.Necessario, null),
+        ("game-mode-on", "Windows", NivelProntidao.Necessario, null),
+        ("power-throttling-off", "CPU", NivelProntidao.Recomendado, null),
         ("mmcss-games-gpu", "CPU", NivelProntidao.Necessario, null),
         ("mmcss-games-prio", "CPU", NivelProntidao.Necessario, null),
         ("mmcss-games-sfio", "CPU", NivelProntidao.Necessario, null),

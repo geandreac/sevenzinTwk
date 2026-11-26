@@ -58,7 +58,7 @@ public partial class LimpezaView : UserControl
         var chk = new CheckBox
         {
             Content = esq,
-            IsChecked = !bloqueadoPorAdmin,
+            IsChecked = a.MarcadoPorPadrao && !bloqueadoPorAdmin,
             IsEnabled = !bloqueadoPorAdmin,
             VerticalContentAlignment = VerticalAlignment.Top,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
