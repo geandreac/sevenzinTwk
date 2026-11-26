@@ -42,13 +42,32 @@ public class IdentidadeDispositivoTests
     }
 
     [Fact]
-    public void Trocar_uma_peca_muda_o_hwid_mas_mantem_tres_componentes_iguais()
+    public void Reinstalar_o_Windows_ou_trocar_a_cpu_nao_muda_o_hwid()
     {
         var antes = IdentidadeDispositivo.Calcular(Pc());
-        var depois = IdentidadeDispositivo.Calcular(Pc(guid: "9a9b9c9d-1111-2222-3333-444455556666")); // Windows reinstalado
-        Assert.NotEqual(antes.Hwid, depois.Hwid);
-        Assert.Equal(3, depois.Componentes.Count(c => antes.Componentes.Contains(c))); // servidor aceita (mínimo 2)
+        var depois = IdentidadeDispositivo.Calcular(Pc(guid: "9a9b9c9d-1111-2222-3333-444455556666", cpu: "AFEBFBFF000A0655"));
+        Assert.Equal(antes.Hwid, depois.Hwid);
+        Assert.Equal(antes.Componentes, depois.Componentes);
     }
+
+    [Fact]
+    public void Outro_pc_com_a_mesma_cpu_e_o_machineguid_copiado_nao_passa_por_este()
+    {
+        // MachineGuid é editável no registro e o ID da CPU se repete no mesmo modelo: não podem identificar o PC.
+        var meu = IdentidadeDispositivo.Calcular(Pc());
+        var clone = IdentidadeDispositivo.Calcular(Pc(uuid: "aabbccdd-0000-1111-2222-333344445555", placa: "XYZ987"));
+        Assert.NotEqual(meu.Hwid, clone.Hwid);
+        Assert.Empty(clone.Componentes.Intersect(meu.Componentes)); // servidor recusa (exige as 2 peças fortes)
+    }
+
+    [Fact]
+    public void Trocar_a_placa_mae_muda_o_vinculo() =>
+        Assert.Single(IdentidadeDispositivo.Calcular(Pc(placa: "NOVA123")).Componentes
+            .Intersect(IdentidadeDispositivo.Calcular(Pc()).Componentes)); // só o UUID bate: abaixo do mínimo de 2
+
+    [Fact]
+    public void Exibir_mostra_os_16_primeiros_caracteres_em_grupos() =>
+        Assert.Equal("3F9A-0C12-77BE-41D0", IdentidadeDispositivo.Exibir("3f9a0c1277be41d0" + new string('0', 48)));
 
     [Fact]
     public void Outro_computador_nao_coincide_em_nenhum_componente()
@@ -66,7 +85,9 @@ public class IdentidadeDispositivoTests
     public void Componentes_genericos_ficam_de_fora_e_sem_nenhum_valido_nao_ha_hwid()
     {
         var r = IdentidadeDispositivo.Calcular(Pc(placa: "Default string", cpu: ""));
-        Assert.Equal(2, r.Componentes.Length);
+        Assert.Single(r.Componentes); // só o UUID: a placa é genérica e os fracos não entram quando há peça forte
+        var semForte = IdentidadeDispositivo.Calcular(Pc(uuid: "", placa: "Default string"));
+        Assert.Equal(2, semForte.Componentes.Length); // placa sem identificador: cai para MachineGuid + CPU
         Assert.Throws<System.InvalidOperationException>(() =>
             IdentidadeDispositivo.Calcular(new[] { new ComponenteHw("placa", "To be filled by O.E.M."), new ComponenteHw("cpu", null) }));
     }

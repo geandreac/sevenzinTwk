@@ -7,7 +7,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Conta local, verificação em dois fatores e licença — tudo no seu PC, sem servidor, sem HWID e sem Discord." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            <TextBlock Text="Sua conta, o computador vinculado a ela, a verificação em dois fatores e a licença." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
         <StackPanel Grid.Row="1" x:Name="Lista"/>
     </Grid>

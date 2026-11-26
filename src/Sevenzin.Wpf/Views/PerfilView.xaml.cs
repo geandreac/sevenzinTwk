@@ -7,7 +7,7 @@ using Sevenzin.Diagnostics;
 namespace Sevenzin.Wpf.Views;
 
 /// <summary>Tela "Perfil" (tela 15 do original): conta local, 2FA (TOTP offline) e licença local —
-/// substituindo o KeyAuth por algo transparente. Sem servidor, sem HWID, sem Discord.</summary>
+/// substituindo o KeyAuth por algo transparente. Mostra o HWID deste PC, ao qual a conta do servidor fica vinculada.</summary>
 public partial class PerfilView : UserControl
 {
     static Style CardStyle => (Style)Application.Current.Resources["Card"];
@@ -44,6 +44,10 @@ public partial class PerfilView : UserControl
         conta.Children.Add(Campo("Papel", eu.Papel == PapelUsuario.Administrador ? "Administrador" : "Usuário"));
         conta.Children.Add(Campo("Criada em", eu.CriadoUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")));
         Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = conta });
+
+        // ESTE COMPUTADOR (HWID)
+        Lista.Children.Add(new TextBlock { Text = "Este computador", Style = SectionStyle });
+        Lista.Children.Add(new Border { Style = CardStyle, Margin = new Thickness(0, 0, 0, 14), Child = CartaoHwid() });
 
         // 2FA
         Lista.Children.Add(new TextBlock { Text = "Verificação em dois fatores", Style = SectionStyle });
@@ -87,7 +91,7 @@ public partial class PerfilView : UserControl
         });
         li.Children.Add(new TextBlock
         {
-            Text = "A chave é um registro LOCAL (formato A1B2-C3D4-E5F6-G7H8). Não há servidor, HWID ou bloqueio de recursos: tudo continua funcionando com ou sem chave.",
+            Text = "A chave é um registro LOCAL (formato A1B2-C3D4-E5F6-G7H8). Ela não bloqueia recursos: tudo continua funcionando com ou sem chave.",
             Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 4, 0, 0), TextWrapping = TextWrapping.Wrap,
         });
         var linha = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
@@ -198,6 +202,56 @@ public partial class PerfilView : UserControl
         linha.Children.Add(cancelar);
         bloco.Children.Add(linha);
         host.Children.Add(bloco);
+    }
+
+    /// <summary>HWID deste PC com botão de copiar. A conta fica presa ao PC do primeiro acesso (regra no servidor:
+    /// docs/supabase/schema.sql, registrar_dispositivo); o código é o que o suporte pede para liberar um PC novo.</summary>
+    static UIElement CartaoHwid()
+    {
+        var sp = new StackPanel();
+        var g = new Grid { Margin = new Thickness(0, 3, 0, 3) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(160) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        g.Children.Add(new TextBlock { Text = "HWID", Foreground = Muted, FontSize = 13, VerticalAlignment = VerticalAlignment.Center });
+        var valor = new TextBlock
+        {
+            Text = "Calculando…", FontSize = 14, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center,
+            FontFamily = new FontFamily("Cascadia Mono, Consolas"),
+        };
+        Grid.SetColumn(valor, 1);
+        g.Children.Add(valor);
+        var copiar = Botao(Secundario, "Copiar", () => { });
+        copiar.IsEnabled = false;
+        copiar.Margin = new Thickness(0);
+        Grid.SetColumn(copiar, 2);
+        g.Children.Add(copiar);
+        sp.Children.Add(g);
+        sp.Children.Add(new TextBlock
+        {
+            Text = Servicos.UsaSupabase
+                ? "Sua conta fica vinculada a este computador no primeiro acesso e só entra nele. Trocou de PC ou de placa-mãe? Abra um ticket no Discord e informe este código para liberar o novo computador."
+                : "Identificador deste computador, calculado da placa-mãe. No modo de contas locais ele não restringe o login.",
+            Foreground = Secondary, FontSize = 12, Margin = new Thickness(0, 6, 0, 0), TextWrapping = TextWrapping.Wrap,
+        });
+
+        // WMI leva alguns centésimos de segundo: calcula fora da UI (o resultado fica em cache para o resto da execução).
+        _ = Task.Run(() =>
+        {
+            try { return IdentidadeDispositivo.Exibir(IdentidadeDispositivo.Atual().Hwid); }
+            catch { return null; }
+        }).ContinueWith(t => valor.Dispatcher.Invoke(() =>
+        {
+            if (t.Result is not { } codigo) { valor.Text = "Não foi possível identificar este computador."; valor.Foreground = Danger; return; }
+            valor.Text = codigo;
+            copiar.IsEnabled = true;
+            copiar.Click += (_, _) =>
+            {
+                try { Clipboard.SetText(codigo); copiar.Content = "Copiado"; }
+                catch { copiar.Content = "Falhou"; }
+            };
+        }));
+        return sp;
     }
 
     static Button Botao(Style estilo, string texto, Action acao)

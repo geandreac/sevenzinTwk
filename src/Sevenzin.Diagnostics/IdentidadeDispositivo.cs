@@ -8,10 +8,13 @@ namespace Sevenzin.Diagnostics;
 /// <summary>Um identificador de hardware lido do Windows, ainda em texto (só existe na memória do app).</summary>
 public sealed record ComponenteHw(string Nome, string? Valor);
 
-/// <summary>Identidade do computador para vincular a conta a um PC (HWID). Lê quatro identificadores estáveis
-/// (MachineGuid do Windows, UUID e serial da placa-mãe, ID do processador) e envia ao servidor só hashes SHA-256
-/// com sal do app: o valor bruto nunca sai do PC e o hash não serve para rastrear o PC em outro serviço.
-/// O servidor compara componente a componente, então trocar uma peça ou reinstalar o Windows não bloqueia o dono.</summary>
+/// <summary>Identidade do computador para vincular a conta a um PC (HWID). Lê quatro identificadores (MachineGuid do
+/// Windows, UUID e serial da placa-mãe, ID do processador) e envia ao servidor só hashes SHA-256 com sal do app: o
+/// valor bruto nunca sai do PC e o hash não serve para rastrear o PC em outro serviço.
+/// O vínculo usa só as peças FORTES, UUID e serial da placa, que são únicos por máquina: o ID do processador se repete
+/// em toda CPU do mesmo modelo e o MachineGuid é um valor de registro que qualquer um copia de um PC para outro.
+/// Reinstalar o Windows ou trocar a CPU não muda o HWID; trocar a placa-mãe muda (liberação pelo admin).
+/// Os dois fracos só entram quando a placa não traz nenhum identificador real.</summary>
 public static class IdentidadeDispositivo
 {
     const string Sal = "sevenzin-hwid-v1";
@@ -41,15 +44,20 @@ public static class IdentidadeDispositivo
     /// <summary>Hash de um componente: SHA-256 de "sal|nome|valor", em hex minúsculo (64 caracteres). Pura.</summary>
     public static string HashComponente(string nome, string valor) => Sha256Hex($"{Sal}|{nome}|{valor}");
 
+    static readonly HashSet<string> Fortes = new(StringComparer.Ordinal) { "uuid", "placa" };
+
     /// <summary>Calcula o HWID (hash do conjunto) e a lista de hashes por componente, na ordem recebida.
-    /// Componentes genéricos ou vazios ficam de fora. Sem nenhum componente válido, lança exceção. Pura.</summary>
+    /// Componentes genéricos ou vazios ficam de fora; havendo peça forte (UUID ou serial da placa), só elas contam.
+    /// Sem nenhum componente válido, lança exceção. Pura.</summary>
     public static (string Hwid, string[] Componentes) Calcular(IEnumerable<ComponenteHw> brutos)
     {
-        var comps = brutos
+        var validos = brutos
             .Select(c => (c.Nome, Valor: Normalizar(c.Valor)))
             .Where(c => c.Valor is not null)
-            .Select(c => HashComponente(c.Nome, c.Valor!))
-            .ToArray();
+            .ToList();
+        if (validos.Any(c => Fortes.Contains(c.Nome)))
+            validos = validos.Where(c => Fortes.Contains(c.Nome)).ToList();
+        var comps = validos.Select(c => HashComponente(c.Nome, c.Valor!)).ToArray();
         if (comps.Length == 0)
             throw new InvalidOperationException("Não foi possível identificar este computador.");
         return (Sha256Hex(Sal + "|" + string.Join("|", comps)), comps);
@@ -82,6 +90,11 @@ public static class IdentidadeDispositivo
                 return o[campo]?.ToString();
         return null;
     }
+
+    /// <summary>HWID para mostrar ao usuário e ao suporte: os 16 primeiros caracteres do hash, em grupos
+    /// (ex.: 3F9A-0C12-77BE-41D0). Basta para identificar o PC no painel do admin. Pura.</summary>
+    public static string Exibir(string hwid) =>
+        string.Join("-", Enumerable.Range(0, 4).Select(i => hwid.Substring(i * 4, 4))).ToUpperInvariant();
 
     static (string, string[])? _cache;
 

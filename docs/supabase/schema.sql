@@ -83,9 +83,10 @@ create policy "acessos: registrar" on public.acessos for insert with check (true
 -- ───────────────────────── vínculo da conta ao computador (HWID) + sessão única ─────────────────────────
 -- Cada conta de usuário fica presa a UM computador. O app envia só hashes SHA-256 (nunca o identificador bruto):
 --   p_hwid         hash do conjunto de componentes
---   p_componentes  hashes de até 4 componentes (MachineGuid, UUID da placa, serial da placa, ID da CPU)
--- É o mesmo PC se o hwid for igual OU se pelo menos 2 componentes coincidirem (trocar uma peça ou reinstalar o
--- Windows não bloqueia o dono). Cada vínculo bem-sucedido gera uma sessao_id nova: o login mais recente derruba
+--   p_componentes  hashes das peças FORTES: UUID e serial da placa-mãe (o app só cai para MachineGuid e ID da CPU
+--                  quando a placa não traz identificador real; ver IdentidadeDispositivo.cs)
+-- É o mesmo PC se o hwid for igual OU se pelo menos 2 componentes coincidirem (com as 2 peças fortes, as duas
+-- precisam bater: reinstalar o Windows ou trocar a CPU não muda nada; trocar a placa-mãe exige liberação do admin). Cada vínculo bem-sucedido gera uma sessao_id nova: o login mais recente derruba
 -- o anterior (sessão única). Admin é isento. Só as funções abaixo escrevem na tabela (sem policy de escrita).
 
 create table if not exists public.dispositivos (
