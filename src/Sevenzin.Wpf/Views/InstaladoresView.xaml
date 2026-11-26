@@ -4,13 +4,40 @@
     <Grid Margin="44,24,40,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Margin="0,8,0,22">
+        <StackPanel Grid.Row="0" Margin="0,8,0,18">
             <TextBlock Text="Instaladores" Style="{StaticResource TituloTela}"/>
-            <TextBlock Text="Só fontes oficiais. O download é verificado por assinatura (e hash, quando fixado) ANTES de permitir executar. Nada é baixado nem executado sem você — ao contrário do original." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            <TextBlock Text="Programas para jogos e manutenção, baixados direto do site de cada fabricante." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Path Data="M7,0.5 L13,2.8 V7 C13,10.3 10.6,12.6 7,13.5 C3.4,12.6 1,10.3 1,7 V2.8 Z M4.4,7 L6.2,8.8 L9.8,5.2"
+                      Stroke="{StaticResource SuccessBrush}" StrokeThickness="1.4" StrokeLineJoin="Round" Width="14" Height="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="SeloTxt" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
         </StackPanel>
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,16">
+
+        <!-- Busca (largura toda, lupa e limpar) + chips de categoria: ficam fixos enquanto a lista rola. -->
+        <StackPanel Grid.Row="1" Margin="0,0,8,6">
+            <Grid>
+                <TextBox x:Name="Busca" Style="{StaticResource DarkBox}" Tag="Buscar por nome, uso ou fabricante" Padding="36,9,96,9" FontSize="14"
+                         TextChanged="Busca_TextChanged" KeyDown="Busca_KeyDown" AutomationProperties.Name="Buscar instaladores"/>
+                <Path Data="M6.5,1 A5.5,5.5 0 1 1 6.49,1 Z M10.6,10.6 L14.5,14.5" Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.6"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="16" Height="16" Stretch="Uniform"
+                      HorizontalAlignment="Left" VerticalAlignment="Center" Margin="13,0,0,0" IsHitTestVisible="False"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0">
+                    <TextBlock x:Name="ContagemTxt" Foreground="{StaticResource TextMutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Button x:Name="LimparBusca" Style="{StaticResource LinkButton}" VerticalAlignment="Center" Width="30" Height="30" Visibility="Collapsed" Click="LimparBusca_Click"
+                            ToolTip="Limpar busca (Esc)" AutomationProperties.Name="Limpar busca">
+                        <Path Data="M1,1 L9,9 M9,1 L1,9" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.6"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="10" Height="10"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+            <WrapPanel x:Name="Chips" Margin="0,12,0,0" AutomationProperties.Name="Categorias"/>
+        </StackPanel>
+
+        <ScrollViewer x:Name="Rolagem" Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,8,16">
             <StackPanel x:Name="Lista"/>
         </ScrollViewer>
     </Grid>

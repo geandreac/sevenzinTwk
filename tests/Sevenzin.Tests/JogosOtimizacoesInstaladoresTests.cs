@@ -119,9 +119,9 @@ public class JogosOtimizacoesInstaladoresTests
     }
 
     [Fact]
-    public void CatalogoUtilitarios_atinge_55_itens_oficiais_https()
+    public void CatalogoUtilitarios_atinge_69_itens_oficiais_https()
     {
-        Assert.Equal(55, CatalogoUtilitarios.Todos.Count);
+        Assert.Equal(69, CatalogoUtilitarios.Todos.Count);
         var pastaIcones = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Sevenzin.Wpf", "Assets", "Apps"));
 
         Assert.All(CatalogoUtilitarios.Todos, u =>
@@ -163,5 +163,20 @@ public class JogosOtimizacoesInstaladoresTests
         Assert.NotNull(r);
         Assert.Equal("app-x64-setup.exe", r!.Value.NomeArquivo);
         Assert.Equal("https://github.com/org/repo/releases/download/v1/app-x64-setup.exe", r.Value.Url);
+    }
+
+    [Fact]
+    public void ExtrairAssetGitHubRelease_nao_escolhe_ARM_quando_ha_x86_64()
+    {
+        // Formato real da release do RustDesk: aarch64 e x86_64 lado a lado.
+        const string json = """
+            { "assets": [
+                { "name": "rustdesk-1.5.3-aarch64.exe", "browser_download_url": "https://github.com/rustdesk/rustdesk/releases/download/1.5.3/rustdesk-1.5.3-aarch64.exe" },
+                { "name": "rustdesk-1.5.3-aarch64.msi", "browser_download_url": "https://github.com/rustdesk/rustdesk/releases/download/1.5.3/rustdesk-1.5.3-aarch64.msi" },
+                { "name": "rustdesk-1.5.3-x86_64.exe", "browser_download_url": "https://github.com/rustdesk/rustdesk/releases/download/1.5.3/rustdesk-1.5.3-x86_64.exe" },
+                { "name": "rustdesk-1.5.3-x86_64.msi", "browser_download_url": "https://github.com/rustdesk/rustdesk/releases/download/1.5.3/rustdesk-1.5.3-x86_64.msi" }
+            ] }
+            """;
+        Assert.Equal("rustdesk-1.5.3-x86_64.exe", DownloaderInstalador.ExtrairAssetGitHubRelease(json)!.Value.NomeArquivo);
     }
 }
