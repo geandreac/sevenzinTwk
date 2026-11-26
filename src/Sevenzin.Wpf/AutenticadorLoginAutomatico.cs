@@ -38,6 +38,11 @@ public static class AutenticadorLoginAutomatico
                         if (ClienteSupabase.TotpVerificado(fatores) is not null)
                             return false;
 
+                        // Computador não vinculado (ou sem resposta do servidor): vai para a tela de login,
+                        // que mostra o motivo ao entrar manualmente.
+                        if (!(await cliente.ConfirmarDispositivoAsync()).Ok)
+                            return false;
+
                         var papel = cliente.EhAdmin ? PapelUsuario.Administrador : PapelUsuario.Usuario;
                         var nome = string.IsNullOrWhiteSpace(cliente.NomePerfil)
                             ? ValidacaoCredenciais.NomeDeEmail(cliente.Sessao!.Email)

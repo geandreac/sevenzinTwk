@@ -326,4 +326,97 @@ public sealed class ClienteSupabase
         }
         catch { return new(false, "Sem conexão com o servidor. Verifique a internet e tente de novo."); }
     }
+
+    // ───────────── Vínculo da conta ao computador (HWID) e sessão única ─────────────
+    // A regra mora no servidor (docs/supabase/schema.sql: registrar_dispositivo, validar_sessao,
+    // resetar_dispositivo). O app só envia hashes e obedece à resposta.
+
+    /// <summary>Id da sessão única devolvido pelo servidor ao vincular; o app confere de tempos em tempos se continua
+    /// sendo a sessão ativa da conta.</summary>
+    public string? SessaoDispositivo { get; private set; }
+    string? _hwid;
+
+    /// <summary>Traduz o status de <c>registrar_dispositivo</c> em liberado ou bloqueado, com a mensagem para o
+    /// usuário. Status desconhecido ou ausente bloqueia (falha fechada). Pura.</summary>
+    public static (bool Ok, string? Mensagem) InterpretarVinculo(string? status) => status switch
+    {
+        "vinculado" or "ok" or "admin" => (true, null),
+        "outro_dispositivo" => (false, "Esta conta está vinculada a outro computador. Cada acesso vale para um PC.\n\n" +
+                                       "Trocou de computador? Abra um ticket no Discord para liberar o novo PC."),
+        _ => (false, "Não foi possível confirmar este computador no servidor. Verifique a internet e tente de novo."),
+    };
+
+    /// <summary>Vincula a conta logada a este PC (1º acesso) ou confere se é o mesmo PC. Bloqueado ou sem resposta,
+    /// encerra a sessão no servidor e devolve a mensagem para mostrar. Chamar depois do login (e do 2FA).</summary>
+    public async Task<ResultadoSupabase> ConfirmarDispositivoAsync()
+    {
+        if (Sessao is null) return new(false, "Sessão não iniciada.");
+        string? status = null, sessao = null;
+        try
+        {
+            var (hwid, componentes) = await Task.Run(IdentidadeDispositivo.Atual);
+            var resp = await Http.SendAsync(Req(HttpMethod.Post, "/rest/v1/rpc/registrar_dispositivo",
+                new { p_hwid = hwid, p_componentes = componentes }, token: Sessao.AccessToken));
+            if (resp.IsSuccessStatusCode)
+            {
+                using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+                var raiz = doc.RootElement;
+                status = raiz.TryGetProperty("status", out var s) ? s.GetString() : null;
+                sessao = raiz.TryGetProperty("sessao", out var se) && se.ValueKind == JsonValueKind.String ? se.GetString() : null;
+                _hwid = hwid;
+            }
+        }
+        catch (InvalidOperationException e) { return await Recusar(e.Message); }
+        catch { /* rede: status fica null e cai na falha fechada */ }
+
+        var (ok, msg) = InterpretarVinculo(status);
+        if (!ok) return await Recusar(msg!);
+        SessaoDispositivo = sessao;
+        return new(true, null, status);
+    }
+
+    async Task<ResultadoSupabase> Recusar(string mensagem)
+    {
+        await SairAsync();
+        return new(false, mensagem);
+    }
+
+    /// <summary>A sessão deste PC ainda é a sessão ativa da conta? false = a conta entrou em outro lugar ou o vínculo
+    /// foi liberado pelo admin. null = não deu para perguntar (rede, servidor): quem chama não deve derrubar o usuário.</summary>
+    public async Task<bool?> SessaoAindaValidaAsync()
+    {
+        if (Sessao is null || _hwid is null) return null;
+        if (SessaoDispositivo is null) return true; // admin: isento do vínculo
+        try
+        {
+            var resp = await Http.SendAsync(Req(HttpMethod.Post, "/rest/v1/rpc/validar_sessao",
+                new { p_sessao = SessaoDispositivo, p_hwid = _hwid }, token: Sessao.AccessToken));
+            if (!resp.IsSuccessStatusCode) return null;
+            return (await resp.Content.ReadAsStringAsync()).Trim() == "true";
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Admin: apaga o vínculo de uma conta para ela poder entrar em um PC novo (e derruba a sessão atual).</summary>
+    public async Task<ResultadoSupabase> LiberarDispositivoAsync(string usuarioId)
+    {
+        if (Sessao is null) return new(false, "Sessão não iniciada.");
+        try
+        {
+            var resp = await Http.SendAsync(Req(HttpMethod.Post, "/rest/v1/rpc/resetar_dispositivo",
+                new { p_usuario = usuarioId }, token: Sessao.AccessToken));
+            return resp.IsSuccessStatusCode
+                ? new(true, null)
+                : new(false, ErroDe(await resp.Content.ReadAsStringAsync()) ?? "Falha ao liberar o computador.");
+        }
+        catch { return new(false, "Sem conexão com o servidor."); }
+    }
+
+    /// <summary>Encerra a sessão no servidor (refresh token revogado).</summary>
+    public async Task SairAsync()
+    {
+        if (Sessao is null) return;
+        try { await Http.SendAsync(Req(HttpMethod.Post, "/auth/v1/logout", token: Sessao.AccessToken)); } catch { }
+        Sessao = null;
+    }
 }

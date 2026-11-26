@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
@@ -178,7 +178,17 @@ public partial class LoginWindow : Window
                 return;
             }
             _ = cmfa.RegistrarAcessoAsync(_emailMfa!, "Sucesso (2FA)", true);
-            CompletarSupabase(cmfa, _emailMfa!, _senhaMfa!);
+            var (emailMfa, senhaMfa) = (_emailMfa!, _senhaMfa!);
+            _clienteMfa = null; _fatorMfa = null; _emailMfa = null; _senhaMfa = null; // bloqueado ou não, recomeça do zero
+            EntrarBtn.IsEnabled = false;
+            await CompletarSupabase(cmfa, emailMfa, senhaMfa);
+            if (DialogResult != true)
+            {
+                EntrarBtn.IsEnabled = true;
+                TotpBloco.Visibility = Visibility.Collapsed;
+                EntrarBtn.Content = "Entrar";
+                Subtitulo.Text = ModoAdmin ? SubtituloAdmin : "Acesse sua conta";
+            }
             return;
         }
 
@@ -205,14 +215,22 @@ public partial class LoginWindow : Window
                 return;
             }
             _ = cliente.RegistrarAcessoAsync(email, "Sucesso", true);
-            CompletarSupabase(cliente, email, senha);
+            await CompletarSupabase(cliente, email, senha);
         }
         finally { if (DialogResult != true) EntrarBtn.IsEnabled = true; }
     }
 
     // Sessão local sintética com o papel do Supabase — o resto da UI (checagem de admin) segue igual.
-    void CompletarSupabase(ClienteSupabase cliente, string email, string senha)
+    // Antes de abrir a sessão, o servidor confere se este é o computador vinculado à conta (HWID). Se não for,
+    // a sessão no servidor já foi encerrada e o usuário vê o motivo.
+    async Task CompletarSupabase(ClienteSupabase cliente, string email, string senha)
     {
+        var vinculo = await cliente.ConfirmarDispositivoAsync();
+        if (!vinculo.Ok)
+        {
+            Erro(vinculo.Mensagem ?? "Computador não autorizado.");
+            return;
+        }
         var papel = cliente.EhAdmin ? PapelUsuario.Administrador : PapelUsuario.Usuario;
         var nome = string.IsNullOrWhiteSpace(cliente.NomePerfil) ? ValidacaoCredenciais.NomeDeEmail(cliente.Sessao!.Email) : cliente.NomePerfil!;
         Servicos.Sessao.Abrir(new Usuario(cliente.Sessao!.Email, nome, papel, "-", DateTime.UtcNow), autenticadoPorBackend: true);

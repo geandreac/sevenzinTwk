@@ -79,3 +79,94 @@ create policy "acessos: registrar" on public.acessos for insert with check (true
 -- Promova a conta do dono a admin depois de criá-la pelo painel (Auth → Users). A regra perfis_admin_unico só
 -- aceita este e-mail:
 --   update public.perfis set papel = 'admin' where lower(email) = 'geandreac.dev@gmail.com';
+
+-- ───────────────────────── vínculo da conta ao computador (HWID) + sessão única ─────────────────────────
+-- Cada conta de usuário fica presa a UM computador. O app envia só hashes SHA-256 (nunca o identificador bruto):
+--   p_hwid         hash do conjunto de componentes
+--   p_componentes  hashes de até 4 componentes (MachineGuid, UUID da placa, serial da placa, ID da CPU)
+-- É o mesmo PC se o hwid for igual OU se pelo menos 2 componentes coincidirem (trocar uma peça ou reinstalar o
+-- Windows não bloqueia o dono). Cada vínculo bem-sucedido gera uma sessao_id nova: o login mais recente derruba
+-- o anterior (sessão única). Admin é isento. Só as funções abaixo escrevem na tabela (sem policy de escrita).
+
+create table if not exists public.dispositivos (
+  usuario_id     uuid primary key references auth.users(id) on delete cascade,
+  hwid           text not null,
+  componentes    text[] not null default '{}',
+  vinculado_utc  timestamptz not null default now(),
+  ultimo_utc     timestamptz not null default now(),
+  sessao_id      uuid,
+  sessao_utc     timestamptz
+);
+alter table public.dispositivos enable row level security;
+
+drop policy if exists "dispositivos: admin le" on public.dispositivos;
+create policy "dispositivos: admin le" on public.dispositivos for select using (public.e_admin());
+-- sem policy de insert/update/delete: nem o próprio usuário consegue apagar ou trocar o vínculo pela API REST.
+
+create or replace function public.registrar_dispositivo(p_hwid text, p_componentes text[])
+returns jsonb language plpgsql security definer
+set search_path = public as $$
+declare
+  v_uid    uuid := auth.uid();
+  v_atual  public.dispositivos;
+  v_iguais int;
+  v_minimo int;
+  v_sessao uuid := gen_random_uuid();
+begin
+  if v_uid is null then raise exception 'não autenticado'; end if;
+  if p_hwid is null or p_hwid !~ '^[0-9a-f]{64}$' then raise exception 'hwid inválido'; end if;
+  if coalesce(array_length(p_componentes, 1), 0) not between 1 and 8
+     or exists (select 1 from unnest(p_componentes) c where c !~ '^[0-9a-f]{64}$') then
+    raise exception 'componentes inválidos';
+  end if;
+  if public.e_admin() then return jsonb_build_object('status', 'admin'); end if;
+
+  select * into v_atual from public.dispositivos where usuario_id = v_uid for update;
+  if not found then
+    insert into public.dispositivos (usuario_id, hwid, componentes, sessao_id, sessao_utc)
+    values (v_uid, p_hwid, p_componentes, v_sessao, now());
+    return jsonb_build_object('status', 'vinculado', 'sessao', v_sessao);
+  end if;
+
+  select count(*) into v_iguais from unnest(p_componentes) c where c = any (v_atual.componentes);
+  v_minimo := least(2, coalesce(array_length(v_atual.componentes, 1), 0));
+  if v_atual.hwid <> p_hwid and v_iguais < v_minimo then
+    insert into public.acessos (email, resultado, sucesso)
+    values ((select email from auth.users where id = v_uid), 'Bloqueado: outro computador', false);
+    return jsonb_build_object('status', 'outro_dispositivo');
+  end if;
+
+  -- mesmo PC: atualiza os hashes (acompanha troca de peça) e abre a sessão nova, derrubando a anterior
+  update public.dispositivos
+     set hwid = p_hwid, componentes = p_componentes, ultimo_utc = now(), sessao_id = v_sessao, sessao_utc = now()
+   where usuario_id = v_uid;
+  return jsonb_build_object('status', 'ok', 'sessao', v_sessao);
+end; $$;
+
+create or replace function public.validar_sessao(p_sessao uuid, p_hwid text)
+returns boolean language plpgsql security definer
+set search_path = public as $$
+begin
+  if auth.uid() is null then return false; end if;
+  if public.e_admin() then return true; end if;
+  update public.dispositivos set ultimo_utc = now()
+   where usuario_id = auth.uid() and sessao_id = p_sessao and hwid = p_hwid;
+  return found;
+end; $$;
+
+create or replace function public.resetar_dispositivo(p_usuario uuid)
+returns void language plpgsql security definer
+set search_path = public as $$
+begin
+  if not public.e_admin() then raise exception 'apenas administradores podem liberar computadores'; end if;
+  delete from public.dispositivos where usuario_id = p_usuario;
+  insert into public.acessos (email, resultado, sucesso)
+  values ((select email from auth.users where id = p_usuario), 'Computador liberado pelo admin', true);
+end; $$;
+
+revoke all on function public.registrar_dispositivo(text, text[]) from public, anon;
+revoke all on function public.validar_sessao(uuid, text) from public, anon;
+revoke all on function public.resetar_dispositivo(uuid) from public, anon;
+grant execute on function public.registrar_dispositivo(text, text[]) to authenticated;
+grant execute on function public.validar_sessao(uuid, text) to authenticated;
+grant execute on function public.resetar_dispositivo(uuid) to authenticated;

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -68,6 +68,27 @@ public partial class MainWindow : Window
 
         SincronizarIconeBandeja();
         if (!App.ModoRender) _ = VerificarAtualizacaoAsync();
+        if (!App.ModoRender) IniciarConferenciaDeSessao();
+    }
+
+    System.Windows.Threading.DispatcherTimer? _conferenciaSessao;
+
+    /// <summary>Sessão única por conta: a cada 5 min pergunta ao servidor se esta ainda é a sessão ativa. Se a conta
+    /// entrou em outro PC (ou o admin liberou o vínculo), volta para o login. Erro de rede não derruba ninguém.</summary>
+    void IniciarConferenciaDeSessao()
+    {
+        if (Servicos.ClienteSupabase is null) return;
+        _conferenciaSessao = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
+        _conferenciaSessao.Tick += async (_, _) =>
+        {
+            if (Servicos.ClienteSupabase is not { } cli || await cli.SessaoAindaValidaAsync() != false) return;
+            _conferenciaSessao?.Stop();
+            MessageBox.Show(this, "Sua conta foi aberta em outro computador ou o vínculo deste PC foi alterado.\n\n" +
+                "Entre novamente. Se não foi você, troque sua senha e abra um ticket no Discord.",
+                "Sessão encerrada", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ForcarRelogin();
+        };
+        _conferenciaSessao.Start();
     }
 
     void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -209,6 +230,7 @@ public partial class MainWindow : Window
 
     void ForcarRelogin()
     {
+        _conferenciaSessao?.Stop();
         _encerramentoExplicito = true;
         Servicos.Sessao.Encerrar();
         RecuperacaoFalhaStore.Padrao.MarcarEncerramentoNormal();
