@@ -48,6 +48,11 @@ public static class NvidiaDrs
     public const uint IdPreferredRefreshRate = 0x0064B541;        // PREFERRED_REFRESH_RATE_ID (0 = App Controlled, 1 = Highest available)
     public const uint IdTripleBuffering = 0x20FDD1F9;             // OGL_TRIPLE_BUFFER_ID (0 = Off, 1 = On)
     public const uint IdMaximumFramesAllowed = 0x208E55E3;        // Maximum frames allowed (1, 2, etc.)
+    // Painel NVIDIA › "Ajustar as configurações da imagem com a Visualização" (achado comparando o Base Profile nas três
+    // opções da página): 0 = "Use as configurações de imagens avançadas em 3D"; 1 = modos guiados ("Deixar que o aplicativo
+    // 3D decida" e "Usar minhas preferências"), que ao aplicar sobrescrevem V-Sync, filtragem e antisserrilhamento.
+    public const uint IdModoImagemPainel = 0x1094F1F7;
+    public const uint ModoImagemAvancado = 0u;
 
     public const uint VsyncPadraoAplicativo = 0x60925292;
     public const uint VsyncForcarDesligado = 0x08416747;
@@ -69,6 +74,7 @@ public static class NvidiaDrs
         IdPreferredRefreshRate,
         IdTripleBuffering,
         IdMaximumFramesAllowed,
+        IdModoImagemPainel,
     };
 
     /// <summary>
@@ -210,6 +216,9 @@ public static class NvidiaDrs
             },
         };
 
+        // Todo perfil deixa o Painel em "configurações avançadas": assim o que o perfil gravou é o que vale, e abrir a
+        // página de visualização no Painel não troca os valores pelos de um modo guiado.
+        baseLista.Add(new(IdModoImagemPainel, "Adjust image settings with preview", ModoImagemAvancado, "Use the advanced 3D image settings"));
         return baseLista;
     }
 
