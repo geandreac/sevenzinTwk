@@ -291,6 +291,30 @@ public static class NvidiaDebloat
         return false;
     }
 
+    /// <summary>Plano B quando o modelo não está no catálogo (placa sem driver com ID desconhecido, nome fora do padrão):
+    /// a série GeForce RTX mais nova (desktop ou notebook) e o primeiro modelo dela. O pacote Game Ready/Studio é o
+    /// mesmo para todas as GeForce que ele suporta, e o instalador da NVIDIA recusa sozinho uma placa que ele não cobre.</summary>
+    public static bool ResolverSerieMaisRecente(
+        bool notebook,
+        IReadOnlyList<ItemLookupNvidia> series,
+        IReadOnlyList<ItemLookupNvidia> modelos,
+        out int psid,
+        out int pfid,
+        out string nomeCatalogo)
+    {
+        psid = 0; pfid = 0; nomeCatalogo = string.Empty;
+        var serie = series
+            .Select(s => (s, m: Regex.Match(s.Nome, @"^GeForce RTX (\d+) Series(?: \(Notebooks?\))?$", RegexOptions.IgnoreCase)))
+            .Where(x => x.m.Success && x.s.Nome.Contains("Notebook", StringComparison.OrdinalIgnoreCase) == notebook)
+            .OrderByDescending(x => int.Parse(x.m.Groups[1].Value))
+            .Select(x => x.s)
+            .FirstOrDefault(s => modelos.Any(m => m.ParentId == s.Valor));
+        if (serie is null) return false;
+        var modelo = modelos.First(m => m.ParentId == serie.Valor);
+        (psid, pfid, nomeCatalogo) = (serie.Valor, modelo.Valor, $"{serie.Nome} (pacote geral)");
+        return true;
+    }
+
     /// <summary>Extrai o driver oficial mais recente da resposta JSON de `AjaxDriverService.php`.</summary>
     public static DriverCatalogoNvidia? ExtrairMelhorDriverJson(string json, bool notebook, CanalDriverNvidia canal)
     {
@@ -695,10 +719,16 @@ public static class NvidiaDebloat
         var xmlSeries = Http.GetStringAsync("https://www.nvidia.com/Download/API/lookupValueSearch.aspx?TypeID=2", ct).GetAwaiter().GetResult();
         var xmlModelos = Http.GetStringAsync("https://www.nvidia.com/Download/API/lookupValueSearch.aspx?TypeID=3", ct).GetAwaiter().GetResult();
 
-        if (!ResolverIdsCatalogo(nomeGpu, notebook, ParseLookupXml(xmlSeries), ParseLookupXml(xmlModelos), out int psid, out int pfid, out var nomeCat))
+        var series = ParseLookupXml(xmlSeries);
+        var modelos = ParseLookupXml(xmlModelos);
+        if (!ResolverIdsCatalogo(nomeGpu, notebook, series, modelos, out int psid, out int pfid, out var nomeCat))
         {
-            log("[X] Não foi possível mapear automaticamente este modelo no catálogo da NVIDIA. Use a opção 'Já tenho o instalador'.");
-            return null;
+            if (!ResolverSerieMaisRecente(notebook, series, modelos, out psid, out pfid, out nomeCat))
+            {
+                log("[X] Não foi possível mapear automaticamente este modelo no catálogo da NVIDIA. Use a opção 'Já tenho o instalador'.");
+                return null;
+            }
+            log("  [!] Modelo não encontrado no catálogo; usando o pacote GeForce mais recente, que é o mesmo para as placas suportadas.");
         }
         log($"  [OK] Catálogo NVIDIA: {nomeCat} (psid={psid}, pfid={pfid})");
 

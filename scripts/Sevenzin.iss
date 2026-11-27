@@ -4,7 +4,7 @@
 ; Compilar: scripts\build-installer.ps1  (ou abrir este .iss no Inno Setup e Build). Saída: dist\installer\.
 
 #define AppName "SevenzinTwks"
-#define AppVersion "2.2.1"
+#define AppVersion "2.2.2"
 #define AppExe "Sevenzin.exe"
 #define AppPublisher "geandreac"
 

@@ -66,24 +66,30 @@ public partial class GpuView : UserControl
             var dispositivos = LeitorModosVideo.Dispositivos();
             var modos = (dispositivos.Count > 0 ? dispositivos : new List<DispositivoVideo> { new("", "Exibição primária") })
                 .Select(d => { var n = d.Nome.Length > 0 ? d.Nome : null; return (d, LeitorModosVideo.Listar(n), LeitorModosVideo.Atual(n)); }).ToList();
-            return (gpus, nvKeys, amdKeys, verDriver, smi, tele, modos);
+            var placas = PlacasVideoPci.Coletar();
+            return (gpus, nvKeys, amdKeys, verDriver, smi, tele, modos, placas);
         });
 
         _gpus = dados.gpus;
         _chavesNvidia = dados.nvKeys;
         _chavesAmd = dados.amdKeys;
+        // Placa no PCI sem o driver do fabricante: depois de um DDU ela some de "adaptadores de vídeo", mas continua aqui.
+        var semDriver = dados.placas.Where(p => p.Estado != EstadoDriverPlaca.Instalado).ToList();
 
-        AtualizarCabecalhoTopo(_gpus);
+        AtualizarCabecalhoTopo(_gpus, semDriver);
         Lista.Children.Clear();
+        foreach (var p in semDriver) Lista.Children.Add(CartaoPlacaSemDriver(p));
 
         if (_gpus.Count == 0)
         {
-            Lista.Children.Add(new TextBlock
-            {
-                Text = "Nenhum adaptador de vídeo detectado.",
-                Foreground = Muted,
-                Margin = new Thickness(2, 8, 0, 0),
-            });
+            if (semDriver.Count == 0)
+                Lista.Children.Add(new TextBlock
+                {
+                    Text = "Nenhuma placa de vídeo encontrada, nem no barramento PCI. Confira se a placa está bem encaixada e com o cabo de energia ligado.",
+                    Foreground = Muted,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(2, 8, 0, 0),
+                });
             return;
         }
 
@@ -117,8 +123,16 @@ public partial class GpuView : UserControl
         Lista.Children.Add(CartaoModosVideo(dados.modos));
     }
 
-    void AtualizarCabecalhoTopo(IReadOnlyList<InfoGpu> gpus)
+    void AtualizarCabecalhoTopo(IReadOnlyList<InfoGpu> gpus, IReadOnlyList<PlacaVideoPci> semDriver)
     {
+        if (semDriver.FirstOrDefault() is { } s)
+        {
+            TxtModeloTopo.Text = s.Nome;
+            PontoStatusTopo.Fill = Warning;
+            TxtSubstatusTopo.Text = s.Estado == EstadoDriverPlaca.Ausente ? "Encontrada sem driver" : "Usando o driver básico do Windows";
+            return;
+        }
+
         var nv = gpus.FirstOrDefault(g => g.Fabricante == FabricanteGpu.Nvidia);
         var amd = gpus.FirstOrDefault(g => g.Fabricante == FabricanteGpu.Amd);
         var principal = nv ?? amd ?? gpus.FirstOrDefault();
@@ -141,6 +155,56 @@ public partial class GpuView : UserControl
     }
 
     static TextBlock Secao(string t) => new() { Text = t, Style = SectionStyle, Margin = new Thickness(0, 2, 0, 10) };
+
+    /// <summary>Placa vista no PCI sem o driver do fabricante: diz o que está acontecendo e oferece o caminho para instalar.</summary>
+    Border CartaoPlacaSemDriver(PlacaVideoPci p)
+    {
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock { Text = p.Nome, FontSize = 16, FontWeight = FontWeights.SemiBold });
+        var status = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
+        status.Children.Add(new System.Windows.Shapes.Ellipse { Width = 8, Height = 8, Fill = Warning, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
+        status.Children.Add(new TextBlock
+        {
+            Text = p.Estado == EstadoDriverPlaca.Ausente ? "Sem driver instalado" : "Usando o driver básico da Microsoft",
+            Foreground = Warning,
+            FontSize = 12.5,
+        });
+        sp.Children.Add(status);
+        sp.Children.Add(new TextBlock
+        {
+            Text = p.Estado == EstadoDriverPlaca.Ausente
+                ? "O Windows encontrou a placa, mas nenhum driver está instalado nela. Até instalar, os jogos rodam sem aceleração e os ajustes desta tela ficam indisponíveis. Costuma acontecer depois de remover o driver com o DDU ou uma limpeza."
+                : "A imagem funciona, mas o driver básico do Windows não tem aceleração para jogos. Instale o driver do fabricante.",
+            Foreground = Secondary,
+            FontSize = 13,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 10, 0, 14),
+        });
+
+        var acoes = new StackPanel { Orientation = Orientation.Horizontal };
+        if (p.Fabricante == FabricanteGpu.Nvidia)
+        {
+            var instalar = new Button { Style = PriButton, Content = "Instalar driver com o Auto NVIDIA Debloat", Padding = new Thickness(18, 9, 18, 9) };
+            instalar.Click += (_, _) => AbrirModalDebloat(p.Nome, semDriver: true);
+            acoes.Children.Add(instalar);
+        }
+        else if (DriverGpu.UrlOficialDriver(p.Fabricante) is { } url)
+        {
+            var abrir = new Button { Style = SecButton, Content = $"Abrir a página oficial de drivers {PlacasVideoPci.NomeFabricante(p.Fabricante)}", Padding = new Thickness(16, 8, 16, 8) };
+            abrir.Click += (_, _) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            acoes.Children.Add(abrir);
+        }
+        acoes.Children.Add(new TextBlock
+        {
+            Text = $"ID do dispositivo: {(p.Instancia.Length > 21 ? p.Instancia[4..21] : p.Instancia)}",
+            Foreground = Muted,
+            FontSize = 11.5,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(16, 0, 0, 0),
+        });
+        sp.Children.Add(acoes);
+        return new Border { Style = CardStyle, Child = sp, Margin = new Thickness(0, 0, 0, 16) };
+    }
     static Tweak? Tw(string id) => CatalogoTweaks.Todos.FirstOrDefault(t => t.Id == id);
 
     // ─────────────────────────── Coluna Esquerda: Ajustes do Driver ───────────────────────────
@@ -650,11 +714,11 @@ public partial class GpuView : UserControl
 
     // ─────────────────────────── Modal: Auto NVIDIA Debloat (NvClean) ───────────────────────────
 
-    void AbrirModalDebloat()
+    void AbrirModalDebloat(string? nomePlaca = null, bool semDriver = false)
     {
         ModalDebloatConteudo.Children.Clear();
         var gpuNv = _gpus.FirstOrDefault(g => g.Fabricante == FabricanteGpu.Nvidia);
-        var nomeGpu = gpuNv?.Adaptador ?? "NVIDIA GPU";
+        var nomeGpu = nomePlaca ?? gpuNv?.Adaptador ?? "NVIDIA GPU";
         bool ehNotebook = NvidiaDebloat.EhNotebookGpu(nomeGpu);
 
         System.Windows.Threading.DispatcherTimer? timerReinicio = null;
@@ -710,8 +774,13 @@ public partial class GpuView : UserControl
         });
         spHw.Children.Add(linhaModelo);
         var linhaDet = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
-        linhaDet.Children.Add(new System.Windows.Shapes.Ellipse { Width = 7, Height = 7, Fill = Success, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
-        linhaDet.Children.Add(new TextBlock { Text = "GPU detectada", Foreground = Success, FontSize = 11.5 });
+        linhaDet.Children.Add(new System.Windows.Shapes.Ellipse { Width = 7, Height = 7, Fill = semDriver ? Warning : Success, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
+        linhaDet.Children.Add(new TextBlock
+        {
+            Text = semDriver ? "Placa encontrada sem driver: o Debloat baixa e instala o driver oficial" : "GPU detectada",
+            Foreground = semDriver ? Warning : Success,
+            FontSize = 11.5,
+        });
         spHw.Children.Add(linhaDet);
         cardHw.Child = spHw;
         ModalDebloatConteudo.Children.Add(cardHw);
