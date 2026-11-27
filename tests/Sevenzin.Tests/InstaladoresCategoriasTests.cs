@@ -50,7 +50,7 @@ public class InstaladoresCategoriasTests
     public void Sem_assinatura_ou_de_risco_so_abrem_a_pagina_oficial()
     {
         var soPagina = CatalogoUtilitarios.Todos.Where(u => u.SoPagina is not null).Select(u => u.Nome).ToHashSet();
-        Assert.Equal(new[] { "CRU (Custom Resolution Utility)", "ExitLag", "MeasureSleep", "Windows Update Blocker (Sordum)", "vibranceGUI" }.ToHashSet(), soPagina);
+        Assert.Equal(new[] { "CRU (Custom Resolution Utility)", "ExitLag", "MeasureSleep", "NVIDIA Control Panel", "Windows Update Blocker (Sordum)", "vibranceGUI" }.ToHashSet(), soPagina);
         Assert.All(CatalogoUtilitarios.Todos.Where(u => u.SoPagina is not null), u => Assert.False(string.IsNullOrWhiteSpace(u.SoPagina)));
     }
 

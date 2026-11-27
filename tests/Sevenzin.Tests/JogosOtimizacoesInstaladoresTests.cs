@@ -119,9 +119,9 @@ public class JogosOtimizacoesInstaladoresTests
     }
 
     [Fact]
-    public void CatalogoUtilitarios_atinge_69_itens_oficiais_https()
+    public void CatalogoUtilitarios_atinge_70_itens_oficiais_https()
     {
-        Assert.Equal(69, CatalogoUtilitarios.Todos.Count);
+        Assert.Equal(70, CatalogoUtilitarios.Todos.Count);
         var pastaIcones = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Sevenzin.Wpf", "Assets", "Apps"));
 
         Assert.All(CatalogoUtilitarios.Todos, u =>

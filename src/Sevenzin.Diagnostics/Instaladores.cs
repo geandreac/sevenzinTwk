@@ -412,6 +412,9 @@ public static class CatalogoUtilitarios
         // ── Drivers e periféricos ──
         new Utilitario("NVCleanstall", "Instalação limpa do driver NVIDIA (TechPowerUp).",
             "https://www.techpowerup.com/download/techpowerup-nvcleanstall/", "https://www.techpowerup.com/download/techpowerup-nvcleanstall/", "TechPowerUp", null, "Drivers e componentes", "logo_nvcleanstall", "TechPowerUp.NVCleanstall"),
+        new Utilitario("NVIDIA Control Panel", "Painel de Controle NVIDIA oficial: configurações 3D, resolução, G-SYNC e cor da tela.",
+            "https://apps.microsoft.com/detail/9NF8H0H7WMLT", "https://apps.microsoft.com/detail/9NF8H0H7WMLT", "NVIDIA", null, "Drivers e componentes", "logo_nvidiacontrolpanel", null,
+            SoPagina: "O Painel de Controle NVIDIA só é distribuído pela Microsoft Store, sem instalador próprio; o botão abre a página oficial dele na Store para instalar. Com o driver NVIDIA atual ele costuma se instalar sozinho, mas some se a Store estiver desativada ou se o driver foi instalado sem ele."),
         new Utilitario("DDU (Display Driver Uninstaller)", "Remove drivers de vídeo de forma limpa (Wagnardsoft).",
             "https://www.wagnardsoft.com/forums/viewforum.php?f=5", "https://www.wagnardsoft.com/DDU/download/DDU%20v18.0.8.9.exe", "Wagnardsoft", null, "Drivers e componentes", "logo_ddu", "Wagnardsoft.DisplayDriverUninstaller"),
         new Utilitario("Radeon Software Slimmer", "Instalação enxuta do driver AMD (open source).",
