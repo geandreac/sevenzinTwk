@@ -1,0 +1,29 @@
+{
+  "servidor": "1575523063943139470",
+  "canais": [
+    { "chave": "regras",      "canal": "1575523067315097693", "arquivo": "regras.md" },
+    { "chave": "termos",      "canal": "1575533783766139001", "arquivo": "termos.md" },
+    { "chave": "faq",         "canal": "1575533799029342260", "arquivo": "faq.md" },
+    { "chave": "sobre",       "canal": "1575533813453299752", "arquivo": "sobre.md" },
+    { "chave": "anuncios",    "canal": "1575540287080497282", "arquivo": "anuncios.md" },
+    { "chave": "drivers",     "canal": "1575534088951963721", "arquivo": "drivers.md" },
+    { "chave": "seguranca",   "canal": "1575534102499692565", "arquivo": "seguranca.md" },
+    { "chave": "planos",      "canal": "1575535402335338587", "arquivo": "planos.md" },
+    { "chave": "avaliacoes",  "canal": "1575535415925149776", "arquivo": "avaliacoes.md" },
+    { "chave": "ticket",      "canal": "1575535429220835390", "arquivo": "ticket.md" },
+    { "chave": "changelog",   "canal": "1575535443955556412", "arquivo": "changelog.md" },
+    { "chave": "sugestoes",   "canal": "1575538942084780114", "arquivo": "sugestoes.md", "forum": "📌 Como sugerir uma melhoria" },
+    { "chave": "bugs",        "canal": "1575539027543588874", "arquivo": "bugs.md", "forum": "📌 Como relatar um bug" },
+    { "chave": "chat",        "canal": "1575535457176129688", "arquivo": "chat.md" },
+    { "chave": "setups",      "canal": "1575535470572474378", "arquivo": "setups.md" },
+    { "chave": "avisos",      "canal": "1575538459555139646", "arquivo": "avisos.md" },
+    { "chave": "download",    "canal": "1575538474717806712", "arquivo": "download.md" },
+    { "chave": "tutorial",    "canal": "1575538488714207332", "arquivo": "tutorial.md" },
+    { "chave": "suporte",     "canal": "1575538501951295629", "arquivo": "suporte.md" },
+    { "chave": "beta",        "canal": "1575538515138318446", "arquivo": "beta.md" },
+    { "chave": "moderacao",   "canal": "1575534611142803477", "arquivo": "moderacao.md" }
+  ],
+  "changelog": "1575535443955556412",
+  "cargoAvisosVersao": "Release Alerts",
+  "repositorio": "geandreac/sevenzinTwk"
+}

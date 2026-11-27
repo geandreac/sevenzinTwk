@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Sevenzin.Diagnostics\Sevenzin.Diagnostics.csproj" />
+    <ProjectReference Include="..\..\tools\Sevenzin.DiscordBot\Sevenzin.DiscordBot.csproj" />
   </ItemGroup>
 
 </Project>
