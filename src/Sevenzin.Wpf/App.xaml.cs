@@ -180,12 +180,15 @@ public partial class App : Application
 
     static async Task ExecutarPosReinicioNvidiaAsync(EstadoPosDebloatNvidia estado)
     {
+        await Task.Delay(1500);
+        PosDebloatNvidiaStore.RemoverTarefa();
+        string resumoPerfil;
+        string nomePerfil = estado.PerfilId;
         try
         {
-            await Task.Delay(1500);
-            PosDebloatNvidiaStore.RemoverTarefa();
             var gpuNv = DiagnosticoGpu.Coletar().FirstOrDefault(g => g.Fabricante == FabricanteGpu.Nvidia);
             var perfil = GpuDriverTweaks.ObterPerfil(estado.PerfilId) ?? GpuDriverTweaks.ObterPerfil("fps2")!;
+            nomePerfil = perfil.Nome;
 
             var motor = new MotorTweaks(new RegistroWindows());
             foreach (var tid in perfil.TweakIds)
@@ -201,24 +204,21 @@ public partial class App : Application
             if (resDrs.Sucesso)
                 GpuDriverTweaks.SalvarEstadoPerfil(new EstadoPerfilGpu(perfil.Id,
                     GpuDriverTweaks.LerVersaoDriverClasse(FabricanteGpu.Nvidia) ?? gpuNv?.VersaoDriver, DateTime.UtcNow));
-
-            bool painelAberto = await NvidiaDebloat.AbrirPainelControleComEsperaAsync();
-            var resumoPainel = painelAberto
-                ? "Painel de Controle NVIDIA aberto."
-                : "Painel de Controle NVIDIA ainda está sendo provisionado pela Store.";
-
-            NotificacoesStore.Padrao.Adicionar(
-                "GPU",
-                $"Pós-reinício NVIDIA concluído ({perfil.Nome})",
-                $"{(resDrs.Sucesso ? verDrs.Resumo : resDrs.Mensagem)} · {resumoPainel}");
+            resumoPerfil = resDrs.Sucesso ? verDrs.Resumo : resDrs.Mensagem;
         }
         catch (Exception ex)
         {
-            NotificacoesStore.Padrao.Adicionar(
-                "GPU",
-                "Aviso no pós-reinício NVIDIA",
-                $"Não foi possível concluir automaticamente os ajustes pós-boot: {ExtrairMotivoClaro(ex)}");
+            resumoPerfil = $"Perfil não aplicado: {ExtrairMotivoClaro(ex)}";
         }
+
+        // O Painel abre mesmo que o perfil tenha falhado. No primeiro login com driver novo, o app do Painel (Microsoft
+        // Store) pode levar um tempo para ficar registrado: tenta por cerca de 2 minutos.
+        bool painelAberto = await NvidiaDebloat.AbrirPainelControleComEsperaAsync(maxTentativas: 24, intervaloMs: 5000);
+        var resumoPainel = painelAberto
+            ? "Painel de Controle NVIDIA aberto."
+            : "Painel de Controle NVIDIA não encontrado depois de 2 minutos. Abra pela Microsoft Store (NVIDIA Control Panel) ou pelo menu Iniciar.";
+
+        NotificacoesStore.Padrao.Adicionar("GPU", $"Pós-reinício NVIDIA concluído ({nomePerfil})", $"{resumoPerfil} · {resumoPainel}");
     }
 
     static string ExtrairMotivoClaro(Exception ex)

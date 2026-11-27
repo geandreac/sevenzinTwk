@@ -20,11 +20,13 @@ public class NvidiaPainelControleTests
     [Fact]
     public void Prefere_o_classico_depois_o_da_loja_e_null_sem_nenhum()
     {
-        Assert.EndsWith("nvcplui.exe", Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(true, true)!.Value.Exe);
-        var loja = Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(false, true)!.Value;
+        const string familia = "NVIDIACorp.NVIDIAControlPanel_56jybvy8sckqj"; // nome real, lido de um pacote instalado
+        Assert.EndsWith("nvcplui.exe", Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(true, familia)!.Value.Exe);
+        var loja = Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(false, familia + "\r\n")!.Value;
         Assert.Equal("explorer.exe", loja.Exe);
-        Assert.StartsWith(@"shell:AppsFolder\NVIDIACorp.NVIDIAControlPanel_", loja.Args);
-        Assert.Null(Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(false, false));
+        Assert.Equal(@"shell:AppsFolder\NVIDIACorp.NVIDIAControlPanel_56jybvy8sckqj!NVIDIACorp.NVIDIAControlPanel", loja.Args);
+        Assert.Null(Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(false, null));
+        Assert.Null(Sevenzin.Diagnostics.NvidiaDebloat.ComandoPainelControle(false, ""));
     }
 }
 

@@ -406,20 +406,22 @@ public static class NvidiaDebloat
     }
 
     const string PainelLegado = @"C:\Program Files\NVIDIA Corporation\Control Panel Client\nvcplui.exe";
-    const string PainelLoja = @"shell:AppsFolder\NVIDIACorp.NVIDIAControlPanel_56jybq7fm28ns!NVIDIACorp.NVIDIAControlPanel";
-
     /// <summary>Como abrir o Painel de Controle NVIDIA: o executável clássico, se existir; senão o app da Microsoft
-    /// Store (driver DCH) pelo AppsFolder; null quando nenhum está instalado. Função pura.</summary>
-    public static (string Exe, string Args)? ComandoPainelControle(bool legadoExiste, bool appLojaInstalado) =>
-        legadoExiste ? (PainelLegado, "") : appLojaInstalado ? ("explorer.exe", PainelLoja) : null;
+    /// Store (driver DCH) pelo AppsFolder, com o nome de família LIDO do pacote instalado; null quando nenhum existe.
+    /// O nome não pode ser fixo: o valor que estava no código ("…_56jybq7fm28ns") não é o do pacote real
+    /// ("…_56jybvy8sckqj"), e o Windows abria um item inexistente sem erro. Função pura.</summary>
+    public static (string Exe, string Args)? ComandoPainelControle(bool legadoExiste, string? familiaPacoteLoja) =>
+        legadoExiste ? (PainelLegado, "")
+        : string.IsNullOrWhiteSpace(familiaPacoteLoja) ? null
+        : ("explorer.exe", $@"shell:AppsFolder\{familiaPacoteLoja.Trim()}!NVIDIACorp.NVIDIAControlPanel");
 
     /// <summary>Abre o Painel de Controle NVIDIA (clássico `nvcplui.exe` ou app DCH da Microsoft Store). Nunca lança.</summary>
     public static bool AbrirPainelControle(Action<string>? log = null)
     {
         try
         {
-            var cmd = ComandoPainelControle(File.Exists(PainelLegado),
-                RodarPowerShellLeitura("(Get-AppxPackage -Name NVIDIACorp.NVIDIAControlPanel).Name").Length > 0);
+            var familia = RodarPowerShellLeitura("(Get-AppxPackage -Name NVIDIACorp.NVIDIAControlPanel | Select-Object -First 1).PackageFamilyName");
+            var cmd = ComandoPainelControle(File.Exists(PainelLegado), familia);
             if (cmd is null)
             {
                 log?.Invoke("  [!] Painel de Controle NVIDIA ainda não encontrado (driver DCH pode concluir registro pela Store).");
